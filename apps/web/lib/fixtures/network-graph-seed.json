@@ -1,0 +1,172 @@
+{
+  "founder-a-cold-start-strong": {
+    "founderId": "founder-a-cold-start-strong",
+    "description": "Bias test: strong execution, sparse network",
+    "founderNetwork": {
+      "nodes": [
+        {
+          "id": "founder-a-cold-start-strong",
+          "type": "Founder",
+          "label": "Alex Rivera",
+          "confidence": 0.85
+        },
+        {
+          "id": "company-a",
+          "type": "Company",
+          "label": "Rivera Labs",
+          "confidence": 0.9
+        },
+        {
+          "id": "founder-peer-1",
+          "type": "Founder",
+          "label": "Sam Okonkwo",
+          "confidence": 0.7
+        }
+      ],
+      "edges": [
+        {
+          "from": "founder-a-cold-start-strong",
+          "to": "company-a",
+          "relationType": "CO_CONTRIBUTED",
+          "weight": 0.9,
+          "firstSeenAt": "2025-03-01"
+        },
+        {
+          "from": "founder-a-cold-start-strong",
+          "to": "founder-peer-1",
+          "relationType": "CO_PARTICIPATED",
+          "weight": 0.6,
+          "firstSeenAt": "2024-11-15"
+        }
+      ]
+    },
+    "networkProximity": {
+      "proximityScore": 0.08,
+      "confidence": 0.75,
+      "disclosure": "Network proximity signal — reflects who this founder is connected to, not their own demonstrated capability. Shown for transparency, weighted conservatively.",
+      "paths": []
+    }
+  },
+  "founder-b-network-heavy-weak": {
+    "founderId": "founder-b-network-heavy-weak",
+    "description": "Bias test: weak execution, strong 2nd-degree anchor paths",
+    "founderNetwork": {
+      "nodes": [
+        {
+          "id": "founder-b-network-heavy-weak",
+          "type": "Founder",
+          "label": "Jordan Lee",
+          "confidence": 0.6
+        },
+        {
+          "id": "founder-via-bob",
+          "type": "Founder",
+          "label": "Bob Chen",
+          "confidence": 0.88
+        },
+        {
+          "id": "vc-sequoia",
+          "type": "VC",
+          "label": "Sequoia Capital",
+          "confidence": 0.95,
+          "tags": ["anchor", "tier1_vc"]
+        },
+        {
+          "id": "accel-yc",
+          "type": "Accelerator",
+          "label": "Y Combinator",
+          "confidence": 0.95,
+          "tags": ["anchor"]
+        },
+        {
+          "id": "company-b",
+          "type": "Company",
+          "label": "Lee Analytics",
+          "confidence": 0.5
+        },
+        {
+          "id": "founder-collab",
+          "type": "Founder",
+          "label": "Mia Patel",
+          "confidence": 0.72
+        }
+      ],
+      "edges": [
+        {
+          "from": "founder-b-network-heavy-weak",
+          "to": "founder-via-bob",
+          "relationType": "CO_AUTHORED",
+          "weight": 0.85,
+          "firstSeenAt": "2025-01-10"
+        },
+        {
+          "from": "founder-via-bob",
+          "to": "vc-sequoia",
+          "relationType": "ALUMNI_OF",
+          "weight": 0.9,
+          "firstSeenAt": "2023-06-01"
+        },
+        {
+          "from": "founder-b-network-heavy-weak",
+          "to": "founder-collab",
+          "relationType": "CO_CONTRIBUTED",
+          "weight": 0.7,
+          "firstSeenAt": "2024-08-20"
+        },
+        {
+          "from": "founder-collab",
+          "to": "accel-yc",
+          "relationType": "CO_PARTICIPATED",
+          "weight": 0.8,
+          "firstSeenAt": "2024-01-05"
+        },
+        {
+          "from": "founder-b-network-heavy-weak",
+          "to": "company-b",
+          "relationType": "CO_CONTRIBUTED",
+          "weight": 0.4,
+          "firstSeenAt": "2025-02-01"
+        }
+      ]
+    },
+    "networkProximity": {
+      "proximityScore": 0.72,
+      "confidence": 0.82,
+      "disclosure": "Network proximity signal — reflects who this founder is connected to, not their own demonstrated capability. Shown for transparency, weighted conservatively.",
+      "paths": [
+        {
+          "anchorNode": {
+            "id": "vc-sequoia",
+            "type": "VC",
+            "label": "Sequoia Capital",
+            "tags": ["anchor", "tier1_vc"]
+          },
+          "viaNode": {
+            "id": "founder-via-bob",
+            "type": "Founder",
+            "label": "Bob Chen"
+          },
+          "edgeTypes": ["CO_AUTHORED", "ALUMNI_OF"],
+          "hopCount": 2,
+          "lastActiveAt": "2025-01-10"
+        },
+        {
+          "anchorNode": {
+            "id": "accel-yc",
+            "type": "Accelerator",
+            "label": "Y Combinator",
+            "tags": ["anchor"]
+          },
+          "viaNode": {
+            "id": "founder-collab",
+            "type": "Founder",
+            "label": "Mia Patel"
+          },
+          "edgeTypes": ["CO_CONTRIBUTED", "CO_PARTICIPATED"],
+          "hopCount": 2,
+          "lastActiveAt": "2024-08-20"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "founder-a-cold-start-strong",
+  "display_name": "Alex Rivera",
+  "founder_score": 0.78,
+  "founder_score_trend": "improving",
+  "genome": {
+    "execution_velocity": { "value": 0.88, "trend": "improving", "confidence": 0.9 },
+    "technical_depth": { "value": 0.82, "trend": "stable", "confidence": 0.85 },
+    "resilience_proxy": { "value": 0.75, "trend": "stable", "confidence": 0.7 },
+    "public_footprint_depth": { "value": 0.7, "trend": "improving", "confidence": 0.8 },
+    "network_embeddedness": { "value": 0.08, "trend": "stable", "confidence": 0.75 }
+  },
+  "founder_score_history": [
+    { "recorded_at": "2026-04-01T00:00:00Z", "score": 0.62 },
+    { "recorded_at": "2026-05-15T00:00:00Z", "score": 0.71 },
+    { "recorded_at": "2026-07-01T00:00:00Z", "score": 0.78 }
+  ],
+  "domain_affinity": [
+    {
+      "sector": "ai_infra",
+      "weight": 0.85,
+      "confidence": 0.8,
+      "evidence_source": "github"
+    }
+  ],
+  "network_proximity": {
+    "proximity_score": 0.08,
+    "confidence": 0.75,
+    "disclosure": "Network proximity signal — reflects who this founder is connected to, not their own demonstrated capability. Shown for transparency, weighted conservatively."
+  },
+  "network_graph_founder_id": "founder-a-cold-start-strong"
+}

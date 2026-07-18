@@ -1,0 +1,15 @@
+{
+  "id": "thesis-ai-infra-eu",
+  "name": "Pre-seed AI Infra EU",
+  "version": 1,
+  "is_active": true,
+  "sectors": ["ai_infra", "devtools"],
+  "stage": "pre_seed",
+  "geography": "EU",
+  "check_size_usd": 100000,
+  "ownership_target_pct": 5,
+  "risk_appetite": "balanced",
+  "exclude_sectors": ["crypto"],
+  "require_signals": ["technical_founder"],
+  "watchlist_promotion_threshold": 0.65
+}

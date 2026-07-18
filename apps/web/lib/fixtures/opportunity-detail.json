@@ -1,0 +1,83 @@
+{
+  "id": "opp-contradiction",
+  "company_name": "NovaMetrics",
+  "founder_name": "Elena Vasquez",
+  "founder_id": "founder-contradiction",
+  "source": "inbound",
+  "screen_verdict": "pass",
+  "has_contradiction": true,
+  "axis_scores": [
+    {
+      "axis": "founder",
+      "value": 0.72,
+      "trend": "stable",
+      "confidence": 0.68,
+      "evidence": []
+    },
+    {
+      "axis": "market",
+      "value": "bullish",
+      "trend": "improving",
+      "confidence": 0.74,
+      "evidence": []
+    },
+    {
+      "axis": "idea_vs_market",
+      "value": 0.65,
+      "trend": "stable",
+      "confidence": 0.6,
+      "evidence": []
+    }
+  ],
+  "claims": [
+    {
+      "claim_id": "claim-arr-500k",
+      "text": "We are at $500K ARR",
+      "trust_score": 0.22,
+      "validation_status": "contradicted",
+      "evidence": [
+        {
+          "source_type": "deck",
+          "source_locator": "slide 8",
+          "evidence_snippet": "We are at $500K ARR",
+          "confidence": 0.95
+        },
+        {
+          "source_type": "web",
+          "source_locator": "https://producthunt.com/posts/novametrics",
+          "evidence_snippet": "Pre-revenue — 12 design partners",
+          "confidence": 0.88
+        }
+      ]
+    },
+    {
+      "claim_id": "claim-customers-40",
+      "text": "40 paying enterprise customers",
+      "trust_score": 0.35,
+      "validation_status": "weakly_supported",
+      "evidence": [
+        {
+          "source_type": "deck",
+          "source_locator": "slide 9",
+          "evidence_snippet": "40 paying enterprise customers",
+          "confidence": 0.92
+        }
+      ]
+    }
+  ],
+  "memo": {
+    "sections": [
+      {
+        "title": "Executive Summary",
+        "content": "NovaMetrics offers AI-powered revenue forecasting for B2B SaaS.",
+        "not_disclosed": false
+      },
+      {
+        "title": "Financials",
+        "content": null,
+        "not_disclosed": true
+      }
+    ]
+  },
+  "trace_id": "trace-opp-contradiction-001"
+}

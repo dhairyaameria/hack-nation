@@ -1,0 +1,112 @@
+{
+  "active_thesis": {
+    "id": "thesis-ai-infra-eu",
+    "name": "Pre-seed AI Infra EU"
+  },
+  "opportunities": [
+    {
+      "id": "opp-alex-inbound",
+      "company_name": "Rivera Labs",
+      "founder_name": "Alex Rivera",
+      "founder_id": "founder-a-cold-start-strong",
+      "source": "inbound",
+      "discovery_channel": "direct_apply",
+      "triggering_signal": null,
+      "screen_verdict": "pass",
+      "thesis_fit_score": 0.91,
+      "status": "screening",
+      "has_contradiction": false,
+      "axis_scores": [
+        {
+          "axis": "founder",
+          "value": 0.84,
+          "trend": "improving",
+          "confidence": 0.88,
+          "evidence": []
+        },
+        {
+          "axis": "market",
+          "value": "bullish",
+          "trend": "stable",
+          "confidence": 0.72,
+          "evidence": []
+        },
+        {
+          "axis": "idea_vs_market",
+          "value": 0.76,
+          "trend": "improving",
+          "confidence": 0.7,
+          "evidence": []
+        }
+      ],
+      "sla": {
+        "signal_at": "2026-07-18T10:00:00Z",
+        "screening_at": "2026-07-18T10:45:00Z",
+        "diligence_at": null,
+        "decision_at": null
+      }
+    },
+    {
+      "id": "opp-jordan-outbound",
+      "company_name": "Lee Analytics",
+      "founder_name": "Jordan Lee",
+      "founder_id": "founder-b-network-heavy-weak",
+      "source": "outbound",
+      "discovery_channel": "network_proximity",
+      "triggering_signal": "2-hop path to Sequoia via co-author",
+      "screen_verdict": "pass",
+      "thesis_fit_score": 0.58,
+      "status": "screening",
+      "has_contradiction": false,
+      "axis_scores": [
+        {
+          "axis": "founder",
+          "value": 0.41,
+          "trend": "stable",
+          "confidence": 0.65,
+          "evidence": []
+        },
+        {
+          "axis": "market",
+          "value": "neutral",
+          "trend": "declining",
+          "confidence": 0.55,
+          "evidence": []
+        },
+        {
+          "axis": "idea_vs_market",
+          "value": 0.38,
+          "trend": "stable",
+          "confidence": 0.5,
+          "evidence": []
+        }
+      ],
+      "sla": {
+        "signal_at": "2026-07-18T09:00:00Z",
+        "screening_at": null,
+        "diligence_at": null,
+        "decision_at": null
+      }
+    },
+    {
+      "id": "opp-contradiction",
+      "company_name": "NovaMetrics",
+      "founder_name": "Elena Vasquez",
+      "founder_id": "founder-contradiction",
+      "source": "inbound",
+      "discovery_channel": "direct_apply",
+      "triggering_signal": null,
+      "screen_verdict": "pass",
+      "thesis_fit_score": 0.79,
+      "status": "diligence",
+      "has_contradiction": true,
+      "axis_scores": [],
+      "sla": {
+        "signal_at": "2026-07-18T08:00:00Z",
+        "screening_at": "2026-07-18T08:30:00Z",
+        "diligence_at": "2026-07-18T09:15:00Z",
+        "decision_at": null
+      }
+    }
+  ]
+}
