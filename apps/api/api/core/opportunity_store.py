@@ -74,7 +74,7 @@ def _axis_score_out(row: dict[str, Any]) -> dict[str, Any]:
         "value": row["value_numeric"] if row["value_numeric"] is not None else row["value_label"],
         "trend": row["trend"],
         "confidence": row.get("confidence"),
-        "evidence": [],
+        "evidence": row.get("evidence") or [],
     }
 
 
@@ -351,6 +351,7 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
                 "value_label": s["value"] if isinstance(s["value"], str) else None,
                 "trend": s.get("trend", "stable"),
                 "confidence": s.get("confidence"),
+                "evidence": s.get("evidence", []),
             }
             for s in axis_scores
         ]

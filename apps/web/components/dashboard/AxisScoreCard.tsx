@@ -50,6 +50,21 @@ export function AxisScoreCard({ score }: { score: AxisScore }) {
         <div className="mt-1 text-xs text-muted-foreground">
           confidence {Math.round(score.confidence * 100)}%
         </div>
+        {score.evidence.length > 0 && (
+          <div className="mt-2 space-y-1 border-t pt-2">
+            {score.evidence.map((e, i) => (
+              <p
+                key={i}
+                className={cn(
+                  "text-[11px] leading-snug",
+                  e.source_type === "network_proximity" ? "text-amber-700" : "text-muted-foreground"
+                )}
+              >
+                {e.evidence_snippet}
+              </p>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

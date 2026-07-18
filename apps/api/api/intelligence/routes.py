@@ -43,7 +43,7 @@ def analyze_opportunity(opportunity_id: str):
     if opp is None:
         raise HTTPException(404, "Opportunity not found")
 
-    result = agents.run_pipeline(opportunity_id, opp["company_name"], opp.get("claims", []))
+    result = agents.run_pipeline(opportunity_id, opp["company_name"], opp.get("claims", []), founder_id=opp.get("founder_id"))
 
     opportunity_store.update_opportunity(
         opportunity_id,
