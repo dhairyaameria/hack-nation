@@ -34,7 +34,7 @@ Next.js + TypeScript + Tailwind + shadcn/ui. Deploy to Vercel. Consume REST (`/a
    - "Re-run this question" control → renders diff vs. prior answer.
 
 ### P1 — Strong differentiators
-5. **Network graph explorer:** founder/company graph via GraphQL (`FounderNetwork`), filters for timeframe/geography/sector/confidence.
+5. **Network graph explorer:** founder/company graph via GraphQL (`FounderNetwork`), filters for timeframe/geography/sector/confidence. **Full build spec:** `09-NETWORK-GRAPH-UI.md` (layout, colors, seed JSON, `react-force-graph-2d`, bias-test demo pair).
 6. **Wayback timeline:** company historical snapshots with sentiment/narrative-drift markers (`stable | pivoted | inconsistent`).
 7. **Thesis Engine settings:** create/edit thesis profiles; switching active thesis visibly reorders recommendations.
 8. **NL query bar:** compound query input → ranked results with per-clause match explanations.

@@ -19,6 +19,8 @@ Every build agent must read this file and `01-CONTRACTS.md` before starting. The
 | `05-COPILOT-SKILLS.md` | Thesis Engine, Perplexity research, NL queries, skill repository, VC Copilot chatbot | Agent D — Copilot |
 | `06-FRONTEND-UX.md` | Investor dashboard, all UI screens | Agent E — Frontend |
 | `07-EXECUTION.md` | Milestones, integration checkpoints, risks, metrics, demo checklist, optional federated module | Team lead / integrator |
+| `08-IMPLEMENTATION-PLAN.md` | Time-sequenced build order with gates | Team lead / all agents |
+| `09-NETWORK-GRAPH-UI.md` | Founder network graph UI (Agent E + B) | Agent E — Frontend |
 
 **Dependency order:** `01-CONTRACTS` → `02-DATA-FOUNDATION` (schema live early) → everything else in parallel → `06-FRONTEND` consumes APIs as they land → `07-EXECUTION` integration.
 

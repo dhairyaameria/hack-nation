@@ -18,6 +18,7 @@ Data- and AI-first venture operating system for discovering founders, running di
 | [`docs/06-FRONTEND-UX.md`](docs/06-FRONTEND-UX.md) | Agent E — Investor dashboard & UX |
 | [`docs/07-EXECUTION.md`](docs/07-EXECUTION.md) | Milestones, demo script, acceptance checklist |
 | [`docs/08-IMPLEMENTATION-PLAN.md`](docs/08-IMPLEMENTATION-PLAN.md) | Time-sequenced build order with gates |
+| [`docs/09-NETWORK-GRAPH-UI.md`](docs/09-NETWORK-GRAPH-UI.md) | Founder network graph UI spec (react-force-graph, seed JSON) |
 
 ## Parallel build order
 
