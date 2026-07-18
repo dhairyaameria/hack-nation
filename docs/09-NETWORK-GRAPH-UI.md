@@ -196,7 +196,7 @@ apps/web/
     useFounderNetwork.ts       # GraphQL fetch hook
   app/founders/[id]/page.tsx   # Genome radar + badge + graph
   app/network/[founderId]/page.tsx  # optional full-screen
-  lib/fixtures/network-graph-seed.json  # fallback data
+  lib/fixtures/                 # optional local copy; canonical: shared/fixtures/network-graph-seed.json
 ```
 
 ### 7.1 Minimal graph component
@@ -264,7 +264,7 @@ The `disclosure` string from `NetworkProximity` is **non-optional UI** — rende
 Agent B: add matching rows to `network_nodes` / `network_edges` in seed script.
 Agent E: use this fixture if GraphQL isn't wired yet.
 
-**File:** `apps/web/lib/fixtures/network-graph-seed.json`
+**File:** `shared/fixtures/network-graph-seed.json` (also documented in `15-MOCK-FIXTURES.md`)
 
 ```json
 {

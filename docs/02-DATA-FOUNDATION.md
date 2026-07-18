@@ -13,7 +13,7 @@ Build the Memory layer: the deduplicated, enriched, timestamped, source-tagged d
 
 ## Deliverables
 
-1. **Supabase migrations** for the full data model in `01-CONTRACTS.md` §1, including pgvector setup for deck-chunk embeddings and semantic evidence retrieval.
+1. **Supabase migrations** for the full data model in `01-CONTRACTS.md` §1, following file order in `16-MIGRATIONS-GUIDE.md`, including pgvector setup for deck-chunk embeddings and semantic evidence retrieval.
 2. **Bronze/Silver/Gold lifecycle** (Databricks Delta tables, or Postgres-schema equivalents if Databricks time-boxes out — decide by end of Milestone 1):
    - **Bronze (raw):** exact payload as received + `source`, `source_entity_id`, `fetched_at`, `run_id`. Never mutated.
    - **Silver (normalized/linked):** canonical `founder`, `company`, `artifact` (repo/paper/deck/launch page), `event` (hackathon result, release, funding mention); dedup keys; source-level confidence.
@@ -26,10 +26,13 @@ Build the Memory layer: the deduplicated, enriched, timestamped, source-tagged d
    - Per founder (not per opportunity), full time series in `founder_score_history`, never resets.
    - Write API for the Intelligence workstream to append score updates; read API returns score + trend.
 5. **Data quality weights** on every ingested field: `completeness`, `source_reliability`, `recency`. Sparse/low-confidence data flagged `low-confidence`, never silently used at face value.
-6. **Seed dataset** in `/db/seed/`:
+6. **Seed dataset** in `/db/seed/` (see also `11-ENTITY-MODEL.md`, `12-THESIS-SETTINGS-UI.md`, **`14-SEED-DATA-SPEC.md`**):
    - Synthetic founder profiles (mix of: established track record, cold-start with public footprint only, cold-start with network proximity only).
    - At least one profile pair for the bias test (strong execution + zero network vs. weak execution + strong network).
+   - **`domain_affinity[]`** on ≥3 founders (inferred from role history / Wayback).
+   - **2 thesis profiles** (one active) from `12-THESIS-SETTINGS-UI.md` seed JSON.
    - **Seeded contradictions** (e.g., deck claims $500K ARR; public signals contradict) — the validator demo depends on this.
+   - ~25 network nodes/edges incl. 5+ anchor-tagged nodes.
    - 2–3 fictional pitch decks (PDF) for inbound flow testing.
 
 ## Research Track Owned Here: Data Quality vs. Volume (PRD §13.2)

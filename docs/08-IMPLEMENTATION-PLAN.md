@@ -1,6 +1,6 @@
 # 08 — Implementation Plan (Executable Build Order)
 
-**Purpose:** the concrete, time-sequenced plan that turns docs 00–07 into working software. Assumes a ~24–36 hour hackathon window and multiple builders (human or AI agents) working in parallel. Times are cumulative from kickoff; compress or stretch proportionally.
+**Purpose:** the concrete, time-sequenced plan that turns docs 00–17 into working software. Assumes a ~24–36 hour hackathon window and multiple builders (human or AI agents) working in parallel. Times are cumulative from kickoff; compress or stretch proportionally.
 
 **How to use with AI agents:** each task block below is written to be dispatched as a self-contained agent prompt: *"Read `docs/00-OVERVIEW.md` + `docs/01-CONTRACTS.md`, then implement task X.Y below from `docs/08-IMPLEMENTATION-PLAN.md`."* Tasks in the same wave run in parallel; waves are sequential gates.
 
@@ -26,16 +26,16 @@ npx shadcn@latest init
 ### 0.3 Shared schemas package
 - Create `shared/schemas/models.py` with `EvidenceRef`, `AxisScore`, `ClaimTrust` (from `01-CONTRACTS.md` §2) + mirrored TypeScript types in `shared/schemas/types.ts`.
 
-**Gate G0:** repo boots (`uvicorn` hello-world + `next dev`), Supabase reachable, `.env` complete.
+**Gate G0:** repo boots (`uvicorn` hello-world + `next dev`), Supabase reachable, `.env` complete. See `13-PRE-BUILD-CHECKLIST.md`.
 
 ---
 
 ## Wave 1 (Hour 1–6) — Foundation. 5 parallel tracks.
 
 ### 1.A Database & seed (Agent A) — CRITICAL PATH, start first
-1. Write all migrations from `01-CONTRACTS.md` §1 into `db/migrations/001_core.sql` … `005_copilot.sql`. Include provenance columns everywhere, pgvector column on `evidence`/deck chunks.
+1. Write all migrations from `01-CONTRACTS.md` §1 into `db/migrations/` per `16-MIGRATIONS-GUIDE.md` (001–007). Include provenance columns everywhere, pgvector column on `evidence`/deck chunks.
 2. `ingest_raw(source, payload, run_id)` + `resolve_founder(candidate_identity)` helpers in `apps/api/api/ingestion/memory.py` (deterministic rules now; LLM fuzzy match stub for Wave 2).
-3. Seed data in `db/seed/seed.py`:
+3. Seed data in `db/seed/seed.py` per `14-SEED-DATA-SPEC.md`:
    - 8–12 synthetic founders: ≥2 established, ≥2 cold-start (public footprint only), 1 cold-start (network proximity only), the **bias-test pair**, 1 founder with a **seeded ARR contradiction**, 1 with a dead company domain (for Wayback).
    - ~25 network nodes/edges incl. 5+ anchor-tagged nodes; 2–3 fictional deck PDFs in `db/seed/decks/`.
 4. **Output:** `make db-reset && make db-seed` works end to end.
@@ -58,8 +58,8 @@ npx shadcn@latest init
 3. **Output:** thesis switch changes a ranked list ordering in an API response.
 
 ### 1.E App shell (Agent E)
-1. Next.js layout: sidebar nav (Pipeline / Founders / Copilot / Settings), shadcn theme.
-2. Pipeline dashboard against **mocked** contract responses (checked-in JSON fixtures matching `01-CONTRACTS.md` shapes).
+1. Next.js layout: sidebar nav (Pipeline / Founders / Agent / Settings), shadcn theme.
+2. Pipeline dashboard against **mocked** contract responses (`shared/fixtures/` per `15-MOCK-FIXTURES.md`).
 3. Opportunity detail skeleton: three axis cards, trust heatmap placeholder, memo section list.
 4. **Output:** clickable dashboard → opportunity detail with fixture data.
 
@@ -104,7 +104,7 @@ npx shadcn@latest init
 
 ---
 
-## Wave 3 (Hour 14–22) — Trust, network, memos, copilot.
+## Wave 3 (Hour 14–22) — Trust, network, memos, Cursor Skills.
 
 ### 3.A Network graph + proximity (Agent B)
 1. Populate `network_nodes`/`network_edges` from connectors + seed; tag anchors.
@@ -123,18 +123,19 @@ npx shadcn@latest init
 3. `GET /recommendation/{id}/trace` serving the full reasoning-trace drill-down.
 4. **Bias test executed as a scripted check:** execution-strong/network-zero founder must outrank network-strong/execution-weak on the Founder axis. Fix weights until it passes.
 
-### 3.D Skill repository + copilot (Agent D)
-1. `skill_definitions` + `skill_runs` infra; register all 10 skills as thin adapters over B/C services (catalog in `05-COPILOT-SKILLS.md` §4).
-2. Router agent (`POST /copilot/message`): OpenAI tool-calling over the skill catalog; explicit "no matching skill" response; skill chaining within a turn.
-3. `POST /skill-runs/{id}/rerun` + diff computation vs. prior run.
+### 3.D Cursor Skills + VC Agent Chat (Agent D)
+1. Ensure all skills exist in `.cursor/skills/*/SKILL.md`; `skill_loader.py` registers them at API startup; optional mirror to `skill_definitions`.
+2. `skill_runs` infra; thin API adapters per skill (catalog in `05-CURSOR-SKILLS.md` §4).
+3. Router agent (`POST /agent/message`): OpenAI tool-calling over Cursor skill catalog via `vc-agent-router`; explicit "no matching skill" response; skill chaining within a turn.
+4. `POST /skill-runs/{id}/rerun` + diff computation vs. prior run.
 
 ### 3.E Differentiator UI (Agent E)
 1. Founder profile: Genome radar (5 dimensions) + Founder Score trend + **separate** network badge with disclosure text + click-through path view.
 2. Evidence drill-down (claim → source, ≤2 clicks) + "Why this recommendation?" trace view.
-3. Memo view with visible gap-flag badges; copilot chat panel (skills + citations + re-run diff).
+3. Memo view with visible gap-flag badges; VC Agent chat panel (Cursor skill names + citations + re-run diff).
 4. Decision SLA timer from `decision_log` timestamps.
 
-**Gate G3 (Hour ~22):** trace drill-down works; memo renders with gap flags; copilot answers a free-form question with citations; bias test passes; Wayback timeline renders.
+**Gate G3 (Hour ~22):** trace drill-down works; memo renders with gap flags; VC Agent Chat answers a free-form question via Cursor skills with citations; bias test passes; Wayback timeline renders.
 
 ---
 
@@ -184,7 +185,7 @@ flowchart LR
     W2A --> W2C
     W2B --> W3A["3.A Network graph"] & W3B["3.B Wayback"]
     W2C --> W3C["3.C Memo + decision + trace"]
-    W2D --> W3D["3.D Skills + copilot"]
+    W2D --> W3D["3.D Cursor Skills + Agent"]
     W3A --> W3C
     W3C --> W4B["4.B Research notes"]
     W3A --> W4A["4.A Channel intel"]

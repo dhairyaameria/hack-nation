@@ -10,7 +10,11 @@ Owner: **Agent A (Data)** implements the DDL; everyone else consumes.
 
 ### Core entities
 - `founders`, `companies`, `founder_company_roles`, `opportunities`
-- `thesis_profiles` — versioned Thesis Engine configs (sectors, stage, geography, check size, ownership targets, risk appetite)
+- `thesis_profiles` — VC/fund profile: sectors, stage, geography, check size, ownership targets, risk appetite, exclude_sectors, require_signals, watchlist_promotion_threshold (see `12-THESIS-SETTINGS-UI.md`)
+
+**`founders` key fields:** `id`, `display_name`, `primary_email`, `location`, `domain_affinity` (jsonb array: `{ sector, weight, confidence, evidence_source }` — inferred from past companies + Genome; see `11-ENTITY-MODEL.md`)
+
+**`thesis_profiles` key fields:** full DDL in `12-THESIS-SETTINGS-UI.md`; `opportunities.thesis_profile_id` stores active thesis at analysis time
 
 ### Scores & profiles
 - `founder_score_history` — persistent Founder Score per founder, full time series, never resets
@@ -41,10 +45,10 @@ Owner: **Agent A (Data)** implements the DDL; everyone else consumes.
 - `network_anchor_tags` — curated strong-signal nodes (notable founders, tier-1 VCs, top accelerators)
 - `network_proximity_scores` — per founder: `path_count`, `path_diversity`, `edge_recency`, `proximity_score` (0-1), `confidence`, capped scoring-weight metadata
 
-### Copilot & skills
-- `skill_definitions` — versioned: name, version, input schema, tool bindings, output contract
-- `skill_runs` — skill id + version, input params, data snapshot refs, output, citations, timestamp
-- `chat_sessions`, `chat_messages` — each assistant message linked to its `skill_runs`
+### Cursor Skills & VC Agent Chat
+- `skill_definitions` — optional mirror of `.cursor/skills/*/SKILL.md` metadata for audit
+- `skill_runs` — skill name, input params, data snapshot refs, output, citations, timestamp
+- `chat_sessions`, `chat_messages` — VC Agent Chat conversations, each assistant message linked to its `skill_runs`
 
 ### Optional federated module
 - `federated_rounds`, `federated_partner_updates`, `provenance_ledger` (hash-chained: `event_hash`, `prev_hash`, `entity_id`, `timestamp`, `source`)
@@ -68,9 +72,11 @@ Base path: `/api/v1`. All responses JSON. All factual payloads include evidence 
 | `/validation/run/{opportunity_id}` | POST | C | Validator agent pass |
 | `/recommendation/{id}/trace` | GET | C | Full reasoning trace |
 | `/channels/quality` | GET | B | Channel quality ranking + underexplored suggestions |
-| `/thesis` / `/thesis/{id}` | POST/GET | D | Thesis Engine CRUD |
+| `/thesis` / `/thesis/{id}` | POST/GET/PUT | D | Thesis Engine CRUD |
+| `/thesis/active` | GET | D | Current active thesis profile |
+| `/thesis/{id}/activate` | POST | D | Set active thesis (deactivates others) |
 | `/query/natural-language` | POST | D | Compound NL query, one pass, per-clause match explanations |
-| `/copilot/message` | POST | D | Chat turn: routes to skills, returns evidence-linked answer |
+| `/agent/message` | POST | D | VC Agent Chat turn — routes to Cursor skills, returns evidence-linked answer |
 | `/skills` / `/skills/{name}` | GET | D | Skill catalog + versioned definitions |
 | `/skills/{name}/run` | POST | D | Direct skill execution |
 | `/skill-runs/{id}` | GET | D | Inspect past run |
@@ -100,6 +106,27 @@ class ClaimTrust(BaseModel):
     trust_score: float
     validation_status: Literal["verified", "contradicted", "weakly_supported", "unknown"]
     evidence: list[EvidenceRef]
+
+class DomainAffinity(BaseModel):
+    sector: str
+    weight: float          # 0-1
+    confidence: float      # 0-1
+    evidence_source: str    # wayback | github | role_history | deck
+
+class ThesisProfile(BaseModel):
+    id: str | None = None
+    name: str
+    version: int = 1
+    is_active: bool = False
+    sectors: list[str]
+    stage: Literal["pre_seed", "seed", "series_a"]
+    geography: str
+    check_size_usd: float
+    ownership_target_pct: float | None = None
+    risk_appetite: Literal["conservative", "balanced", "aggressive"]
+    exclude_sectors: list[str] = []
+    require_signals: list[str] = []
+    watchlist_promotion_threshold: float = 0.65
 ```
 
 ---
@@ -166,15 +193,16 @@ Graph queries must support filters: timeframe, geography, sector, confidence thr
 
 ---
 
-## 4. Skill Contract (Copilot skill repository)
+## 4. Cursor Skills Contract
 
-Every skill is a versioned definition:
+**Source of truth:** `.cursor/skills/<skill-name>/SKILL.md` (Cursor Agent Skills format with YAML frontmatter).
+
+Runtime loader parses frontmatter and registers skills for the VC Agent router. Optional JSON mirror for audit:
 
 ```json
 {
-  "name": "verify_claim",
-  "version": 2,
-  "description": "Re-runs validator pass on a single claim",
+  "name": "verify-claim",
+  "skill_path": ".cursor/skills/verify-claim/SKILL.md",
   "input_schema": { "claim_id": "string" },
   "tool_bindings": ["tavily", "perplexity", "db.claims"],
   "output_contract": "ClaimTrust"
@@ -183,10 +211,11 @@ Every skill is a versioned definition:
 
 Rules:
 - Every execution logged as a `skill_run` (inputs, snapshot refs, output, citations, timestamp).
-- Outputs must use the shared Pydantic shapes above so the frontend renders them uniformly.
+- Outputs must use the shared Pydantic shapes so the frontend renders them uniformly.
 - Skills write into `reasoning_traces` like any pipeline stage.
+- UI must display the **Cursor skill folder name** that ran (e.g. `verify-claim`).
 
-Initial catalog (10 skills): `thesis_sourcing_sweep`, `memo_research`, `generate_memo`, `verify_claim`, `founder_genome_lookup`, `network_proximity_check`, `wayback_history`, `screen_opportunity`, `channel_quality_report`, `compare_opportunities`. Full descriptions in `05-COPILOT-SKILLS.md`.
+Initial catalog (11 skills in `.cursor/skills/`): `thesis-sourcing-sweep`, `memo-research`, `generate-memo`, `verify-claim`, `founder-genome-lookup`, `network-proximity-check`, `wayback-history`, `screen-opportunity`, `channel-quality-report`, `compare-opportunities`, `vc-agent-router`. Full descriptions in `05-CURSOR-SKILLS.md`.
 
 ---
 
@@ -197,9 +226,10 @@ Initial catalog (10 skills): `thesis_sourcing_sweep`, `memo_research`, `generate
 /apps/api          # FastAPI + GraphQL (Agents B, C, D share; module-per-workstream)
   /api/ingestion   # Agent B
   /api/intelligence# Agent C
-  /api/copilot     # Agent D
+  /api/agent       # Agent D — Cursor Skills + VC Agent Chat
   /api/graphql     # Agent B
 /shared/schemas    # Pydantic + TS types (generated or mirrored) — SINGLE SOURCE OF TRUTH
+/shared/fixtures   # Wave 1 JSON mocks — see 15-MOCK-FIXTURES.md
 /jobs/connectors   # outbound connectors, wayback, perplexity sweeps (Agent B)
 /dbx               # Databricks notebooks/pipelines (Agent A)
 /db/migrations     # Supabase SQL migrations (Agent A)
@@ -209,5 +239,5 @@ Initial catalog (10 skills): `thesis_sourcing_sweep`, `memo_research`, `generate
 Conventions:
 - Python 3.11+, Pydantic v2, type hints everywhere.
 - All external API calls (GitHub, Perplexity, Tavily, Wayback) wrapped with retry + timeout + cached responses in Bronze — reruns must not hammer external APIs.
-- Environment variables via `.env` (never committed); keys needed: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `OPENAI_API_KEY`, `PERPLEXITY_API_KEY`, `TAVILY_API_KEY`, `DATABRICKS_*`, `ELEVENLABS_API_KEY`.
+- Environment variables: copy `.env.example` → `.env` (never commit `.env`); see `13-PRE-BUILD-CHECKLIST.md`
 - Seeded demo data lives in `/db/seed/` — includes synthetic founder profiles WITH seeded contradictions (required for the validator demo).

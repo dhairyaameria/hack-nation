@@ -27,11 +27,11 @@
 - **D:** Skill repository core + first 4 skills (`thesis_sourcing_sweep`, `memo_research`, `verify_claim`, `generate_memo`).
 - **E:** Founder profile (Genome radar + network badge), evidence drill-down, memo view.
 
-### Milestone 4 — Decision & Copilot
+### Milestone 4 — Decision & VC Agent
 - **C:** Final memo generation + decision log + SLA instrumentation; confidence intervals + method note.
 - **B:** Channel intelligence + outcome feedback loop.
-- **D:** Copilot router + chat endpoint + re-run/diff.
-- **E:** Copilot panel, SLA timer, network explorer, Wayback timeline, thesis switching.
+- **D:** VC Agent router + `POST /agent/message` + Cursor skill adapters + re-run/diff.
+- **E:** VC Agent chat panel, SLA timer, network explorer, Wayback timeline, thesis switching.
 - **Optional (cut first):** federated module (see §3 below).
 
 ## 2. Integration Checkpoints
@@ -88,7 +88,7 @@
 5. Inbound deck → parsed claims → fast screen → 3-axis scores (independent, trended).
 6. Validator catches the seeded contradiction live → contradiction alert in UI.
 7. Memo with required sections + "not disclosed" flags → claim → evidence drill-down in 2 clicks.
-8. Copilot: judge-suggested free-form question → skills route + citations → re-run diff on an earlier question.
+8. VC Agent Chat: judge-suggested free-form question → Cursor skills route + citations → re-run diff on an earlier question.
 9. Close on the SLA timer: "first signal to $100K decision in X — with every claim traceable."
 
 ## 8. Demo Acceptance Checklist (full)
@@ -110,8 +110,8 @@
 - [ ] Memo: 5 required sections + explicit gap flags, zero fabrication.
 - [ ] Live SLA timer end-to-end for one opportunity.
 - [ ] Compound NL query resolved in one pass with per-clause explanations.
-- [ ] Copilot routes a live free-form question with skill names + citations (≥1 Perplexity-backed).
-- [ ] Copilot re-run diff demonstrated.
+- [ ] VC Agent Chat routes a live free-form question to Cursor skill(s) with skill names + citations (≥1 Perplexity-backed).
+- [ ] VC Agent re-run diff demonstrated.
 - [ ] Thesis switch changes top recommendation live.
 - [ ] (Stretch) Confidence Method Note and/or federated module, limitations stated honestly.
 

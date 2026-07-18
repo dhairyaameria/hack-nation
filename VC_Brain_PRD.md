@@ -7,7 +7,7 @@
 **Owner:** Team VC Brain
 **Date:** 2026-07-18
 
-> **For parallel agent builds:** this PRD is split into per-workstream files under `docs/` — start with `docs/00-OVERVIEW.md` (shared context + binding rules) and `docs/01-CONTRACTS.md` (interfaces), then your assigned workstream file (02–07). This master document remains the authoritative source if any conflict arises.
+> **For parallel agent builds:** this PRD is split into per-workstream files under `docs/` — start with `docs/13-PRE-BUILD-CHECKLIST.md`, then `docs/00-OVERVIEW.md` and `docs/01-CONTRACTS.md`, then your assigned workstream file (02–12). Pre-build references: `14-SEED-DATA-SPEC`, `15-MOCK-FIXTURES`, `16-MIGRATIONS-GUIDE`, `17-PARALLEL-WORKFLOW`. This master document remains the authoritative source if any conflict arises.
 
 
 ## 1. Motivation and Vision **[BRIEF]**
@@ -176,13 +176,13 @@ VC Brain must make founder potential *visible* and *reasoned about* directly —
 
 **Requirements:**
 - CRUD for thesis profiles (a fund could run more than one).
-- Thesis directly parameterizes: candidate ranking, watchlist promotion thresholds, and memo emphasis (e.g., a risk-averse thesis surfaces bear-case evidence more prominently).
+- Thesis directly parameterizes: candidate ranking, watchlist promotion thresholds, memo emphasis, and hard filters via `exclude_sectors[]` / `require_signals[]` (see `12-THESIS-SETTINGS-UI.md`).
 
 **Perplexity-powered thesis research [OUR EDGE]:**
 - The active thesis is compiled into structured research queries executed against the **Perplexity API** (search-grounded LLM with citations) to continuously source thesis-matching founders/companies from the live web — e.g., a thesis of "pre-seed AI infra, Berlin, technical founders" generates recurring Perplexity sourcing sweeps for recent launches, hiring posts, hackathon results, and community mentions matching that lens.
 - Perplexity results enter the same Bronze ingestion path as every other source (provenance: `source = perplexity`, query text, retrieved citations, timestamp) — they are candidates for the watchlist, not pre-trusted facts.
 - Because Perplexity returns **citations natively**, every sourced lead arrives with source URLs already attached — feeding directly into the evidence/Trust layer rather than requiring a separate retrieval pass.
-- The same capability is packaged as the `thesis_sourcing_sweep` and `memo_research` skills in the Skill Repository (§11.6), so the memo pipeline and the VC Copilot chatbot reuse identical research logic.
+- The same capability is packaged as Cursor skills (`thesis-sourcing-sweep`, `memo-research`) in `.cursor/skills/`, so the memo pipeline and VC Agent Chat reuse identical research logic.
 
 ### 7.2 Smart Data Collection & Management **[BRIEF]**
 - Actively collect, validate, and structure founder/company data from heterogeneous sources.
@@ -430,38 +430,44 @@ The **Founder Genome** is the single, persistent, evidence-linked profile object
 | Public footprint depth | Writing/thinking quality and consistency on owned or community channels | Personal blog/site, Hacker News, forums, X/LinkedIn posts | **High — works with zero funding/GitHub history** (Area of Research 3, §13.3) |
 | Network embeddedness | Second-degree proximity to known strong founders/VCs/accelerators (§10.4.1) | GitHub follow graph, co-authorship, cohort rosters | Auxiliary/attention-only — capped, disclosed, never scoring-dominant |
 | Persistent Founder Score | Longitudinal score across every application/opportunity this person has ever touched | Internal (Memory) | Grows over time; starts thin but honest for a first-time founder |
+| Domain affinity | Inferred sectors/types of companies built (from roles, Wayback, GitHub, decks) | `founder_company_roles`, Wayback, GitHub | High for repeat builders; thin but honest for cold-start |
+
+**`domain_affinity[]`** on `founders`: `{ sector, weight, confidence, evidence_source }` — used for NL queries ("find AI infra founders") and founder-market fit; never a hard reject alone.
 
 **Design rule that resolves the tension in this feature request:** network embeddedness is *part of the Genome* (so the system does actively use 2nd-degree connections to help surface and contextualize cold-start founders), but it is rendered as its own labeled panel, capped in scoring weight, and paired with the explicit disclosure text from §10.4.1. The Genome as a whole is what lets a networkless founder still "have a profile" — the network dimension is one voice in that profile, not the loudest one.
 
 **UI representation:** a radar/spider chart with the five substantive dimensions (excluding the capped network dimension, which is shown as a separate small badge with its path evidence on click) plus a Founder Score trend line beneath it. See §20 for placement in the dashboard.
 
-### 11.6 VC Copilot Chatbot & Skill Repository **[OUR EDGE]**
+### 11.6 VC Agent Chat & Cursor Skills Repository **[OUR EDGE]**
 
-**Concept.** Instead of hard-wiring every capability into fixed dashboard screens, the system's capabilities are packaged as a **repository of named, reusable skills** — self-contained agent procedures with a defined input schema, tool access, and output contract. A **VC Copilot chatbot** sits on top: the investor asks anything in natural language, a router agent decomposes the question, selects and executes the right skill(s), and returns an evidence-linked answer. Because skills are stored definitions rather than one-off prompts, **any run is repeatable**: the same question later re-executes the same skill against fresh Memory data, and the investor can compare runs over time.
+**Concept.** Instead of hard-wiring every capability into fixed dashboard screens, the system's capabilities are packaged as **Cursor Agent Skills** — project-scoped `SKILL.md` files under `.cursor/skills/` with YAML frontmatter, procedural instructions, tool bindings, and output contracts. A **VC Agent Chat** panel sits in the investor UI: the investor asks anything in natural language, a router agent (skill: `vc-agent-router`) decomposes the question, selects and executes the right Cursor skill(s), and returns an evidence-linked answer. Because skills are first-class Cursor skills (same files the dev team uses in the IDE), **any run is repeatable**: the same question later re-executes the same skill against fresh Memory data, logged in `skill_runs`, and the investor can compare runs over time.
 
-**Skill repository — initial catalog:**
+**Skill repository location:** `.cursor/skills/` (see `docs/05-CURSOR-SKILLS.md` for full catalog).
 
-| Skill | What it does | Backing tools |
+**Skill catalog — initial set:**
+
+| Cursor skill | What it does | Backing tools |
 |---|---|---|
-| `thesis_sourcing_sweep` | Runs the active thesis as live web research; returns new thesis-matching founder/company leads with citations | Perplexity API → Bronze ingestion |
-| `memo_research` | Gathers market sizing, competitor clusters, and comparable rounds for a target company, citations attached | Perplexity API, Tavily |
-| `generate_memo` | Produces the full investment memo (required sections + flagged gaps) for an opportunity | OpenAI agents, Memory, `memo_research` |
-| `verify_claim` | Re-runs the Validator pass on a single claim on demand | Tavily, Perplexity, claim/evidence tables |
-| `founder_genome_lookup` | Renders a founder's Genome dimensions, trends, and evidence | Memory, Gold features |
-| `network_proximity_check` | Traverses 2nd-degree graph to anchor nodes, returns paths + disclosure | GraphQL network layer |
-| `wayback_history` | Reconstructs historical narrative/sentiment for a company domain | Wayback module |
-| `screen_opportunity` | Runs the fast first-pass screen on a named company | Screening pipeline |
-| `channel_quality_report` | Ranks sourcing channels by quality; suggests underexplored ones | Sourcing graph intelligence |
-| `compare_opportunities` | Side-by-side 3-axis + trust comparison of two or more opportunities | Memory, axis scores |
+| `thesis-sourcing-sweep` | Runs the active thesis as live web research; returns new thesis-matching founder/company leads with citations | Perplexity API → Bronze ingestion |
+| `memo-research` | Gathers market sizing, competitor clusters, and comparable rounds for a target company, citations attached | Perplexity API, Tavily |
+| `generate-memo` | Produces the full investment memo (required sections + flagged gaps) for an opportunity | OpenAI agents, Memory, `memo-research` |
+| `verify-claim` | Re-runs the Validator pass on a single claim on demand | Tavily, Perplexity, claim/evidence tables |
+| `founder-genome-lookup` | Renders a founder's Genome dimensions, trends, and evidence | Memory, Gold features |
+| `network-proximity-check` | Traverses 2nd-degree graph to anchor nodes, returns paths + disclosure | GraphQL network layer |
+| `wayback-history` | Reconstructs historical narrative/sentiment for a company domain | Wayback module |
+| `screen-opportunity` | Runs the fast first-pass screen on a named company | Screening pipeline |
+| `channel-quality-report` | Ranks sourcing channels by quality; suggests underexplored ones | Sourcing graph intelligence |
+| `compare-opportunities` | Side-by-side 3-axis + trust comparison of two or more opportunities | Memory, axis scores |
+| `vc-agent-router` | Maps investor NL questions to the correct skill(s) | OpenAI tool-calling |
 
 **Chatbot behavior requirements:**
-- **Routing:** an orchestrator agent maps each investor question to one or more skills (e.g., *"Should I worry about the ARR claim in Acme's deck?"* → `verify_claim`; *"Find me three more founders like this one"* → `thesis_sourcing_sweep` + `founder_genome_lookup`). If no skill matches, the copilot says so explicitly rather than free-styling an unsourced answer.
+- **Routing:** orchestrator uses `vc-agent-router` skill + tool-calling to map each investor question to one or more Cursor skills (e.g., *"Should I worry about the ARR claim in Acme's deck?"* → `verify-claim`; *"Find me three more founders like this one"* → `thesis-sourcing-sweep` + `founder-genome-lookup`). If no skill matches, the agent says so explicitly rather than free-styling an unsourced answer.
 - **Composition:** skills chain — output of one can feed another in a single conversational turn (research → verify → summarize).
-- **Repeatability:** every skill execution is logged as a `skill_run` (skill id + version, input params, data snapshot refs, output, citations, timestamp). The investor can re-run any prior question with one click and see a diff against the previous answer — directly reinforcing the brief's "trend over time, not just latest snapshot" principle.
+- **Repeatability:** every skill execution is logged as a `skill_run` (skill name, input params, data snapshot refs, output, citations, timestamp). The investor can re-run any prior question with one click and see a diff against the previous answer — directly reinforcing the brief's "trend over time, not just latest snapshot" principle.
 - **Traceability:** chatbot answers obey the same rules as memos — every factual statement carries an evidence locator, and skill runs write into `reasoning_traces` (§12.1) like any other pipeline stage.
-- **Skill versioning:** skills are stored as versioned definitions (prompt/procedure + tool bindings + output schema) so improving a skill mid-hackathon doesn't silently change the meaning of historical runs.
+- **UI transparency:** each answer displays which **Cursor skill name(s)** executed (folder name from `.cursor/skills/`).
 
-**Why this matters for judging:** it turns the product from a set of static screens into an extensible operating system — the "one investor with the power of an organization" framing of the brief — while keeping every answer auditable. It also demos extremely well: the judge can ask an arbitrary question live and watch the router pick skills, execute, and cite.
+**Why this matters for judging:** it turns the product from static screens into an extensible operating system — skills are real Cursor Agent Skills your team builds and runs in the IDE *and* in the product — while keeping every answer auditable. It demos extremely well: the judge can ask an arbitrary question live and watch the router pick Cursor skills, execute, and cite.
 
 ---
 
@@ -563,7 +569,7 @@ To add technical depth beyond the brief without derailing core scope, we add a *
 - **Vector search:** pgvector on Supabase (deck-chunk embeddings, semantic evidence retrieval for multi-attribute reasoning).
 - **Auth/Storage:** Supabase Auth + Supabase Storage (deck uploads, parsed artifacts).
 - **Heavy ingestion/feature pipelines:** Databricks (Bronze/Silver/Gold Delta tables, feature store) — syncs enriched Gold outputs back into Supabase for the app to read.
-- **LLM reasoning:** OpenAI (structured outputs + tool calling) for Primary/Validator/Referee agents, memo generation, and the VC Copilot router agent.
+- **LLM reasoning:** OpenAI (structured outputs + tool calling) for Primary/Validator/Referee agents, memo generation, and the VC Agent router (via `vc-agent-router` Cursor skill).
 - **Search-grounded research:** Perplexity API for thesis-driven sourcing sweeps and memo research skills — returns cited answers that flow straight into the evidence layer (§7.1, §11.6).
 - **Retrieval/verification:** Tavily for external claim verification and market/comparable lookups.
 - **Historical web data:** Wayback CDX API + snapshot fetch/parse module.
@@ -669,7 +675,7 @@ query NetworkProximity($founderId: ID!, $anchorTags: [String!]) {
 
 **Core entities:**
 - `founders`, `companies`, `founder_company_roles`, `opportunities`
-- `thesis_profiles` (versioned Thesis Engine configs)
+- `thesis_profiles` (versioned VC/fund profile — see `12-THESIS-SETTINGS-UI.md`)
 - `founder_score_history`, `founder_confidence_intervals`
 - `opportunity_axis_scores` (founder / market / idea_vs_market, each with trend)
 - `claims`, `evidence`, `claim_evidence_links` (`supports` / `contradicts`)
@@ -683,9 +689,9 @@ query NetworkProximity($founderId: ID!, $anchorTags: [String!]) {
 - `network_anchor_tags` (curated tags marking verified strong-signal nodes: notable founders, tier-1 VCs, top accelerators)
 - `network_proximity_scores` (per founder: `path_count`, `path_diversity`, `edge_recency`, `proximity_score`, `confidence`, capped scoring-weight metadata)
 - `watchlist_entries` (outbound state machine: discovered → scored → activation-candidate → outreach-sent → applied → screening; includes `promoted_via` reason tag, e.g. `network_proximity`)
-- `skill_definitions` (versioned skill catalog: name, version, input schema, tool bindings, output contract — §11.6)
-- `skill_runs` (every execution: skill id + version, input params, data snapshot refs, output, citations, timestamp — enables re-run and answer diffing)
-- `chat_sessions`, `chat_messages` (VC Copilot conversations, each assistant message linked to its `skill_runs`)
+- `skill_definitions` (optional mirror of `.cursor/skills/*/SKILL.md` metadata — §11.6)
+- `skill_runs` (every execution: skill name, input params, data snapshot refs, output, citations, timestamp — enables re-run and answer diffing)
+- `chat_sessions`, `chat_messages` (VC Agent Chat conversations, each assistant message linked to its `skill_runs`)
 - `federated_rounds`, `federated_partner_updates`, `provenance_ledger` (optional module, §14)
 
 ---
@@ -703,7 +709,7 @@ query NetworkProximity($founderId: ID!, $anchorTags: [String!]) {
 - `GET /channels/quality`
 - `GET /thesis/{id}` / `POST /thesis`
 - `POST /query/natural-language` (multi-attribute reasoning endpoint)
-- `POST /copilot/message` (VC Copilot chat turn — routes to skills, returns evidence-linked answer)
+- `POST /agent/message` (VC Agent Chat turn — routes to Cursor skills, returns evidence-linked answer)
 - `GET /skills` / `GET /skills/{name}` (skill catalog + versioned definitions)
 - `POST /skills/{name}/run` (direct skill execution outside chat)
 - `GET /skill-runs/{id}` / `POST /skill-runs/{id}/rerun` (inspect a past run; re-execute against fresh data and diff)
@@ -726,7 +732,7 @@ Investor dashboard must include:
 - Founder/company network graph explorer (GraphQL-backed).
 - Founder Genome radar chart (§11.5): execution velocity, technical depth, resilience proxy, public footprint depth, plus Founder Score trend line — with network embeddedness shown as a separate capped/disclosed badge, never folded into the radar's main dimensions.
 - Wayback historical timeline view for a given company.
-- **VC Copilot chat panel** (§11.6): persistent chatbot where the investor asks free-form questions; each answer shows which skill(s) ran, with inline citations and a "re-run this question" control that diffs against the prior answer.
+- **VC Agent chat panel** (§11.6): persistent chat where the investor asks free-form questions; each answer shows which **Cursor skill(s)** ran, with inline citations and a "re-run this question" control that diffs against the prior answer.
 - "Why not?" explanations for rejected opportunities: the specific reason and what milestone would change the outcome.
 
 **Usability requirement:** a non-technical investor must be able to navigate the entire core flow (see a founder → understand the score → read the memo → see the evidence → decide) without technical support.
@@ -774,13 +780,13 @@ Investor dashboard must include:
 - Agentic traceability logging + "why this recommendation" drill-down UI.
 - GraphQL founder/company network queries.
 - Multi-attribute natural-language query endpoint.
-- Skill repository core: `skill_definitions`/`skill_runs` tables, first 3–4 skills wrapped (`thesis_sourcing_sweep`, `memo_research`, `verify_claim`, `generate_memo`) with Perplexity integration.
+- Cursor Skills core: all `.cursor/skills/*/SKILL.md` files + first 4 API adapters (`thesis-sourcing-sweep`, `memo-research`, `verify-claim`, `generate-memo`) with Perplexity integration.
 
 ### Milestone 4 — Historical Intelligence, Sourcing Graph, and Decision
 - Wayback snapshot ingestion and sentiment/narrative timeline for at least one company.
 - Sourcing-graph channel quality scoring + underexplored-channel recommendations + outcome feedback loop.
 - Final memo generation (required + flagged-optional sections) and decision SLA dashboard.
-- VC Copilot chat panel: router agent over the skill repository, evidence-linked answers, re-run + diff on past questions.
+- VC Agent chat panel: router over Cursor skill catalog, evidence-linked answers, re-run + diff on past questions.
 - (If time allows) Federated scoring module demo and Confidence Method Note write-up.
 
 ---
@@ -814,7 +820,7 @@ Investor dashboard must include:
 - [ ] Memo rendered with all five required sections, plus explicit "not disclosed"/"unavailable" flags for any missing optional sections — no fabricated financials/cap table.
 - [ ] Live decision SLA timer shown end-to-end for at least one opportunity, demonstrating the 24-hour claim.
 - [ ] Natural-language compound query resolved in one pass with explained per-clause matches.
-- [ ] VC Copilot answers a live free-form question by routing to skills (skill names + citations visible in the answer), including at least one Perplexity-backed research skill.
-- [ ] A previously-asked copilot question re-run against fresh data, showing the diff between the two answers (repeatability demonstrated).
+- [ ] VC Agent Chat answers a live free-form question by routing to Cursor skills (skill names + citations visible in the answer), including at least one Perplexity-backed skill.
+- [ ] A previously-asked agent question re-run against fresh data, showing the diff between the two answers (repeatability demonstrated).
 - [ ] Configurable Thesis Engine shown affecting ranking/scoring live (e.g., switching thesis changes the top recommendation).
 - [ ] (Stretch) Confidence Method Note and/or federated scoring module demoed, with limitations honestly stated.

@@ -3,7 +3,7 @@
 **Project:** VC Brain — Deploying $100K Checks in 24 Hours (Hack-Nation × Maschmeyer Group)
 **Master PRD:** `../VC_Brain_PRD.md` (authoritative if any conflict arises)
 
-Every build agent must read this file and `01-CONTRACTS.md` before starting. Then read only your assigned workstream file.
+Every build agent must read this file and `01-CONTRACTS.md` before starting. **Before coding:** complete `13-PRE-BUILD-CHECKLIST.md`. Then read only your assigned workstream file.
 
 ---
 
@@ -16,11 +16,19 @@ Every build agent must read this file and `01-CONTRACTS.md` before starting. The
 | `02-DATA-FOUNDATION.md` | Memory layer: Supabase schema, Bronze/Silver/Gold, entity resolution, Founder Score storage | Agent A — Data |
 | `03-SOURCING.md` | Inbound app, outbound connectors, watchlist, cold-start, network proximity, Wayback, channel intelligence | Agent B — Sourcing |
 | `04-INTELLIGENCE-TRUST.md` | 3-axis scoring, Analyst/Validator/Referee agents, Trust layer, memo generation, traceability, research tracks | Agent C — Intelligence |
-| `05-COPILOT-SKILLS.md` | Thesis Engine, Perplexity research, NL queries, skill repository, VC Copilot chatbot | Agent D — Copilot |
+| `05-CURSOR-SKILLS.md` | Thesis Engine, Perplexity research, NL queries, Cursor Skills, VC Agent Chat | Agent D — Cursor Skills |
 | `06-FRONTEND-UX.md` | Investor dashboard, all UI screens | Agent E — Frontend |
 | `07-EXECUTION.md` | Milestones, integration checkpoints, risks, metrics, demo checklist, optional federated module | Team lead / integrator |
 | `08-IMPLEMENTATION-PLAN.md` | Time-sequenced build order with gates | Team lead / all agents |
 | `09-NETWORK-GRAPH-UI.md` | Founder network graph UI (Agent E + B) | Agent E — Frontend |
+| `10-FILTERING-FUNNEL.md` | How VC thesis + founder profile filter companies | Everyone |
+| `11-ENTITY-MODEL.md` | Founder / company / opportunity / thesis relationships | Everyone |
+| `12-THESIS-SETTINGS-UI.md` | Thesis schema, API, Settings UI | Agent D + E |
+| `13-PRE-BUILD-CHECKLIST.md` | **Start here before building** — keys, gates, agent dispatch | Team lead |
+| `14-SEED-DATA-SPEC.md` | Demo seed catalog — stable IDs, bias pair, contradiction | Agent A |
+| `15-MOCK-FIXTURES.md` | Wave 1 frontend JSON fixtures | Agent E |
+| `16-MIGRATIONS-GUIDE.md` | Ordered SQL migration files + apply steps | Agent A |
+| `17-PARALLEL-WORKFLOW.md` | Branch strategy, module ownership, merge order | Team lead |
 
 **Dependency order:** `01-CONTRACTS` → `02-DATA-FOUNDATION` (schema live early) → everything else in parallel → `06-FRONTEND` consumes APIs as they land → `07-EXECUTION` integration.
 
