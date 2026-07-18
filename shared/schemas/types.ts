@@ -15,6 +15,7 @@ export type ScreenVerdict = "pass" | "reject" | "needs-more-info";
 export type OpportunitySource = "inbound" | "outbound";
 export type Stage = "pre_seed" | "seed" | "series_a";
 export type RiskAppetite = "conservative" | "balanced" | "aggressive";
+export type MemoryFactType = "actor" | "decision" | "commitment" | "claim";
 
 export interface EvidenceRef {
   source_type: string;
@@ -136,4 +137,51 @@ export interface OpportunityDetail {
   claims: ClaimTrust[];
   memo?: Memo | null;
   trace_id?: string | null;
+}
+
+/** Where a chunk/fact came from. Mandatory on every memory row. */
+export interface Provenance {
+  source_type: string; // deck | memo | note | email | web | ...
+  source_locator: string; // filename, message id, URL, "<locator>#chunk-<n>"
+  source_timestamp?: string | null;
+}
+
+export interface Document {
+  id?: string | null;
+  title: string;
+  doc_type?: string | null; // deck | memo | note | email
+  raw_text: string;
+  founder_id?: string | null;
+  company_id?: string | null;
+  provenance: Provenance;
+}
+
+export interface DocumentChunk {
+  id?: string | null;
+  document_id: string;
+  chunk_index: number;
+  content: string;
+  founder_id?: string | null;
+  company_id?: string | null;
+  provenance: Provenance;
+  similarity?: number | null; // populated by search_memory
+}
+
+/**
+ * Write-time extracted fact. Bi-temporal-lite: invalidated facts keep
+ * their row with valid_until set, never deleted.
+ */
+export interface MemoryFact {
+  id?: string | null;
+  fact_type: MemoryFactType;
+  subject: string; // canonical actor/company name the fact is about
+  body: string; // one-sentence plain-language statement
+  payload: Record<string, unknown>;
+  founder_id?: string | null;
+  company_id?: string | null;
+  document_id?: string | null;
+  confidence?: number | null;
+  valid_from?: string | null;
+  valid_until?: string | null;
+  provenance: Provenance;
 }
