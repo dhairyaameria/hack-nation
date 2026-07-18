@@ -6,6 +6,7 @@ import { AxisScoreRow } from "@/components/dashboard/AxisScoreCard";
 import { ContradictionBanner } from "@/components/opportunity/ContradictionBanner";
 import { ClaimTrustList } from "@/components/opportunity/ClaimTrustList";
 import { MemoView } from "@/components/opportunity/MemoView";
+import { AnalyzeButton } from "@/components/opportunity/AnalyzeButton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
@@ -39,6 +40,15 @@ export default async function OpportunityDetailPage({
       </header>
 
       {opp.has_contradiction && <ContradictionBanner />}
+
+      {(!opp.axis_scores || opp.axis_scores.length === 0) && (
+        <div className="rounded-lg border bg-muted/30 p-4">
+          <p className="text-sm text-muted-foreground mb-3">
+            No analysis has run yet for this opportunity.
+          </p>
+          <AnalyzeButton opportunityId={opp.id} />
+        </div>
+      )}
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">

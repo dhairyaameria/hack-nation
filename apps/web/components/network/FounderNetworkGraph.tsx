@@ -27,7 +27,10 @@ export function FounderNetworkGraph({
   data: NetworkData | null;
 }) {
   const graphData = useMemo(
-    () => (data ? toForceGraphData(data.founderNetwork) : { nodes: [], links: [] }),
+    () =>
+      data
+        ? toForceGraphData(data.founderNetwork)
+        : { nodes: [] as ReturnType<typeof toForceGraphData>["nodes"], links: [] as ReturnType<typeof toForceGraphData>["links"] },
     [data]
   );
 
@@ -45,8 +48,10 @@ export function FounderNetworkGraph({
         graphData={graphData}
         nodeId="id"
         nodeLabel="label"
-        nodeVal={(n: GraphNode) => (n.id === founderId ? 12 : n.tags?.includes("anchor") ? 10 : 6)}
-        nodeColor={(n: GraphNode) => nodeColor(n, founderId)}
+        nodeVal={(n: { id?: string | number; tags?: string[] }) =>
+          n.id === founderId ? 12 : n.tags?.includes("anchor") ? 10 : 6
+        }
+        nodeColor={(n: object) => nodeColor(n as GraphNode, founderId)}
         linkColor={() => "#cbd5e1"}
         linkWidth={1}
         linkLabel="relationType"
