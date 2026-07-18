@@ -20,6 +20,7 @@ from typing import Any
 from api.agent import thesis_store
 from api.core import fixtures
 from api.core.db import get_client
+from api.ingestion import memory
 
 # ---------------------------------------------------------------------------
 # In-memory fallback (no Supabase credentials configured)
@@ -232,8 +233,12 @@ def create_opportunity(
         _memory()[opp_id] = row
         return row
 
-    founder = client.table("founders").insert({"display_name": founder_name, "domain_affinity": []}).execute().data[0]
-    company = client.table("companies").insert({"name": company_name, "status": "active"}).execute().data[0]
+    # Resolve rather than blind-insert so the SAME real-world founder/company
+    # (e.g. one already known from a prior outbound signal) isn't duplicated
+    # when they later flow through this path — required for convergence
+    # (docs/03-SOURCING.md §3) to actually unify identity, not just code path.
+    founder = memory.resolve_founder(founder_name)
+    company = memory.resolve_company(company_name)
     active_thesis = thesis_store.get_active_thesis()
 
     opp_row = {

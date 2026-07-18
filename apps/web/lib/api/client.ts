@@ -100,3 +100,73 @@ export async function analyzeOpportunity(id: string): Promise<unknown> {
   if (!res.ok) throw new Error(`Analysis failed (${res.status})`);
   return res.json();
 }
+
+// ---------------------------------------------------------------------------
+// Outbound sourcing + watchlist (docs/03-SOURCING.md §2-4)
+// ---------------------------------------------------------------------------
+
+export type WatchlistStage =
+  | "discovered"
+  | "scored"
+  | "activation-candidate"
+  | "outreach-sent"
+  | "applied"
+  | "screening";
+
+export interface WatchlistSignal {
+  channel: "github" | "hackernews";
+  [key: string]: unknown;
+}
+
+export interface WatchlistEntry {
+  id: string;
+  founder_id: string;
+  founder_name: string;
+  company_id: string | null;
+  company_name: string | null;
+  stage: WatchlistStage;
+  conviction_score: number | null;
+  promoted_via: string | null;
+  signals: WatchlistSignal[];
+  triggering_signal: string | null;
+  opportunity_id: string | null;
+  created_at: string;
+  updated_at: string;
+  confidence?: number;
+  rationale?: string;
+  promoted?: boolean;
+  reason?: string;
+  draft?: string;
+}
+
+export async function getWatchlist(): Promise<WatchlistEntry[]> {
+  const res = await fetch(`${API_URL}/api/v1/sourcing/watchlist`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Failed to load watchlist (${res.status})`);
+  const data = await res.json();
+  return data.entries as WatchlistEntry[];
+}
+
+export async function discoverFounder(payload: {
+  founder_name: string;
+  company_name?: string;
+  github_username?: string;
+  hn_query?: string;
+}): Promise<WatchlistEntry> {
+  const res = await fetch(`${API_URL}/api/v1/sourcing/discover`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Discover failed (${res.status})`);
+  return res.json();
+}
+
+async function postWatchlistAction(entryId: string, action: string): Promise<WatchlistEntry> {
+  const res = await fetch(`${API_URL}/api/v1/sourcing/watchlist/${entryId}/${action}`, { method: "POST" });
+  if (!res.ok) throw new Error(`${action} failed (${res.status})`);
+  return res.json();
+}
+
+export const promoteWatchlistEntry = (id: string) => postWatchlistAction(id, "promote");
+export const generateOutreach = (id: string) => postWatchlistAction(id, "outreach");
+export const activateWatchlistEntry = (id: string) => postWatchlistAction(id, "activate");

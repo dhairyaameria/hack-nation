@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud, Radar } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Pipeline", icon: LayoutDashboard },
+  { href: "/sourcing", label: "Sourcing", icon: Radar },
   { href: "/apply", label: "Apply", icon: UploadCloud },
   { href: "/founders", label: "Founders", icon: Users },
   { href: "/agent", label: "Agent", icon: MessageSquareText },
