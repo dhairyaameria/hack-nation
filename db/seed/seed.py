@@ -311,11 +311,15 @@ def main():
     score_rows = []
     for slug, scores in FOUNDER_SCORE_HISTORY.items():
         for i, score in enumerate(scores):
+            # Truncate to midnight so re-seeding upserts the same row instead
+            # of drifting by the few seconds between script runs (same fix
+            # as the genome snapshot recorded_at above).
+            recorded_at = days_ago((len(scores) - i) * 30).replace(hour=0, minute=0, second=0, microsecond=0)
             score_rows.append({
                 "founder_id": sid(slug),
                 "score": score,
                 "confidence": 0.7,
-                "recorded_at": iso(days_ago((len(scores) - i) * 30)),
+                "recorded_at": iso(recorded_at),
             })
     upsert(client, "founder_score_history", score_rows, on_conflict="founder_id,recorded_at")
 
@@ -388,6 +392,19 @@ def main():
                 "opportunity_id": contradiction_opp_id,
                 "description": f"{c['text']!r} contradicted by {c['contradicting_evidence']['source_locator']}",
             }], on_conflict="claim_id")
+
+    # `memos` has no unique constraint on opportunity_id (a real memo can be
+    # regenerated), so upsert manually: update if a row exists, else insert.
+    memo_sections = [
+        {"title": "Executive Summary", "content": "NovaMetrics offers AI-powered revenue forecasting for B2B SaaS.", "not_disclosed": False},
+        {"title": "Financials", "content": None, "not_disclosed": True},
+    ]
+    existing_memo = client.table("memos").select("id").eq("opportunity_id", contradiction_opp_id).limit(1).execute()
+    if existing_memo.data:
+        client.table("memos").update({"sections": memo_sections}).eq("id", existing_memo.data[0]["id"]).execute()
+    else:
+        client.table("memos").insert({"opportunity_id": contradiction_opp_id, "sections": memo_sections}).execute()
+    print("  upserted 1 row(s) -> memos")
 
     print("7. Wayback snapshots (DataPulse)")
     datapulse_id = sid("company-datapulse")

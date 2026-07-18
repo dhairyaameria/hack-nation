@@ -70,6 +70,10 @@ export async function getActiveThesis() {
 }
 
 export async function getNetworkGraphSeed(founderId: string) {
+  if (!USE_FIXTURES) {
+    const live = await tryFetch<Record<string, unknown>>(`/api/v1/founders/${founderId}/network`);
+    if (live) return live;
+  }
   return (networkGraphFixture as Record<string, unknown>)[founderId] ?? null;
 }
 

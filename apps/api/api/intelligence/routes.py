@@ -1,15 +1,16 @@
 """Agent C — 3-axis scoring, trust, memo endpoints.
 
-Backed by the in-memory `opportunity_store` (Wave 2 swaps that module for
-Supabase-backed reads without changing these routes — see
-`docs/17-PARALLEL-WORKFLOW.md` §4).
+Backed by `opportunity_store` / `founder_store` / `thesis_store`, which are
+Supabase-backed when credentials are configured and fall back to
+fixtures/in-memory data otherwise (see `docs/17-PARALLEL-WORKFLOW.md` §4).
 """
 
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from api.core import fixtures, opportunity_store
+from api.agent import thesis_store
+from api.core import founder_store, opportunity_store
 from api.intelligence import agents
 
 router = APIRouter(tags=["intelligence"])
@@ -18,9 +19,9 @@ router = APIRouter(tags=["intelligence"])
 @router.get("/opportunities")
 def list_opportunities():
     opps = opportunity_store.list_opportunities()
-    active_thesis = fixtures.get_active_thesis()
+    active_thesis = thesis_store.get_active_thesis()
     return {
-        "active_thesis": {"id": active_thesis["id"], "name": active_thesis["name"]},
+        "active_thesis": {"id": active_thesis["id"], "name": active_thesis["name"]} if active_thesis else None,
         "opportunities": opps,
     }
 
@@ -50,7 +51,6 @@ def analyze_opportunity(opportunity_id: str):
         memo=result["memo"],
         claims=result["claims"],
         trace=result["trace"],
-        trace_id=result["trace"]["trace_id"],
         status="diligence",
     )
     opportunity_store.set_sla_stage(opportunity_id, "diligence_at")
@@ -76,17 +76,25 @@ def get_memo(opportunity_id: str):
 
 @router.get("/recommendation/{opportunity_id}/trace")
 def get_trace(opportunity_id: str):
-    opp = opportunity_store.get_opportunity(opportunity_id)
-    if opp is None:
+    if opportunity_store.get_opportunity(opportunity_id) is None:
         raise HTTPException(404, "Opportunity not found")
-    if opp.get("trace") is None:
+    trace = opportunity_store.get_trace(opportunity_id)
+    if trace is None:
         raise HTTPException(404, "No reasoning trace yet — run /analyze first.")
-    return opp["trace"]
+    return trace
 
 
 @router.get("/founders/{founder_id}")
 def get_founder(founder_id: str):
-    profile = fixtures.get_founder_profile(founder_id)
+    profile = founder_store.get_founder_profile(founder_id)
     if profile is None:
         raise HTTPException(404, "Founder not found")
     return profile
+
+
+@router.get("/founders/{founder_id}/network")
+def get_founder_network(founder_id: str):
+    graph = founder_store.get_network_graph(founder_id)
+    if graph is None:
+        raise HTTPException(404, "No network graph for this founder yet.")
+    return graph
