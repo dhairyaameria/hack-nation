@@ -170,3 +170,74 @@ async function postWatchlistAction(entryId: string, action: string): Promise<Wat
 export const promoteWatchlistEntry = (id: string) => postWatchlistAction(id, "promote");
 export const generateOutreach = (id: string) => postWatchlistAction(id, "outreach");
 export const activateWatchlistEntry = (id: string) => postWatchlistAction(id, "activate");
+
+// ---------------------------------------------------------------------------
+// Perplexity research: thesis sourcing sweep + natural-language query
+// (docs/05-CURSOR-SKILLS.md §2-3)
+// ---------------------------------------------------------------------------
+
+export interface EvidenceRef {
+  source_type: string;
+  source_locator: string;
+  evidence_snippet: string;
+  confidence: number;
+  title?: string;
+}
+
+export interface SourcingSweepLead {
+  query: string;
+  answer: string;
+  evidence: EvidenceRef[];
+  bronze_id: string;
+}
+
+export interface SourcingSweepResult {
+  thesis: string | null;
+  thesis_id?: string;
+  leads: SourcingSweepLead[];
+  error: string | null;
+}
+
+export async function runSourcingSweep(thesisId?: string): Promise<SourcingSweepResult> {
+  const res = await fetch(`${API_URL}/api/v1/skills/thesis-sourcing-sweep/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ thesis_id: thesisId ?? null }),
+  });
+  if (!res.ok) throw new Error(`Sourcing sweep failed (${res.status})`);
+  return res.json();
+}
+
+export interface ClauseMatch {
+  constraint: string;
+  matched: boolean;
+  explanation: string;
+}
+
+export interface NlQueryResultRow {
+  opportunity_id: string;
+  company_name: string;
+  company_sector?: string | null;
+  founder_name: string;
+  match_count: number;
+  match_ratio: number;
+  clause_matches: ClauseMatch[];
+  match_mode: string;
+}
+
+export interface NlQueryResponse {
+  query: string;
+  constraints: string[];
+  decompose_mode: string;
+  results: NlQueryResultRow[];
+}
+
+export async function runNaturalLanguageQuery(query: string): Promise<NlQueryResponse> {
+  const res = await fetch(`${API_URL}/api/v1/query/natural-language`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
+  if (!res.ok) throw new Error(`Natural-language query failed (${res.status})`);
+  return res.json();
+}

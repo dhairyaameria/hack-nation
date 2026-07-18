@@ -79,7 +79,7 @@ def _axis_score_out(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def _db_list_opportunities(client) -> list[dict[str, Any]]:
-    opps_res = client.table("opportunities").select("*, founders(display_name), companies(name)").execute()
+    opps_res = client.table("opportunities").select("*, founders(display_name), companies(name, sector)").execute()
     opps = opps_res.data
     if not opps:
         return []
@@ -98,6 +98,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
         out.append({
             "id": o["id"],
             "company_name": (o.get("companies") or {}).get("name", "Unknown"),
+            "company_sector": (o.get("companies") or {}).get("sector"),
             "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
             "founder_id": o["founder_id"],
             "source": o["source"],
@@ -116,7 +117,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
 def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
     opp_res = (
         client.table("opportunities")
-        .select("*, founders(display_name), companies(name)")
+        .select("*, founders(display_name, domain_affinity), companies(name, sector)")
         .eq("id", opportunity_id)
         .limit(1)
         .execute()
@@ -173,9 +174,13 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
     return {
         "id": o["id"],
         "company_name": (o.get("companies") or {}).get("name", "Unknown"),
+        "company_sector": (o.get("companies") or {}).get("sector"),
         "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
         "founder_id": o["founder_id"],
+        "founder_domain_affinity": (o.get("founders") or {}).get("domain_affinity") or [],
         "source": o["source"],
+        "discovery_channel": o.get("discovery_channel"),
+        "triggering_signal": o.get("triggering_signal"),
         "screen_verdict": o.get("screen_verdict"),
         "has_contradiction": o["has_contradiction"],
         "axis_scores": axis_scores,

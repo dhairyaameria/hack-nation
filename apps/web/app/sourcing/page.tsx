@@ -8,6 +8,8 @@ import {
   generateOutreach,
   getWatchlist,
   promoteWatchlistEntry,
+  runSourcingSweep,
+  type SourcingSweepResult,
   type WatchlistEntry,
 } from "@/lib/api/client";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +34,8 @@ export default function SourcingPage() {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [outreachDraft, setOutreachDraft] = useState<{ id: string; draft: string } | null>(null);
+  const [sweep, setSweep] = useState<SourcingSweepResult | null>(null);
+  const [sweeping, setSweeping] = useState(false);
 
   async function refresh() {
     setLoading(true);
@@ -68,6 +72,18 @@ export default function SourcingPage() {
       setError(err instanceof Error ? err.message : "Discover failed");
     } finally {
       setDiscovering(false);
+    }
+  }
+
+  async function handleSweep() {
+    setSweeping(true);
+    setError(null);
+    try {
+      setSweep(await runSourcingSweep());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Sourcing sweep failed");
+    } finally {
+      setSweeping(false);
     }
   }
 
@@ -153,6 +169,59 @@ export default function SourcingPage() {
       </form>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
+
+      <section className="rounded-lg border p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+              Thesis sourcing sweep
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Live Perplexity research from the active thesis — launches, hiring signals, hackathon
+              results. Leads land in Bronze as watchlist candidates, never pre-trusted facts.
+            </p>
+          </div>
+          <button
+            onClick={handleSweep}
+            disabled={sweeping}
+            className="shrink-0 rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-50"
+          >
+            {sweeping ? "Researching…" : "Run sweep"}
+          </button>
+        </div>
+
+        {sweep && (
+          <div className="space-y-3 border-t pt-3">
+            {sweep.error && <p className="text-sm text-amber-700">{sweep.error}</p>}
+            {sweep.thesis && (
+              <p className="text-xs text-muted-foreground">
+                Thesis: <span className="font-medium">{sweep.thesis}</span> · {sweep.leads.length} querie(s) with results
+              </p>
+            )}
+            {sweep.leads.map((lead, i) => (
+              <div key={i} className="rounded-md bg-muted/30 p-3 space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">{lead.query}</p>
+                <p className="text-sm whitespace-pre-wrap">{lead.answer}</p>
+                {lead.evidence.length > 0 && (
+                  <div className="space-y-1 border-t pt-2">
+                    {lead.evidence.slice(0, 4).map((e, j) => (
+                      <a
+                        key={j}
+                        href={e.source_locator}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block text-[11px] text-blue-700 hover:underline truncate"
+                      >
+                        [{j + 1}] {e.title || e.source_locator}
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
