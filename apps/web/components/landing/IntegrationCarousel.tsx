@@ -9,10 +9,8 @@ const INTEGRATIONS = [
   { name: "Tavily", mark: TavilyMark },
 ] as const;
 
-/** Fast looping logo strip — duplicated track for seamless marquee. */
+/** Seamless logo strip — two identical groups, animate exactly -50%. */
 export function IntegrationCarousel() {
-  const track = [...INTEGRATIONS, ...INTEGRATIONS, ...INTEGRATIONS];
-
   return (
     <div className="landing-marquee relative mt-12 overflow-hidden py-2">
       <div
@@ -23,22 +21,34 @@ export function IntegrationCarousel() {
         aria-hidden
         className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-[var(--landing-bg)] to-transparent sm:w-28"
       />
-      <div className="landing-marquee-track flex w-max items-center gap-10 sm:gap-14">
-        {track.map((item, i) => {
-          const Mark = item.mark;
-          return (
-            <div
-              key={`${item.name}-${i}`}
-              className="flex shrink-0 items-center gap-3 text-[var(--landing-green)]"
-            >
-              <Mark className="h-8 w-8 sm:h-9 sm:w-9" />
-              <span className="font-serif text-xl sm:text-2xl tracking-tight text-[var(--landing-fg)]">
-                {item.name}
-              </span>
-            </div>
-          );
-        })}
+      <div className="landing-marquee-track flex w-max">
+        <MarqueeGroup />
+        <MarqueeGroup hidden />
       </div>
+    </div>
+  );
+}
+
+function MarqueeGroup({ hidden }: { hidden?: boolean }) {
+  return (
+    <div
+      aria-hidden={hidden || undefined}
+      className="flex shrink-0 items-center gap-10 pr-10 sm:gap-14 sm:pr-14"
+    >
+      {INTEGRATIONS.map((item) => {
+        const Mark = item.mark;
+        return (
+          <div
+            key={item.name}
+            className="flex shrink-0 items-center gap-3 text-[var(--landing-green)]"
+          >
+            <Mark className="h-8 w-8 sm:h-9 sm:w-9" />
+            <span className="font-serif text-xl sm:text-2xl tracking-tight text-[var(--landing-fg)]">
+              {item.name}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }

@@ -211,15 +211,9 @@ export default function LandingPage() {
         className="relative border-t border-[var(--landing-line)] px-6 sm:px-10 py-16 sm:py-24"
       >
         <div className="mx-auto max-w-5xl">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--landing-green)] mb-3">
-            Team
-          </p>
-          <h2 className="font-serif text-3xl sm:text-4xl tracking-tight text-[var(--landing-fg)] mb-3">
-            Building Brain Venture
+          <h2 className="font-serif text-3xl sm:text-4xl tracking-tight text-[var(--landing-fg)] mb-10">
+            Meet the team
           </h2>
-          <p className="mb-10 max-w-xl text-base leading-relaxed text-[var(--landing-muted)]">
-            Reach us on LinkedIn — tap a profile to connect.
-          </p>
           <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {TEAM.map((person) => (
               <li key={person.name} className="space-y-3">
