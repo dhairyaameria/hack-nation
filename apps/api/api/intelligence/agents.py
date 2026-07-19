@@ -19,6 +19,8 @@ VALID_STATUSES = {"verified", "contradicted", "weakly_supported", "unknown"}
 VALID_TRENDS = {"improving", "stable", "declining"}
 VALID_AXES = {"founder", "market", "idea_vs_market"}
 
+# Challenge brief memo spec (required + optional). Always emit every title;
+# missing facts → not_disclosed=true, never fabricate.
 REQUIRED_MEMO_SECTIONS = [
     "Company snapshot",
     "Investment hypotheses",
@@ -26,6 +28,86 @@ REQUIRED_MEMO_SECTIONS = [
     "Problem & product",
     "Traction & KPIs",
 ]
+
+OPTIONAL_MEMO_SECTIONS = [
+    "Team & history",
+    "Technology & defensibility",
+    "Market sizing",
+    "Competition",
+    "Financials & round structure",
+    "Cap table",
+    "Due diligence log",
+    "Exit perspective",
+]
+
+# Canonical order matches the challenge brief § Investment Memo appendix.
+ALL_MEMO_SECTIONS = [
+    "Company snapshot",
+    "Investment hypotheses",
+    "SWOT",
+    "Team & history",
+    "Problem & product",
+    "Technology & defensibility",
+    "Market sizing",
+    "Competition",
+    "Traction & KPIs",
+    "Financials & round structure",
+    "Cap table",
+    "Due diligence log",
+    "Exit perspective",
+]
+
+MEMO_SECTION_GUIDANCE = {
+    "Company snapshot": (
+        "One-paragraph 'in a nutshell': market size, the structural problem, why it's urgent, "
+        "and how the product solves it."
+    ),
+    "Investment hypotheses": (
+        "Explicit 'why we want to invest' bullets — team quality, market wedge, stickiness / "
+        "retention mechanics, traction signal, defensibility, expansion path."
+    ),
+    "SWOT": (
+        "Strengths, weaknesses, opportunities, risks — each as short, evidence-backed bullets "
+        "(label S/W/O/T clearly)."
+    ),
+    "Team & history": (
+        "Founder background, exec team pedigree, why the fund is comfortable with any red flags "
+        "(e.g. single-founder, first-time founder with thin public footprint), company timeline "
+        "from founding to today. Cold-start founders: score from domain depth, building-in-public, "
+        "iteration cadence — do not invent GitHub/funding history."
+    ),
+    "Problem & product": (
+        "The core problem(s) in plain language, then the step-by-step product / process solving it."
+    ),
+    "Technology & defensibility": (
+        "What's proprietary vs. commoditizable, the data moat, model / architecture choices, "
+        "why the advantage compounds over time."
+    ),
+    "Market sizing": (
+        "Top-down and/or bottom-up TAM / SAM / SOM, with assumptions stated explicitly."
+    ),
+    "Competition": (
+        "Named competitor clusters, how each differs from the company, and who could become a "
+        "threat later."
+    ),
+    "Traction & KPIs": (
+        "Customer count, ARR / revenue, growth trajectory, unit economics (CAC, sales cycle, churn), "
+        "usage metrics (e.g. DAU). Only numbers present in evidence."
+    ),
+    "Financials & round structure": (
+        "Historical + projected P&L (revenue, EBITDA, opex, COGS), round size, runway, next-round timing."
+    ),
+    "Cap table": (
+        "Pre- and post-round ownership by party, dilution assumptions, VSOP allocation."
+    ),
+    "Due diligence log": (
+        "What was checked (commercial, people, financial, legal, technical), what's still open."
+    ),
+    "Exit perspective": (
+        "Plausible exit paths (strategic acquirers, PE roll-up, category comparables) and why "
+        "they'd pay a premium."
+    ),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -205,43 +287,150 @@ def run_validator(claims: list[dict], company_name: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+def _normalize_memo_sections(raw_sections: list[dict] | None) -> list[dict]:
+    """Force canonical 13-section order; unknown titles dropped; gaps flagged."""
+    by_title: dict[str, dict] = {}
+    for s in raw_sections or []:
+        if not isinstance(s, dict):
+            continue
+        title = (s.get("title") or "").strip()
+        if title not in ALL_MEMO_SECTIONS:
+            # Allow minor title variants
+            for canonical in ALL_MEMO_SECTIONS:
+                if title.lower() == canonical.lower():
+                    title = canonical
+                    break
+            else:
+                continue
+        content = s.get("content")
+        if isinstance(content, str):
+            stripped = content.strip()
+            if stripped.lower() in {
+                "not_disclosed",
+                "not_disclosed=true",
+                "null",
+                "none",
+                "n/a",
+                "unavailable",
+                "unavailable at this stage.",
+            }:
+                content = None
+            else:
+                content = stripped or None
+        else:
+            content = None
+        undisclosed = bool(s.get("not_disclosed")) or content is None
+        by_title[title] = {
+            "title": title,
+            "content": None if undisclosed else content,
+            "not_disclosed": undisclosed,
+            "required": title in REQUIRED_MEMO_SECTIONS,
+        }
+
+    out = []
+    for title in ALL_MEMO_SECTIONS:
+        if title in by_title:
+            out.append(by_title[title])
+        else:
+            out.append({
+                "title": title,
+                "content": None,
+                "not_disclosed": True,
+                "required": title in REQUIRED_MEMO_SECTIONS,
+            })
+    return out
+
+
 def _heuristic_referee(
     company_name: str,
     claims: list[dict],
     analyst_out: dict,
     research_blob: str = "",
+    *,
+    founder_name: str = "",
 ) -> dict:
     has_traction_claim = any(
-        "traction" in c.get("text", "").lower() or "$" in c.get("text", "") or "raised" in c.get("text", "").lower()
+        any(k in c.get("text", "").lower() for k in ("traction", "arr", "customers", "users", "raised", "revenue"))
+        or "$" in c.get("text", "")
         for c in claims
     )
+    claim_texts = [c.get("text", "") for c in claims if c.get("text")]
     snapshot_bits = [f"{company_name} — {len(claims)} research/deck claim(s)."]
     if research_blob:
         snapshot_bits.append(research_blob[:400].replace("\n", " "))
-    claim_texts = [c.get("text", "") for c in claims if c.get("text")]
-    sections = [
-        {"title": "Company snapshot", "content": " ".join(snapshot_bits)[:600], "not_disclosed": False},
+
+    traction = next(
+        (
+            c
+            for c in claim_texts
+            if any(k in c.lower() for k in ("$", "raised", "arr", "customers", "users", "funding", "revenue"))
+        ),
+        None,
+    ) if has_traction_claim else None
+
+    team_bits = []
+    if founder_name:
+        team_bits.append(f"Founder: {founder_name}.")
+    for c in claim_texts:
+        if any(k in c.lower() for k in ("founder", "ceo", "team", "previously", "ex-", "alumni")):
+            team_bits.append(c)
+            break
+
+    dd_bits = [
+        "Commercial: public web / deck claims reviewed.",
+        "People: founder signals from research dossier (if present).",
+        "Financial / legal / technical deep-dive: still open — not disclosed in source pack.",
+    ]
+
+    draft = [
+        {"title": "Company snapshot", "content": " ".join(snapshot_bits)[:700], "not_disclosed": False},
         {
             "title": "Investment hypotheses",
-            "content": (claim_texts[0] if claim_texts else None) and f"Hypothesis from public signals: {claim_texts[0]}",
+            "content": (
+                "• Team quality: evaluate from public pedigree signals.\n"
+                f"• Market / product wedge: {claim_texts[0]}\n"
+                "• Stickiness / retention, traction, defensibility, expansion: incomplete in source pack."
+            ) if claim_texts else None,
             "not_disclosed": not claim_texts,
         },
         {
             "title": "SWOT",
-            "content": ("Strengths/opportunities inferred from public claims:\n- " + "\n- ".join(claim_texts[:3])) if claim_texts else None,
+            "content": (
+                "Strengths:\n- " + "\n- ".join(claim_texts[:2])
+                + "\nWeaknesses:\n- Limited disclosed financials / unit economics.\n"
+                "Opportunities:\n- Category expansion if product-market fit holds.\n"
+                "Threats / risks:\n- Competitive response; evidence gaps on retention."
+            ) if claim_texts else None,
             "not_disclosed": not claim_texts,
         },
-        {"title": "Problem & product", "content": claim_texts[0] if claim_texts else None, "not_disclosed": not claim_texts},
         {
-            "title": "Traction & KPIs",
-            "content": next(
-                (c for c in claim_texts if any(k in c.lower() for k in ("$", "raised", "arr", "customers", "users", "funding"))),
-                None,
-            ) if has_traction_claim else None,
-            "not_disclosed": not has_traction_claim,
+            "title": "Team & history",
+            "content": " ".join(team_bits)[:500] if team_bits else None,
+            "not_disclosed": not team_bits,
         },
+        {
+            "title": "Problem & product",
+            "content": claim_texts[0] if claim_texts else None,
+            "not_disclosed": not claim_texts,
+        },
+        {"title": "Technology & defensibility", "content": None, "not_disclosed": True},
+        {"title": "Market sizing", "content": None, "not_disclosed": True},
+        {"title": "Competition", "content": None, "not_disclosed": True},
+        {"title": "Traction & KPIs", "content": traction, "not_disclosed": traction is None},
+        {"title": "Financials & round structure", "content": None, "not_disclosed": True},
+        {"title": "Cap table", "content": None, "not_disclosed": True},
+        {
+            "title": "Due diligence log",
+            "content": "\n".join(f"- {b}" for b in dd_bits),
+            "not_disclosed": False,
+        },
+        {"title": "Exit perspective", "content": None, "not_disclosed": True},
     ]
-    return {"sections": sections, "axis_scores": analyst_out["axis_scores"], "prompt_version": "heuristic-referee-v2"}
+    return {
+        "sections": _normalize_memo_sections(draft),
+        "axis_scores": analyst_out["axis_scores"],
+        "prompt_version": "heuristic-referee-v3",
+    }
 
 
 def _llm_referee(
@@ -262,54 +451,56 @@ def _llm_referee(
     axis_block = "\n".join(f"- {a['axis']}: {a['value']} (confidence {a['confidence']})" for a in analyst_out["axis_scores"])
     research_block = (research_blob or "").strip()[:7000] or "(no live research dossier)"
 
+    guidance_block = "\n".join(
+        f"- {title}{' [REQUIRED]' if title in REQUIRED_MEMO_SECTIONS else ' [optional]'}: {MEMO_SECTION_GUIDANCE[title]}"
+        for title in ALL_MEMO_SECTIONS
+    )
+    sections_json = ",\n".join(
+        f'  {{"title": "{title}", "content": <string or null>, "not_disclosed": <bool>}}'
+        for title in ALL_MEMO_SECTIONS
+    )
+
     system = (
-        "You are the Referee in a VC diligence pipeline. You receive (1) a LIVE RESEARCH DOSSIER "
-        "from GitHub/LinkedIn/HN/arXiv/Perplexity/Tavily and (2) structured claims with validator "
-        "verdicts. Write a concise investment memo grounded in that dossier.\n"
+        "You are the Referee in a VC diligence pipeline. Write a full investment memo that "
+        "matches the Maschmeyer Group / Hack-Nation memo appendix — every section listed below "
+        "MUST appear in the JSON array, in that order.\n\n"
+        f"SECTION SPECS:\n{guidance_block}\n\n"
         "HARD RULES:\n"
-        "1. USE the research dossier to fill Company snapshot, Problem & product, Investment "
-        "hypotheses, and SWOT whenever evidence exists — do NOT leave those 'not disclosed' if "
-        "the dossier describes the company/founder.\n"
-        "2. Traction & KPIs: only state numbers that appear in claims/dossier; otherwise "
-        "not_disclosed=true (never invent ARR/customers/funding).\n"
-        "3. Validator 'contradicted' claims must be flagged, not presented as fact.\n"
-        "4. Be brief — no padding.\n\n"
+        "1. REQUIRED sections (Company snapshot, Investment hypotheses, SWOT, Problem & product, "
+        "Traction & KPIs): fill from the research dossier + claims whenever evidence exists. "
+        "Do NOT mark them not_disclosed if the dossier describes the company.\n"
+        "2. OPTIONAL sections: include when evidence exists; otherwise content=null and "
+        "not_disclosed=true. Prefer an honest gap over padding.\n"
+        "3. NEVER invent ARR, customers, funding, cap table %, P&L, or TAM figures. If a number "
+        "is missing, flag not_disclosed (e.g. Cap table / Financials).\n"
+        "4. Validator 'contradicted' claims must be flagged in the relevant section, not presented as fact.\n"
+        "5. Be brief — short bullets, no padding. SWOT must label Strengths / Weaknesses / "
+        "Opportunities / Threats.\n"
+        "6. Team & history: for first-time / cold-start founders with thin GitHub/funding/network, "
+        "state what IS known (domain depth, iteration, public building) and flag unknowns — "
+        "do not invent pedigree.\n"
+        "7. Due diligence log: list what this pipeline actually checked vs still open.\n\n"
         "Return strict JSON:\n"
         '{"sections": [\n'
-        '  {"title": "Company snapshot", "content": <string or null>, "not_disclosed": <bool>},\n'
-        '  {"title": "Investment hypotheses", "content": <string or null>, "not_disclosed": <bool>},\n'
-        '  {"title": "SWOT", "content": <string or null>, "not_disclosed": <bool>},\n'
-        '  {"title": "Problem & product", "content": <string or null>, "not_disclosed": <bool>},\n'
-        '  {"title": "Traction & KPIs", "content": <string or null>, "not_disclosed": <bool>}\n'
+        f"{sections_json}\n"
         "]}"
     )
     user = (
         f"Company: {company_name}\nFounder: {founder_name or 'unknown'}\n\n"
         f"LIVE RESEARCH DOSSIER:\n{research_block}\n\n"
         f"Claims + validator verdicts:\n{claims_block}\n\n"
-        f"Analyst axis scores:\n{axis_block}"
+        f"Analyst axis scores (independent — do not average):\n{axis_block}"
     )
     data = llm.chat_json(system, user)
     if not data or "sections" not in data:
         return None
 
-    by_title = {s.get("title"): s for s in data["sections"] if isinstance(s, dict)}
-    sections = []
-    for title in REQUIRED_MEMO_SECTIONS:
-        s = by_title.get(title)
-        if not s:
-            sections.append({"title": title, "content": None, "not_disclosed": True})
-            continue
-        content = s.get("content")
-        if isinstance(content, str) and content.strip().lower() in {"not_disclosed", "not_disclosed=true", "null", "none", "n/a"}:
-            content = None
-        undisclosed = bool(s.get("not_disclosed")) or content is None or content == ""
-        sections.append({
-            "title": title,
-            "content": None if undisclosed else content,
-            "not_disclosed": undisclosed,
-        })
-    return {"sections": sections, "axis_scores": analyst_out["axis_scores"], "prompt_version": f"openai:{llm.MODEL}:referee-v2"}
+    sections = _normalize_memo_sections(data.get("sections"))
+    return {
+        "sections": sections,
+        "axis_scores": analyst_out["axis_scores"],
+        "prompt_version": f"openai:{llm.MODEL}:referee-v3",
+    }
 
 
 def run_referee(
@@ -332,7 +523,13 @@ def run_referee(
         )
         if result:
             return result
-    return _heuristic_referee(company_name, claims, analyst_out, research_blob=research_blob)
+    return _heuristic_referee(
+        company_name,
+        claims,
+        analyst_out,
+        research_blob=research_blob,
+        founder_name=founder_name,
+    )
 
 
 # ---------------------------------------------------------------------------

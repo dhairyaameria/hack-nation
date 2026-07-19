@@ -12,6 +12,7 @@ import opportunityFixture from "@/lib/fixtures/opportunity-detail.json";
 import founderFixture from "@/lib/fixtures/founder-profile.json";
 import thesisFixture from "@/lib/fixtures/thesis-active.json";
 import networkGraphFixture from "@/lib/fixtures/network-graph-seed.json";
+import memosFixture from "@/lib/fixtures/memos.json";
 import type { OpportunityDetail, OpportunitySummary } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -22,9 +23,12 @@ interface PipelineDashboard {
   opportunities: OpportunitySummary[];
 }
 
-async function tryFetch<T>(path: string): Promise<T | null> {
+async function tryFetch<T>(path: string, timeoutMs = 12_000): Promise<T | null> {
   try {
-    const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
+    const res = await fetch(`${API_URL}${path}`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {
@@ -53,12 +57,81 @@ export async function getOpportunityDetail(id: string): Promise<OpportunityDetai
   return summary ? { ...summary, claims: [], memo: null, trace_id: null } : null;
 }
 
-export async function getFounderProfile(id: string) {
+export interface FounderEnrichment {
+  summary?: string;
+  citations?: string[];
+  web_results?: { title?: string; url?: string; snippet?: string }[];
+  disclaimer?: string;
+  sources?: string[];
+  enriched_at?: string;
+}
+
+export interface FounderProfile {
+  id: string;
+  display_name: string;
+  location?: string | null;
+  founder_score?: number | null;
+  founder_score_trend?: string | null;
+  genome?: Record<string, { value: number; trend?: string; confidence?: number }> | null;
+  founder_score_history?: { recorded_at: string; score: number }[];
+  domain_affinity?: { sector: string; weight: number; evidence_source: string }[];
+  enrichment?: FounderEnrichment;
+  network_proximity?: {
+    proximity_score: number;
+    confidence: number;
+    disclosure: string;
+  } | null;
+}
+
+export interface FounderListItem {
+  id: string;
+  display_name: string;
+  founder_score?: number | null;
+  founder_score_trend?: string | null;
+  company_name?: string | null;
+  source?: string | null;
+  has_enrichment?: boolean;
+}
+
+export async function getFounders(): Promise<FounderListItem[]> {
   if (!USE_FIXTURES) {
-    const live = await tryFetch<typeof founderFixture>(`/api/v1/founders/${id}`);
+    const live = await tryFetch<{ founders: FounderListItem[] }>("/api/v1/founders");
+    if (live) return live.founders;
+  }
+  return [
+    {
+      id: founderFixture.id,
+      display_name: founderFixture.display_name,
+      founder_score: founderFixture.founder_score,
+      founder_score_trend: founderFixture.founder_score_trend,
+      company_name: "Rivera Labs",
+      source: "outbound",
+      has_enrichment: true,
+    },
+  ];
+}
+
+export async function getFounderProfile(id: string, opts?: { enrich?: boolean }): Promise<FounderProfile | null> {
+  // Default off — live Perplexity/Tavily must not block SSR page loads.
+  const enrich = opts?.enrich === true;
+  if (!USE_FIXTURES) {
+    const qs = enrich ? "?enrich=true" : "?enrich=false";
+    const live = await tryFetch<FounderProfile>(
+      `/api/v1/founders/${id}${qs}`,
+      enrich ? 45_000 : 12_000,
+    );
     if (live) return live;
   }
-  return founderFixture.id === id ? founderFixture : null;
+  return founderFixture.id === id ? (founderFixture as FounderProfile) : null;
+}
+
+export async function enrichFounder(id: string, force = false): Promise<FounderProfile> {
+  const res = await fetch(
+    `${API_URL}/api/v1/founders/${id}/enrich?force=${force ? "true" : "false"}`,
+    { method: "POST" },
+  );
+  if (!res.ok) throw new Error(`Founder enrich failed (${res.status})`);
+  return res.json();
 }
 
 export async function getActiveThesis() {
@@ -77,6 +150,14 @@ export async function getNetworkGraphSeed(founderId: string) {
   return (networkGraphFixture as Record<string, unknown>)[founderId] ?? null;
 }
 
+export interface DedupeInfo {
+  action: "attached" | "created";
+  reason?: string;
+  prior_status?: string | null;
+  prior_source?: string | null;
+  deferred?: string[];
+}
+
 export interface SubmitApplicationResult {
   opportunity_id: string;
   company_id?: string | null;
@@ -87,6 +168,7 @@ export interface SubmitApplicationResult {
   claims_extracted: number;
   screen_verdict: "pass" | "reject" | "needs-more-info";
   screen_reason: string;
+  dedupe?: DedupeInfo;
 }
 
 export interface InboundApplication {
@@ -171,6 +253,9 @@ export interface MemoListItem {
   company_name: string;
   founder_name: string;
   source?: string | null;
+  status?: string | null;
+  recommendation?: string | null;
+  decision_at?: string | null;
   has_contradiction: boolean;
   section_count: number;
   sections_filled: number;
@@ -180,12 +265,121 @@ export interface MemoListItem {
   created_at?: string | null;
 }
 
+/** A memo section with its supporting evidence. */
+export interface MemoSectionDetail {
+  title: string;
+  content: string | null;
+  not_disclosed: boolean;
+  required?: boolean;
+  evidence: EvidenceRef[];
+}
+
+export interface MemoDetail {
+  id: string;
+  opportunity_id: string;
+  company_name: string;
+  founder_name: string;
+  source?: string | null;
+  status?: string | null;
+  recommendation?: string | null;
+  has_contradiction: boolean;
+  snapshot?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  sections: MemoSectionDetail[];
+}
+
+const memoFixtures = memosFixture.memos as MemoDetail[];
+
+/** List counts are derived, never stored — they cannot drift from the sections. */
+function toListItem(m: MemoDetail): MemoListItem {
+  return {
+    id: m.id,
+    opportunity_id: m.opportunity_id,
+    company_name: m.company_name,
+    founder_name: m.founder_name,
+    source: m.source,
+    status: m.status,
+    recommendation: m.recommendation,
+    has_contradiction: m.has_contradiction,
+    snapshot: m.snapshot,
+    created_at: m.created_at,
+    updated_at: m.updated_at,
+    section_count: m.sections.length,
+    sections_filled: m.sections.filter((s) => s.content != null).length,
+    gaps_flagged: m.sections.filter((s) => s.not_disclosed).length,
+  };
+}
+
+export async function decideOpportunity(
+  id: string,
+  body: { recommendation?: "yes" | "no" | "needs-more-info"; confidence?: number } = {},
+): Promise<{ opportunity_id: string; recommendation: string; status: string; decision_at: string }> {
+  const res = await fetch(`${API_URL}/api/v1/opportunity/${id}/decide`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recommendation: body.recommendation ?? "yes", confidence: body.confidence ?? 0.8 }),
+  });
+  if (!res.ok) throw new Error(`Decision failed (${res.status})`);
+  return res.json();
+}
+
 export async function getMemos(): Promise<MemoListItem[]> {
   if (!USE_FIXTURES) {
     const live = await tryFetch<{ memos: MemoListItem[] }>("/api/v1/memos");
     if (live) return live.memos;
   }
-  return [];
+  return memoFixtures.map(toListItem);
+}
+
+export async function getMemoDetail(id: string): Promise<MemoDetail | null> {
+  if (!USE_FIXTURES) {
+    const live = await tryFetch<MemoDetail>(`/api/v1/memos/${id}`);
+    if (live) {
+      return {
+        ...live,
+        sections: (live.sections ?? []).map((s) => ({
+          ...s,
+          evidence: s.evidence ?? [],
+        })),
+      };
+    }
+    // Fallback: accept opportunity_id in the URL (older links / list glitches)
+    const fromOpp = await memoDetailFromOpportunity(id);
+    if (fromOpp) return fromOpp;
+  }
+  return memoFixtures.find((m) => m.id === id) ?? null;
+}
+
+/** Build a MemoDetail from opportunity payload when /memos/{id} is unavailable. */
+async function memoDetailFromOpportunity(opportunityOrMemoId: string): Promise<MemoDetail | null> {
+  const list = await tryFetch<{ memos: MemoListItem[] }>("/api/v1/memos");
+  const match = list?.memos?.find(
+    (m) => m.id === opportunityOrMemoId || m.opportunity_id === opportunityOrMemoId,
+  );
+  if (!match) return null;
+  const opp = await tryFetch<OpportunityDetail>(`/api/v1/opportunity/${match.opportunity_id}`);
+  if (!opp?.memo?.sections?.length) return null;
+  return {
+    id: match.id,
+    opportunity_id: match.opportunity_id,
+    company_name: opp.company_name,
+    founder_name: opp.founder_name,
+    source: opp.source,
+    status: opp.status,
+    recommendation: opp.recommendation,
+    has_contradiction: opp.has_contradiction,
+    snapshot: match.snapshot,
+    created_at: match.created_at,
+    updated_at: match.updated_at,
+    sections: opp.memo.sections.map((s) => ({
+      title: s.title,
+      content: s.content ?? null,
+      not_disclosed: s.not_disclosed,
+      required: s.required,
+      evidence: [],
+    })),
+  };
 }
 
 export interface PortfolioCompany {
@@ -227,7 +421,9 @@ function portfolioFromDashboard(dash: PipelineDashboard): PortfolioCompany[] {
 export async function getPortfolio(): Promise<PortfolioCompany[]> {
   if (!USE_FIXTURES) {
     const live = await tryFetch<{ companies: PortfolioCompany[] }>("/api/v1/portfolio");
-    if (live?.companies?.length) return live.companies;
+    // Prefer live API even when empty — otherwise a just-funded company can be
+    // masked by fixture/dashboard fallback after Approve investment.
+    if (live && Array.isArray(live.companies)) return live.companies;
   }
   return portfolioFromDashboard(await getPipelineDashboard());
 }
@@ -293,7 +489,10 @@ export async function discoverFounder(payload: {
   return res.json();
 }
 
-async function postWatchlistAction(entryId: string, action: string): Promise<WatchlistEntry> {
+async function postWatchlistAction(
+  entryId: string,
+  action: string
+): Promise<WatchlistEntry & { dedupe?: DedupeInfo; screen_reason?: string; opportunity_id?: string }> {
   const res = await fetch(`${API_URL}/api/v1/sourcing/watchlist/${entryId}/${action}`, { method: "POST" });
   if (!res.ok) throw new Error(`${action} failed (${res.status})`);
   return res.json();
@@ -338,6 +537,16 @@ export async function runSourcingSweep(thesisId?: string): Promise<SourcingSweep
     body: JSON.stringify({ thesis_id: thesisId ?? null }),
   });
   if (!res.ok) throw new Error(`Sourcing sweep failed (${res.status})`);
+  return res.json();
+}
+
+export async function runFounderSourcingSweep(thesisId?: string): Promise<SourcingSweepResult> {
+  const res = await fetch(`${API_URL}/api/v1/skills/founder-sourcing-sweep/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ thesis_id: thesisId ?? null }),
+  });
+  if (!res.ok) throw new Error(`Founder sourcing sweep failed (${res.status})`);
   return res.json();
 }
 

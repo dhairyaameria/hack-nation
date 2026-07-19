@@ -37,8 +37,15 @@ def _cors_origins() -> list[str]:
     web = os.getenv("NEXT_PUBLIC_WEB_URL", "").strip()
     if web and web not in origins:
         origins.append(web)
-    if "http://localhost:3000" not in origins:
-        origins.append("http://localhost:3000")
+    # Local Next.js (hostname + port variants — browser Origin must match exactly)
+    for o in (
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ):
+        if o not in origins:
+            origins.append(o)
     return origins
 
 

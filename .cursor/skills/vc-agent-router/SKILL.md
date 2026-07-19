@@ -14,7 +14,7 @@ Map investor questions to one or more project skills under `.cursor/skills/`.
 | Question pattern | Skill(s) |
 |---|---|
 | ARR, revenue, traction claim doubt | `verify-claim` |
-| Find founders like X, more deals like this | `thesis-sourcing-sweep`, `founder-genome-lookup` |
+| Find founders like X, more deals like this | `founder-sourcing-sweep`, `thesis-sourcing-sweep`, `founder-genome-lookup` |
 | Market size, competitors, comparables | `memo-research` |
 | Full memo or investment write-up | `generate-memo` |
 | Founder profile, Genome, cold-start | `founder-genome-lookup` |

@@ -20,10 +20,11 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-56 shrink-0 border-r bg-muted/30 flex flex-col h-screen sticky top-0">
-      <Link href="/" className="px-5 py-5 border-b block hover:opacity-90 transition-opacity">
-        <div className="font-semibold text-lg tracking-tight text-foreground">VC Brain</div>
-        <div className="text-xs text-muted-foreground">Maschmeyer Group</div>
+    <aside className="w-56 shrink-0 border-r border-line bg-sidebar text-sidebar-foreground flex flex-col h-screen sticky top-0">
+      <Link href="/" className="px-5 py-5 border-b border-sidebar-border block hover:opacity-90 transition-opacity">
+        <div className="font-semibold text-lg tracking-tight text-foreground">
+          Brain <span className="text-brand">Venture</span>
+        </div>
       </Link>
       <nav className="flex-1 px-2 py-4 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
@@ -35,8 +36,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-primary text-primary-foreground shadow-[0_0_0_1px_var(--brand)]"
+                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -55,8 +56,8 @@ export function Sidebar() {
             DA
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate">Dhairya Ameria</div>
-            <div className="text-xs text-muted-foreground truncate">Investor · VC Brain</div>
+            <div className="text-sm font-medium truncate">Marc Andreessen</div>
+            <div className="text-xs text-muted-foreground truncate">Investor · Brain Venture</div>
           </div>
         </div>
       </div>

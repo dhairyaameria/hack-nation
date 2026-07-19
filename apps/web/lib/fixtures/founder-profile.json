@@ -28,5 +28,12 @@
     "confidence": 0.75,
     "disclosure": "Network proximity signal — reflects who this founder is connected to, not their own demonstrated capability. Shown for transparency, weighted conservatively."
   },
+  "enrichment": {
+    "summary": "### Background\n- Technical founder with deep systems experience.\n- Built open-source infra used by early AI startups.\n\n### Public footprint\n- Active GitHub presence and conference talks.\n- Prior operator roles before founding Rivera Labs.",
+    "citations": ["https://example.com/alex-rivera"],
+    "web_results": [],
+    "sources": ["perplexity", "tavily"],
+    "disclaimer": "Enriched from public web research (Perplexity/Tavily). Not a licensed LinkedIn or Crunchbase API feed."
+  },
   "network_graph_founder_id": "founder-a-cold-start-strong"
 }

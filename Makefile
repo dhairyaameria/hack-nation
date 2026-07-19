@@ -1,10 +1,23 @@
-.PHONY: dev-api dev-web db-reset db-seed mcp pipeline inbound-rerank
+.PHONY: dev dev-api dev-web dev-web-alt db-reset db-seed mcp pipeline inbound-rerank
+
+# Run API (:8000) + web (:3000) together. Ctrl-C stops both.
+dev:
+	@echo "API  → http://127.0.0.1:8000"
+	@echo "Web  → http://127.0.0.1:3000  (if busy: make dev-web-alt)"
+	@trap 'kill 0' EXIT; \
+	$(MAKE) --no-print-directory dev-api & \
+	$(MAKE) --no-print-directory dev-web & \
+	wait
 
 dev-api:
-	cd apps/api && source .venv/bin/activate && uvicorn main:app --reload --port 8000
+	cd apps/api && source .venv/bin/activate && uvicorn main:app --reload --host 127.0.0.1 --port 8000
 
 dev-web:
-	cd apps/web && npm run dev
+	cd apps/web && npm run dev -- --port 3000
+
+# Use when something else already owns :3000
+dev-web-alt:
+	cd apps/web && npm run dev -- --port 3001
 
 # Dev only — requires DATABASE_URL or Supabase connection in .env
 db-reset:

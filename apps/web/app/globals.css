@@ -8,8 +8,10 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-serif: var(--font-newsreader), Georgia, serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-serif: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-newsreader: "Newsreader", Georgia, serif;
+  --font-plex-mono: "IBM Plex Mono", ui-monospace, monospace;
   --font-heading: var(--font-serif);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -74,97 +76,122 @@
 }
 
 :root {
-  /* VC Brain DS — light */
+  /*
+   * VC Brain DS — black / forest green / white (light).
+   * Brand green: #2C3630. Surfaces stay white; ink is near-black;
+   * brand + primary drive nav, CTAs, and links across every tab.
+   */
   --surface: #ffffff;
-  --raise: #fbf9f5;
-  --ink: #191713;
-  --sub: #6e675e;
-  --faint: #b9b2a6;
-  --line: #e4dfd7;
-  --line2: #efebe3;
-  --line3: #ddd6ca;
-  --dotline: #c9c2b6;
-  --dotline-a: #b49bbc;
-  --brand: #7a4a86;
-  --brand-ink: #5a2f66;
-  --brand-ink-h: #46234f;
-  --good-ink: #3e7c4f;
-  --good-bg: #e8f0e6;
-  --warn-ink: #8a6114;
-  --warn-dot: #b07c1f;
-  --warn-bg: #f6edd8;
-  --warn-line: #e3ce9c;
-  --bad-ink: #b23a2e;
-  --bad-bg: #f6e2dd;
-  --bad-line: #e0b4ac;
+  --raise: #f3f5f4;
+  --ink: #0a0a0b;
+  --sub: #5a625c;
+  --faint: #8a928c;
+  --line: #dfe4e1;
+  --line2: #eef1ef;
+  --line3: #cfd6d2;
+  --dotline: #b4bcb7;
+  --dotline-a: #5a6b62;
+  --brand: #2c3630;
+  --brand-ink: #1f2823;
+  --brand-ink-h: #151c18;
+  /* Status hues stay inside black / green / white — no red/amber palette */
+  --good-ink: #2c3630;
+  --good-bg: #e8eeea;
+  --warn-ink: #5a625c;
+  --warn-dot: #2c3630;
+  --warn-bg: #eef1ef;
+  --warn-line: #cfd6d2;
+  --bad-ink: #1f2823;
+  --bad-bg: #e8eeea;
+  --bad-line: #b4bcb7;
 
   /* shadcn mapping */
-  --background: #f5f2ec;
+  --background: #ffffff;
   --foreground: var(--ink);
   --card: var(--surface);
   --card-foreground: var(--ink);
   --popover: var(--surface);
   --popover-foreground: var(--ink);
-  --primary: var(--ink);
-  --primary-foreground: #f5f2ec;
+  --primary: var(--brand);
+  --primary-foreground: #ffffff;
   --secondary: var(--line2);
   --secondary-foreground: var(--ink);
   --muted: var(--line2);
   --muted-foreground: var(--sub);
-  --accent: var(--raise);
-  --accent-foreground: var(--ink);
+  --accent: #e8eeea;
+  --accent-foreground: var(--brand-ink);
   --destructive: var(--bad-ink);
   --border: var(--line);
   --input: var(--line);
   --ring: var(--brand);
-  --chart-1: var(--good-ink);
-  --chart-2: var(--warn-dot);
-  --chart-3: var(--bad-ink);
+  --chart-1: var(--brand);
+  --chart-2: var(--brand-ink);
+  --chart-3: var(--good-ink);
   --chart-4: var(--sub);
-  --chart-5: var(--brand);
+  --chart-5: var(--ink);
   --radius: 2px;
-  --sidebar: var(--raise);
+  --sidebar: #f7f9f8;
   --sidebar-foreground: var(--ink);
-  --sidebar-primary: var(--ink);
-  --sidebar-primary-foreground: #f5f2ec;
-  --sidebar-accent: var(--line2);
-  --sidebar-accent-foreground: var(--ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8eeea;
+  --sidebar-accent-foreground: var(--brand-ink);
   --sidebar-border: var(--line);
   --sidebar-ring: var(--brand);
 }
 
 /*
- * Dark theme. Same warm paper palette as light, inverted — the accent stays
- * the brand orange, lifted for legibility on a dark surface. Semantic
- * good/warn/bad keep their hues, likewise lightened.
+ * Dark theme — true black surfaces, white type, lifted forest-green accents.
  */
 .dark {
-  --surface: #1d1a16;
-  --raise: #242019;
-  --ink: #f0ebe2;
-  --sub: #a39b8f;
-  --faint: #6e675e;
-  --line: #35312a;
-  --line2: #2b2822;
-  --line3: #443f35;
-  --dotline: #5a5344;
-  --dotline-a: #7a5a85;
-  --brand: #a96fb8;
-  --brand-ink: #c9a5d8;
-  --brand-ink-h: #dcc0e6;
-  --good-ink: #8cc79a;
-  --good-bg: #22301f;
-  --warn-ink: #d9b15e;
-  --warn-dot: #d9a93f;
-  --warn-bg: #332a15;
-  --warn-line: #4d3f1e;
-  --bad-ink: #e08273;
-  --bad-bg: #38201c;
-  --bad-line: #55302a;
+  --surface: #121412;
+  --raise: #1a1e1b;
+  --ink: #f3f5f4;
+  --sub: #9aa39d;
+  --faint: #6a736c;
+  --line: #2a302c;
+  --line2: #1c211e;
+  --line3: #3a433d;
+  --dotline: #4a544e;
+  --dotline-a: #7a8b82;
+  --brand: #8fa399;
+  --brand-ink: #b0bfb6;
+  --brand-ink-h: #d0dbd4;
+  --good-ink: #b0bfb6;
+  --good-bg: #1a211e;
+  --warn-ink: #9aa39d;
+  --warn-dot: #8fa399;
+  --warn-bg: #1a1e1b;
+  --warn-line: #3a433d;
+  --bad-ink: #d0dbd4;
+  --bad-bg: #1a211e;
+  --bad-line: #4a544e;
 
-  --background: #141210;
-  --primary-foreground: #141210;
-  --sidebar-primary-foreground: #141210;
+  --background: #050706;
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: #0a0a0b;
+  --secondary: var(--line2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--line2);
+  --muted-foreground: var(--sub);
+  --accent: #1a211e;
+  --accent-foreground: var(--brand-ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
+  --sidebar: #080a09;
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--brand);
+  --sidebar-primary-foreground: #0a0a0b;
+  --sidebar-accent: #1a211e;
+  --sidebar-accent-foreground: var(--brand-ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
 }
 
 @layer base {
@@ -190,13 +217,46 @@
   }
 }
 
+/* Landing — light by default; .dark overrides for night mode */
+.landing {
+  --landing-bg: #f7f9f8;
+  --landing-fg: #0a0a0b;
+  --landing-muted: #5a625c;
+  --landing-line: #dfe4e1;
+  --landing-green: #2c3630;
+  --landing-green-solid: #2c3630;
+}
+
+.dark .landing {
+  --landing-bg: #050706;
+  --landing-fg: #f3f5f4;
+  --landing-muted: rgba(243, 245, 244, 0.55);
+  --landing-line: rgba(143, 163, 153, 0.22);
+  /* Lifted green so #2C3630 reads clearly on black */
+  --landing-green: #8fa399;
+  --landing-green-solid: #2c3630;
+}
+
 /* Landing page motion + atmosphere */
 .landing-grid {
   background-image:
-    linear-gradient(to right, rgba(240, 235, 226, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(240, 235, 226, 0.06) 1px, transparent 1px);
+    linear-gradient(to right, color-mix(in srgb, var(--landing-green) 18%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in srgb, var(--landing-green) 18%, transparent) 1px, transparent 1px);
   background-size: 72px 72px;
   mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+}
+
+@keyframes landing-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.landing-marquee-track {
+  animation: landing-marquee 14s linear infinite;
+}
+
+.landing-marquee:hover .landing-marquee-track {
+  animation-play-state: paused;
 }
 
 @keyframes landing-fade-in {

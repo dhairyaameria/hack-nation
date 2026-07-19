@@ -44,14 +44,14 @@ async def submit_application(
         filename = deck.filename
         claims = deck_parser.parse_deck(file_bytes)
 
-    verdict, reason = fast_screen.screen(company_name, claims)
-
     opp = opportunity_store.create_opportunity(
         company_name=company_name,
         founder_name=founder_name,
         source="inbound",
         discovery_channel="direct_apply",
     )
+    dedupe = opp.get("dedupe") or {"action": "created"}
+    attached = dedupe.get("action") == "attached"
 
     deck_meta: dict[str, str] = {}
     if file_bytes is not None:
@@ -66,6 +66,35 @@ async def submit_application(
         if not deck_meta.get("deck_url"):
             deck_meta["deck_url"] = f"/api/v1/inbound/applications/{opp['id']}/deck"
 
+    if attached:
+        # Reuse open deal: store deck + merge claims only. Do not rewrite
+        # screen/status — Analyze / daily_pipeline own the heavy refresh.
+        if deck_meta:
+            opportunity_store.update_opportunity(opp["id"], **deck_meta)
+        claims_added = opportunity_store.merge_provisional_claims(
+            opp["id"],
+            [{**c, "source": "deck"} for c in claims],
+        )
+        return {
+            "opportunity_id": opp["id"],
+            "company_id": opp.get("company_id"),
+            "company_name": company_name,
+            "deck_filename": deck_meta.get("deck_filename") or filename,
+            "has_deck": bool(deck_meta) or bool(opp.get("has_deck")),
+            "deck_url": deck_meta.get("deck_url")
+            or opp.get("deck_url")
+            or (f"/api/v1/inbound/applications/{opp['id']}/deck" if deck_meta else None),
+            "deck_storage_path": deck_meta.get("deck_storage_path") or opp.get("deck_storage_path"),
+            "claims_extracted": claims_added,
+            "screen_verdict": opp.get("screen_verdict") or "needs-more-info",
+            "screen_reason": (
+                "Attached to existing open opportunity — deck/claims stored; "
+                "re-screen and Analyze deferred."
+            ),
+            "dedupe": dedupe,
+        }
+
+    verdict, reason = fast_screen.screen(company_name, claims)
     opportunity_store.update_opportunity(
         opp["id"],
         claims=[{**c, "claim_id": f"claim-{i}"} for i, c in enumerate(claims)],
@@ -87,6 +116,7 @@ async def submit_application(
         "claims_extracted": len(claims),
         "screen_verdict": verdict,
         "screen_reason": reason,
+        "dedupe": dedupe,
     }
 
 

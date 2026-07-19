@@ -38,6 +38,7 @@ Apply in numeric order. **Do not reorder** — later files assume earlier tables
 | `008_optional_federated.sql` | `federated_*`, `provenance_ledger` | optional — skip if behind |
 | `010_opportunity_deck_and_inbound_rank.sql` | `opportunities.deck_*` + `inbound_rank*` columns | inbound Perplexity rerank (`19-INBOUND-RERANK.md`) |
 | `012_memory_layer.sql` | `documents`, `document_chunks`, `memory_facts`, `actor_aliases`, `match_document_chunks()` | memory REST/MCP (see `18-MEMORY-LAYER.md`) |
+| `013_founder_enrichment.sql` | `founders.enrichment` + `enrichment_at` (Perplexity/Tavily dossier) | Founder Book profiles |
 
 ---
 

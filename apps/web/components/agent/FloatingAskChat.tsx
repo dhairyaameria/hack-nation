@@ -190,7 +190,7 @@ export function FloatingAskChat() {
         >
           <header className="flex items-center justify-between border-b border-line px-4 py-3">
             <div>
-              <p className="font-serif text-base font-semibold text-ink">Ask VC Brain</p>
+              <p className="font-serif text-base font-semibold text-ink">Ask Brain Venture</p>
               <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-sub">
                 Search + agent
               </p>
@@ -211,7 +211,7 @@ export function FloatingAskChat() {
                 <div
                   className={
                     m.role === "user"
-                      ? "inline-block max-w-[92%] rounded-[2px] bg-ink px-3 py-2 text-left text-xs text-background"
+                      ? "inline-block max-w-[92%] rounded-[2px] bg-primary px-3 py-2 text-left text-xs text-primary-foreground"
                       : "inline-block max-w-[92%] rounded-[2px] border border-line2 bg-background px-3 py-2 text-left text-xs text-ink"
                   }
                 >
@@ -286,7 +286,7 @@ export function FloatingAskChat() {
             <button
               type="submit"
               disabled={sending || !input.trim()}
-              className="shrink-0 rounded-[2px] bg-ink px-3 py-2 text-background disabled:opacity-40"
+              className="shrink-0 rounded-[2px] bg-primary px-3 py-2 text-primary-foreground disabled:opacity-40"
               aria-label="Send"
             >
               <Send className="h-3.5 w-3.5" />
@@ -298,8 +298,8 @@ export function FloatingAskChat() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex h-12 w-12 items-center justify-center rounded-full bg-ink text-background shadow-[0_8px_24px_rgba(25,23,19,0.25)] transition-transform hover:scale-105"
-        aria-label={open ? "Close Ask VC Brain" : "Open Ask VC Brain"}
+        className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_8px_28px_rgba(44,54,48,0.45)] transition-transform hover:scale-105"
+        aria-label={open ? "Close Ask Brain Venture" : "Open Ask Brain Venture"}
       >
         {open ? <X className="h-5 w-5" /> : <MessageSquareText className="h-5 w-5" />}
       </button>

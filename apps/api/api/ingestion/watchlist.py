@@ -312,6 +312,42 @@ def discover(
 
     out["confidence"] = confidence
     out["rationale"] = rationale
+
+    # Persist dossier + Gold from research already fetched (no second Perplexity call).
+    if pplx or web_results:
+        try:
+            from api.ingestion import founder_enrich
+
+            enrichment = {
+                "summary": (pplx or {}).get("answer") or "",
+                "citations": list((pplx or {}).get("citations") or [])[:16],
+                "web_results": [
+                    {
+                        "title": r.get("title"),
+                        "url": r.get("url"),
+                        "snippet": (r.get("content") or "")[:320],
+                    }
+                    for r in (web_results or [])
+                    if r.get("url")
+                ],
+                "evidence": list((pplx or {}).get("evidence") or [])[:12],
+                "sources": (
+                    ["perplexity", "tavily"] if (pplx and web_results)
+                    else (["perplexity"] if pplx else ["tavily"])
+                ),
+                "enriched_at": _now_iso(),
+                "access_mode": "public_web_research",
+                "company_name": company_name,
+                "disclaimer": (
+                    "Enriched from public web research (Perplexity/Tavily). "
+                    "Not a licensed LinkedIn or Crunchbase API feed."
+                ),
+            }
+            founder_enrich.persist_founder_enrichment(founder["id"], enrichment)
+            founder_enrich.refresh_genome_from_bronze(founder["id"])
+        except Exception as enrich_exc:  # noqa: BLE001 — discover still succeeds
+            print(f"[watchlist.discover] founder enrich skipped: {enrich_exc}")
+
     return out
 
 
@@ -379,11 +415,46 @@ def generate_outreach(entry_id: str) -> dict[str, Any]:
 def _submit_outbound_application(entry: dict[str, Any]) -> dict[str, Any]:
     """Same shape as `POST /application/submit`: extract claims → create
     opportunity → fast screen → persist claims. Research becomes provisional
-    claims (source=outbound_research), never fabricated beyond the text."""
+    claims (source=outbound_research), never fabricated beyond the text.
+
+    If the company already has an open opportunity, attach (reuse id) and skip
+    re-research / re-screen — diligence refresh stays on Analyze.
+    """
     signals = entry.get("signals") or []
     company_name = entry["company_name"] or f"{entry['founder_name']}'s company"
     founder_name = entry["founder_name"]
-    primary_channel = signals[0]["channel"] if signals else "outbound"
+    # Persist every connector channel (comma-separated) so outbound cards can
+    # show "sources extracted from" without another round-trip.
+    channels: list[str] = []
+    for s in signals:
+        ch = (s.get("channel") or "").strip()
+        if ch and ch not in channels:
+            channels.append(ch)
+    primary_channel = ",".join(channels) if channels else "outbound"
+
+    # Resolve early so we can short-circuit before expensive claim extraction.
+    company = memory.resolve_company(company_name, source="outbound")
+    open_opp = opportunity_store.find_open_opportunity(company["id"])
+    if open_opp is not None:
+        dedupe = {
+            "action": "attached",
+            "reason": "open_opportunity_exists",
+            "prior_status": open_opp.get("status"),
+            "prior_source": open_opp.get("source"),
+            "deferred": ["outbound_research", "fast_screen", "analyze"],
+        }
+        return {
+            "opportunity_id": open_opp["id"],
+            "company_id": company["id"],
+            "claims_extracted": 0,
+            "screen_verdict": open_opp.get("screen_verdict") or "needs-more-info",
+            "screen_reason": (
+                "Company already has an open opportunity — skipped re-research; "
+                "run Analyze to refresh."
+            ),
+            "sector": company.get("sector"),
+            "dedupe": dedupe,
+        }
 
     claims = outbound_enrich.claims_from_signals(
         signals, founder_name=founder_name, company_name=company_name
@@ -423,10 +494,12 @@ def _submit_outbound_application(entry: dict[str, Any]) -> dict[str, Any]:
     opportunity_store.set_sla_stage(opp["id"], "screening_at")
     return {
         "opportunity_id": opp["id"],
+        "company_id": opp.get("company_id") or company["id"],
         "claims_extracted": len(claims),
         "screen_verdict": verdict,
         "screen_reason": reason,
         "sector": sector,
+        "dedupe": opp.get("dedupe") or {"action": "created"},
     }
 
 
@@ -529,4 +602,44 @@ def ingest_sweep_lead(
         out = _row_out(created, founder_name, company_name)
     out["confidence"] = confidence
     out["rationale"] = rationale
+
+    try:
+        from api.ingestion import founder_enrich
+
+        enrichment = {
+            "summary": answer,
+            "citations": list(citations or [])[:16],
+            "web_results": [
+                {
+                    "title": r.get("title"),
+                    "url": r.get("url"),
+                    "snippet": (r.get("content") or "")[:320],
+                }
+                for r in (web_results or [])
+                if r.get("url")
+            ],
+            "evidence": list(evidence or [])[:12],
+            "sources": (
+                ["perplexity", "tavily"] if web_results else ["perplexity"]
+            ),
+            "enriched_at": _now_iso(),
+            "access_mode": "public_web_research",
+            "company_name": company_name,
+            "disclaimer": (
+                "Enriched from public web research (Perplexity/Tavily). "
+                "Not a licensed LinkedIn or Crunchbase API feed."
+            ),
+        }
+        # Also land Perplexity under the founder name so Gold bronze matching works.
+        memory.ingest_raw(
+            "perplexity",
+            {"query": f"thesis-sourcing-sweep:{company_name}", "answer": answer, "citations": citations},
+            entity_type="founder_research",
+            source_entity_id=founder_name,
+        )
+        founder_enrich.persist_founder_enrichment(founder["id"], enrichment)
+        founder_enrich.refresh_genome_from_bronze(founder["id"])
+    except Exception as enrich_exc:  # noqa: BLE001
+        print(f"[watchlist.ingest_sweep_lead] founder enrich skipped: {enrich_exc}")
+
     return out
