@@ -11,6 +11,11 @@ const VERDICT_STYLE: Record<string, string> = {
   "needs-more-info": "bg-warn-bg text-warn border-warn-line",
 };
 
+/**
+ * PDF preview must NOT sit inside a Next `<Link>` / `<a>`. Chrome's PDF
+ * viewer inside a nested iframe navigates the parent anchor and the page
+ * appears to refresh in a loop (especially with many cards).
+ */
 export function InboundApplicationCard({ app }: { app: InboundApplication }) {
   const href = app.company_id
     ? `/companies/${app.company_id}`
@@ -18,16 +23,14 @@ export function InboundApplicationCard({ app }: { app: InboundApplication }) {
   const pdfUrl = deckAbsoluteUrl(app.deck_url);
 
   return (
-    <Link
-      href={href}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border/80 bg-background no-underline transition hover:border-brand-ink/40 hover:shadow-sm"
-    >
+    <article className="flex flex-col overflow-hidden rounded-xl border border-border/80 bg-background transition hover:border-brand-ink/40 hover:shadow-sm">
       <div className="relative aspect-[4/3] overflow-hidden bg-muted/40">
         {pdfUrl ? (
           <iframe
             title={`${app.company_name} deck preview`}
             src={`${pdfUrl}#page=1&view=FitH&toolbar=0&navpanes=0`}
-            className="pointer-events-none h-[140%] w-full origin-top scale-[1.02] border-0"
+            className="h-[140%] w-full origin-top scale-[1.02] border-0"
+            loading="lazy"
           />
         ) : (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -38,9 +41,9 @@ export function InboundApplicationCard({ app }: { app: InboundApplication }) {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-background to-transparent" />
       </div>
 
-      <div className="space-y-2 p-4">
+      <Link href={href} className="block space-y-2 p-4 no-underline">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="text-base font-semibold tracking-tight text-foreground group-hover:text-brand-ink">
+          <h3 className="text-base font-semibold tracking-tight text-foreground hover:text-brand-ink">
             {app.company_name}
           </h3>
           {app.screen_verdict && (
@@ -70,7 +73,8 @@ export function InboundApplicationCard({ app }: { app: InboundApplication }) {
             </Badge>
           )}
         </div>
-      </div>
-    </Link>
+        <p className="pt-1 text-xs font-medium text-primary">Open company →</p>
+      </Link>
+    </article>
   );
 }
