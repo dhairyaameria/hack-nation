@@ -61,6 +61,21 @@ memory tables, so Product 1 can answer questions about them.
 **Deliverable:** dashboard wired to real REST endpoints, not just fixtures. Visual polish
 comes after live data.
 
+### Arman: to be decided (fill in after onboarding)
+
+Arman joins as the fourth teammate. This lane is intentionally empty until he finishes
+onboarding (read `AGENTS.md`, `docs/00-OVERVIEW.md`, `docs/01-CONTRACTS.md`, then this doc)
+and picks his focus with the team. Candidate areas, first to last by current need:
+outbound connectors under `jobs/connectors/`, the network graph (GraphQL resolvers + UI
+handoff with Omar), or demo/QA ownership (seed data, gate checklists, dry runs).
+
+| Owns | Notes |
+|---|---|
+| _TBD_ | Fill in owned paths here once decided |
+
+**Deliverable:** _TBD, agree with the team and update this section in the same PR as your
+first task._
+
 ### Shared touchpoints (integrator: Khaled)
 
 | Path | Rule |
@@ -78,7 +93,8 @@ comes after live data.
 main            <- always demoable at the latest gate
 ├── khaled/*    <- memory, MCP, migrations, seed
 ├── dhairya/*   <- intelligence, ingestion, pipelines, connectors
-└── omar/*      <- apps/web, fixtures
+├── omar/*      <- apps/web, fixtures
+└── arman/*     <- TBD after onboarding (see §2)
 ```
 
 - Branch from fresh `main`, keep branches short-lived (merge every 60 to 90 minutes).
@@ -115,6 +131,7 @@ Allowed paths per lane:
 - **Dhairya's agents:** `apps/api/api/intelligence/**`, `apps/api/api/ingestion/**`,
   `apps/api/api/agent/**`, `jobs/**`
 - **Omar's agents:** `apps/web/**`, `shared/fixtures/**`
+- **Arman's agents:** _TBD, do not dispatch agents for Arman until his lane in §2 is filled in_
 
 ---
 
