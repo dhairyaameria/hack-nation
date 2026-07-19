@@ -106,6 +106,12 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
             "thesis_fit_score": o.get("thesis_fit_score"),
             "status": o["status"],
             "has_contradiction": o["has_contradiction"],
+            "deck_url": o.get("deck_url"),
+            "deck_storage_path": o.get("deck_storage_path"),
+            "deck_filename": o.get("deck_filename"),
+            "inbound_rank": o.get("inbound_rank"),
+            "inbound_rank_rationale": o.get("inbound_rank_rationale"),
+            "inbound_ranked_at": o.get("inbound_ranked_at"),
             "axis_scores": axis_by_opp.get(o["id"], []),
             "sla": _sla_from_decision_log(decision_by_opp.get(o["id"])),
         })
@@ -176,7 +182,15 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
         "founder_id": o["founder_id"],
         "source": o["source"],
         "screen_verdict": o.get("screen_verdict"),
+        "thesis_fit_score": o.get("thesis_fit_score"),
         "has_contradiction": o["has_contradiction"],
+        "deck_url": o.get("deck_url"),
+        "deck_storage_path": o.get("deck_storage_path"),
+        "deck_filename": o.get("deck_filename"),
+        "inbound_rank": o.get("inbound_rank"),
+        "inbound_rank_rationale": o.get("inbound_rank_rationale"),
+        "inbound_ranked_at": o.get("inbound_ranked_at"),
+        "inbound_rank_run_id": o.get("inbound_rank_run_id"),
         "axis_scores": axis_scores,
         "claims": claims_out,
         "memo": memo,
@@ -206,6 +220,9 @@ def create_opportunity(
     source: str = "inbound",
     discovery_channel: str | None = "direct_apply",
     triggering_signal: str | None = None,
+    deck_url: str | None = None,
+    deck_storage_path: str | None = None,
+    deck_filename: str | None = None,
 ) -> dict[str, Any]:
     client = get_client()
     if client is None:
@@ -223,6 +240,13 @@ def create_opportunity(
             "thesis_fit_score": None,
             "status": "discovered",
             "has_contradiction": False,
+            "deck_url": deck_url,
+            "deck_storage_path": deck_storage_path,
+            "deck_filename": deck_filename,
+            "inbound_rank": None,
+            "inbound_rank_rationale": None,
+            "inbound_ranked_at": None,
+            "inbound_rank_run_id": None,
             "axis_scores": [],
             "claims": [],
             "memo": None,
@@ -244,6 +268,9 @@ def create_opportunity(
         "discovery_channel": discovery_channel,
         "triggering_signal": triggering_signal,
         "status": "discovered",
+        "deck_url": deck_url,
+        "deck_storage_path": deck_storage_path,
+        "deck_filename": deck_filename,
     }
     opp = client.table("opportunities").insert(opp_row).execute().data[0]
     client.table("decision_log").insert({"opportunity_id": opp["id"], "signal_at": _now_iso()}).execute()
@@ -260,6 +287,13 @@ def create_opportunity(
         "thesis_fit_score": None,
         "status": "discovered",
         "has_contradiction": False,
+        "deck_url": deck_url,
+        "deck_storage_path": deck_storage_path,
+        "deck_filename": deck_filename,
+        "inbound_rank": None,
+        "inbound_rank_rationale": None,
+        "inbound_ranked_at": None,
+        "inbound_rank_run_id": None,
         "axis_scores": [],
         "claims": [],
         "memo": None,
@@ -392,6 +426,91 @@ def set_sla_stage(opportunity_id: str, stage: str) -> None:
             client.table("decision_log").update({stage: _now_iso()}).eq("id", existing.data[0]["id"]).execute()
     else:
         client.table("decision_log").insert({"opportunity_id": opportunity_id, stage: _now_iso()}).execute()
+
+
+def list_inbound_for_rerank() -> list[dict[str, Any]]:
+    """Inbound opportunities with deck locators + claims for Perplexity rerank."""
+    client = get_client()
+    if client is None:
+        rows = [o for o in _memory().values() if o.get("source") == "inbound"]
+        return sorted(rows, key=lambda o: o.get("company_name") or "")
+
+    opp_res = (
+        client.table("opportunities")
+        .select(
+            "id, source, screen_verdict, status, thesis_fit_score, "
+            "deck_url, deck_storage_path, deck_filename, "
+            "inbound_rank, inbound_rank_rationale, inbound_ranked_at, "
+            "founders(display_name), companies(name)"
+        )
+        .eq("source", "inbound")
+        .order("created_at")
+        .execute()
+    )
+    out: list[dict[str, Any]] = []
+    for o in opp_res.data:
+        claims_res = (
+            client.table("claims")
+            .select("id, text, slide_locator")
+            .eq("opportunity_id", o["id"])
+            .execute()
+        )
+        out.append({
+            "id": o["id"],
+            "company_name": (o.get("companies") or {}).get("name", "Unknown"),
+            "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
+            "source": o["source"],
+            "screen_verdict": o.get("screen_verdict"),
+            "status": o.get("status"),
+            "thesis_fit_score": o.get("thesis_fit_score"),
+            "deck_url": o.get("deck_url"),
+            "deck_storage_path": o.get("deck_storage_path"),
+            "deck_filename": o.get("deck_filename"),
+            "inbound_rank": o.get("inbound_rank"),
+            "inbound_rank_rationale": o.get("inbound_rank_rationale"),
+            "inbound_ranked_at": o.get("inbound_ranked_at"),
+            "claims": [
+                {"claim_id": c["id"], "text": c["text"], "slide_locator": c.get("slide_locator")}
+                for c in claims_res.data
+            ],
+        })
+    return out
+
+
+def apply_inbound_rankings(
+    rankings: list[dict[str, Any]],
+    *,
+    run_id: str,
+    ranked_at: str,
+) -> None:
+    """Persist Perplexity (or heuristic) ranks onto opportunities.
+
+    Updates `inbound_rank`, `inbound_rank_rationale`, `thesis_fit_score`,
+    and run metadata. Does NOT touch the three independent axis scores.
+    """
+    client = get_client()
+    if client is None:
+        mem = _memory()
+        for row in rankings:
+            opp = mem.get(row["opportunity_id"])
+            if opp is None:
+                continue
+            opp["inbound_rank"] = row["rank"]
+            opp["inbound_rank_rationale"] = row.get("rationale")
+            opp["thesis_fit_score"] = row.get("score")
+            opp["inbound_ranked_at"] = ranked_at
+            opp["inbound_rank_run_id"] = run_id
+        return
+
+    for row in rankings:
+        client.table("opportunities").update({
+            "inbound_rank": row["rank"],
+            "inbound_rank_rationale": row.get("rationale"),
+            "thesis_fit_score": row.get("score"),
+            "inbound_ranked_at": ranked_at,
+            "inbound_rank_run_id": run_id,
+            "updated_at": ranked_at,
+        }).eq("id", row["opportunity_id"]).execute()
 
 
 def get_trace(opportunity_id: str) -> dict[str, Any] | None:

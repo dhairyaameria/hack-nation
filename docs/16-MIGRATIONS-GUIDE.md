@@ -36,6 +36,7 @@ Apply in numeric order. **Do not reorder** — later files assume earlier tables
 | `006_memos_decisions.sql` | `memos`, `decision_log` | C, E |
 | `007_agent_skills.sql` | `skill_definitions`, `skill_runs`, `chat_sessions`, `chat_messages` | D |
 | `008_optional_federated.sql` | `federated_*`, `provenance_ledger` | optional — skip if behind |
+| `010_opportunity_deck_and_inbound_rank.sql` | `opportunities.deck_*` + `inbound_rank*` columns | inbound Perplexity rerank (`19-INBOUND-RERANK.md`). Numbered 010 to avoid collision with unmerged `009_memory_layer.sql` |
 
 ---
 

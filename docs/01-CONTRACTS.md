@@ -16,6 +16,8 @@ Owner: **Agent A (Data)** implements the DDL; everyone else consumes.
 
 **`thesis_profiles` key fields:** full DDL in `12-THESIS-SETTINGS-UI.md`; `opportunities.thesis_profile_id` stores active thesis at analysis time
 
+**`opportunities` deck + inbound rank fields** (migration `010`, see `19-INBOUND-RERANK.md`): `deck_url`, `deck_storage_path`, `deck_filename`, `inbound_rank`, `inbound_rank_rationale`, `inbound_ranked_at`, `inbound_rank_run_id`. `thesis_fit_score` is updated by inbound rerank; it is **not** a composite of the three axes.
+
 ### Scores & profiles
 - `founder_score_history` — persistent Founder Score per founder, full time series, never resets
 - `founder_confidence_intervals` — research track output (score + interval + evidence coverage)
@@ -65,7 +67,9 @@ Base path: `/api/v1`. All responses JSON. All factual payloads include evidence 
 | Endpoint | Method | Owner | Purpose |
 |---|---|---|---|
 | `/ingest/founder` | POST | A | Manual/connector ingestion entry |
-| `/application/submit` | POST | B | Inbound: deck + company_name (minimum bar) |
+| `/application/submit` | POST | B | Inbound: deck + company_name (minimum bar); stores `deck_url` / `deck_storage_path` |
+| `/inbound/rerank` | POST | Arman | Perplexity rerank of all inbound vs active thesis (manual or cron; see `19-INBOUND-RERANK.md`) |
+| `/inbound/ranked` | GET | Arman | Inbound list ordered by latest `inbound_rank` |
 | `/opportunity/{id}/analyze` | POST | C | Runs 3-axis + memo pipeline |
 | `/opportunity/{id}/memo` | GET | C | Structured memo (sections + gap flags) |
 | `/opportunity/{id}/trust` | GET | C | Per-claim trust scores + evidence |

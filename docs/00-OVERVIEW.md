@@ -29,6 +29,7 @@ Every build agent must read this file and `01-CONTRACTS.md` before starting. **B
 | `15-MOCK-FIXTURES.md` | Wave 1 frontend JSON fixtures | Agent E |
 | `16-MIGRATIONS-GUIDE.md` | Ordered SQL migration files + apply steps | Agent A |
 | `17-PARALLEL-WORKFLOW.md` | Branch strategy, module ownership, merge order | Team lead |
+| `19-INBOUND-RERANK.md` | Perplexity inbound rerank (API + cron) | Arman |
 
 **Dependency order:** `01-CONTRACTS` → `02-DATA-FOUNDATION` (schema live early) → everything else in parallel → `06-FRONTEND` consumes APIs as they land → `07-EXECUTION` integration.
 

@@ -27,6 +27,7 @@ Data- and AI-first venture operating system for discovering founders, running di
 | [`docs/15-MOCK-FIXTURES.md`](docs/15-MOCK-FIXTURES.md) | Wave 1 frontend JSON fixtures |
 | [`docs/16-MIGRATIONS-GUIDE.md`](docs/16-MIGRATIONS-GUIDE.md) | Ordered SQL migrations (Agent A) |
 | [`docs/17-PARALLEL-WORKFLOW.md`](docs/17-PARALLEL-WORKFLOW.md) | Multi-agent branches, ownership, merge order |
+| [`docs/19-INBOUND-RERANK.md`](docs/19-INBOUND-RERANK.md) | Perplexity inbound rerank (API + cron, cost notes) |
 
 ## Quick start
 
