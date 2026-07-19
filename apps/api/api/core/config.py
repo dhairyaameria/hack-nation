@@ -50,6 +50,7 @@ class Settings:
     openai_api_key: str = os.getenv("OPENAI_API_KEY", "")
     perplexity_api_key: str = os.getenv("PERPLEXITY_API_KEY", "")
     tavily_api_key: str = os.getenv("TAVILY_API_KEY", "")
+    elevenlabs_api_key: str = os.getenv("ELEVENLABS_API_KEY", "")
 
     cors_origins: list[str] = _cors_origins()
     # Preview + production Vercel deployments
