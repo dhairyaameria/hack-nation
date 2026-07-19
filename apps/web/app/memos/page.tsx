@@ -1,74 +1,111 @@
 import Link from "next/link";
-import { AlertTriangle, FileText } from "lucide-react";
+import { ArrowRight, FileText } from "lucide-react";
 import { getMemos } from "@/lib/api/client";
-import { Badge } from "@/components/ui/badge";
+import { SectionLabel, DiscoveryChannelBadge } from "@/components/ui/ds";
 
 export const dynamic = "force-dynamic";
 
+/** Bar showing filled sections vs. flagged gaps — gaps are never hidden. */
+function CompletenessBar({ filled, gaps, total }: { filled: number; gaps: number; total: number }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="flex gap-[3px]">
+        {Array.from({ length: total }, (_, i) => (
+          <span
+            key={i}
+            className="h-2 w-5 rounded-[1px]"
+            style={{ background: i < filled ? "var(--good-ink)" : "var(--warn-bg)" }}
+          />
+        ))}
+      </div>
+      <span className="font-mono text-[10.5px] text-sub">
+        {filled}/{total}
+        {gaps > 0 && <span className="text-warn"> · {gaps} gap{gaps > 1 ? "s" : ""}</span>}
+      </span>
+    </div>
+  );
+}
+
 export default async function InvestmentMemosPage() {
   const memos = await getMemos();
+  const totalGaps = memos.reduce((n, m) => n + m.gaps_flagged, 0);
+  const contradictions = memos.filter((m) => m.has_contradiction).length;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto space-y-6">
-      <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Investment Memos</h1>
-        <p className="text-sm text-muted-foreground">
-          All generated memos — company snapshot, hypotheses, SWOT, problem &amp; product,
-          traction. Gap flags stay visible; nothing is fabricated to fill a blank.
+    <div className="mx-auto max-w-[1100px] px-10 pb-24 pt-14">
+      <div className="border-b border-ink pb-7">
+        <SectionLabel className="text-sub">Investment memos</SectionLabel>
+        <h1 className="mt-3.5 font-serif text-[44px] font-medium leading-[1.05] tracking-[-0.01em]">
+          Investment memos
+        </h1>
+        <p className="mt-3 max-w-[620px] text-[15px] leading-relaxed text-sub">
+          Company snapshot, problem &amp; product, traction, hypotheses, SWOT. Gaps stay
+          flagged as gaps — nothing is fabricated to fill a blank section.
         </p>
-      </header>
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-6 font-mono text-[10.5px] uppercase tracking-[0.1em] text-sub">
+        <span>{memos.length} memo{memos.length === 1 ? "" : "s"}</span>
+        <span className="text-warn">{totalGaps} open gap{totalGaps === 1 ? "" : "s"}</span>
+        <span className={contradictions > 0 ? "text-bad" : undefined}>
+          {contradictions} contradiction{contradictions === 1 ? "" : "s"}
+        </span>
+      </div>
 
       {memos.length === 0 ? (
-        <div className="rounded-lg border border-dashed p-10 text-center space-y-2">
-          <FileText className="h-8 w-8 mx-auto text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+        <div className="mt-8 rounded-[2px] border border-dashed border-line3 px-6 py-14 text-center">
+          <FileText className="mx-auto h-7 w-7 text-faint" />
+          <p className="mt-3 text-[13px] text-sub">
             No memos yet. Run Analyze on an opportunity to generate one.
           </p>
+          <Link href="/" className="mt-1 inline-block font-mono text-[11px] uppercase tracking-[0.06em]">
+            Go to pipeline →
+          </Link>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="mt-6 rounded-[2px] border border-line bg-surface">
+          <div className="flex items-center justify-between border-b border-line px-5 py-3 font-mono text-[10.5px] uppercase tracking-[0.1em] text-sub">
+            <span>All memos</span>
+            <span>Sorted by last updated</span>
+          </div>
           {memos.map((memo) => (
             <Link
               key={memo.id}
-              href={`/opportunities/${memo.opportunity_id}`}
-              className="block rounded-lg border p-4 space-y-2 hover:border-primary/50 transition-colors"
+              href={`/memos/${memo.id}`}
+              className="block border-b border-line2 border-l-2 border-l-transparent px-5 py-5 !text-ink no-underline transition-colors last:border-b-0 hover:border-l-brand hover:bg-raise"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="font-medium">
-                    {memo.company_name}
-                    <span className="text-muted-foreground font-normal"> — {memo.founder_name}</span>
-                  </p>
-                  {memo.updated_at && (
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Updated {new Date(memo.updated_at).toLocaleString()}
-                    </p>
-                  )}
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="font-serif text-xl font-semibold">{memo.company_name}</span>
+                    {memo.source && <DiscoveryChannelBadge channel={memo.source} />}
+                    {memo.has_contradiction && (
+                      <span className="rounded-[2px] bg-bad-bg px-[7px] py-[3px] font-mono text-[9.5px] uppercase tracking-[0.06em] text-bad">
+                        Contradiction
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-1 font-mono text-[11px] text-sub">{memo.founder_name}</div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {memo.source && (
-                    <Badge variant={memo.source === "outbound" ? "secondary" : "outline"}>
-                      {memo.source}
-                    </Badge>
-                  )}
-                  {memo.has_contradiction && (
-                    <Badge variant="destructive" className="gap-1">
-                      <AlertTriangle className="h-3 w-3" /> Contradiction
-                    </Badge>
-                  )}
+                <div className="flex shrink-0 items-center gap-4">
+                  <CompletenessBar
+                    filled={memo.sections_filled}
+                    gaps={memo.gaps_flagged}
+                    total={memo.section_count}
+                  />
+                  <ArrowRight className="h-4 w-4 text-faint" />
                 </div>
               </div>
-
               {memo.snapshot && (
-                <p className="text-sm text-muted-foreground line-clamp-2">{memo.snapshot}</p>
+                <p className="mt-2.5 max-w-[760px] text-[13px] leading-relaxed text-sub">
+                  {memo.snapshot}
+                </p>
               )}
-
-              <p className="text-xs text-muted-foreground">
-                {memo.sections_filled}/{memo.section_count} sections filled
-                {memo.gaps_flagged > 0 && (
-                  <span className="text-warn"> · {memo.gaps_flagged} gap(s) flagged</span>
-                )}
-              </p>
+              {memo.updated_at && (
+                <div className="mt-2 font-mono text-[10px] uppercase tracking-[0.06em] text-faint">
+                  Updated {new Date(memo.updated_at).toLocaleString()}
+                </div>
+              )}
             </Link>
           ))}
         </div>

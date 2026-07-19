@@ -1,0 +1,251 @@
+{
+  "memos": [
+    {
+      "id": "memo-novametrics",
+      "opportunity_id": "opp-contradiction",
+      "company_name": "NovaMetrics",
+      "founder_name": "Elena Vasquez",
+      "source": "inbound",
+      "has_contradiction": true,
+      "created_at": "2026-07-17T09:12:00Z",
+      "updated_at": "2026-07-18T08:40:00Z",
+      "snapshot": "Observability for ML feature pipelines. Claims $1.2M ARR and 22% MoM growth, but the deck figure is contradicted by the Stripe export and one reference call.",
+      "sections": [
+        {
+          "title": "Company snapshot",
+          "not_disclosed": false,
+          "content": "Observability for ML feature pipelines — drift detection, lineage, and replay for teams running training jobs in production. Seed-stage, Berlin, four full-time engineers.",
+          "evidence": [
+            { "source_type": "deck", "source_locator": "Slide 2", "evidence_snippet": "Team of 4 FTE, Berlin, incorporated March 2025.", "confidence": 0.92 },
+            { "source_type": "filing", "source_locator": "Handelsregister HRB 241887", "evidence_snippet": "Incorporation date and registered officers corroborate the deck.", "confidence": 0.95 }
+          ]
+        },
+        {
+          "title": "Problem & product",
+          "not_disclosed": false,
+          "content": "Feature pipelines fail silently — a schema drift upstream degrades a model for weeks before anyone notices. NovaMetrics instruments the pipeline itself rather than the model output, which is what lets them catch drift at the source.",
+          "evidence": [
+            { "source_type": "deck", "source_locator": "Slides 4-6", "evidence_snippet": "Architecture diagram: agents instrument Airflow and Dagster operators directly.", "confidence": 0.88 },
+            { "source_type": "call", "source_locator": "Call 01 · 08:14", "evidence_snippet": "Two design partners confirmed the silent-failure problem independently.", "confidence": 0.74 }
+          ]
+        },
+        {
+          "title": "Traction",
+          "not_disclosed": false,
+          "content": "CONTRADICTION: the deck claims $1.2M ARR as of March 2026 with 22% MoM growth. The Stripe export supplied in diligence totals $412K ARR for the same period, and reference call 02 described revenue as \"just under half a million\". The gap is unexplained and material.",
+          "evidence": [
+            { "source_type": "deck", "source_locator": "Slide 7", "evidence_snippet": "Claims $1.2M ARR as of March 2026; chart shows 22% MoM growth.", "confidence": 0.9 },
+            { "source_type": "export", "source_locator": "Stripe export 2026-03-31", "evidence_snippet": "Gross recurring revenue totals $412,000 annualised for the same period.", "confidence": 0.96 },
+            { "source_type": "call", "source_locator": "Call 02 · 14:32", "evidence_snippet": "Founder described revenue as \"just under half a million\".", "confidence": 0.71 }
+          ]
+        },
+        {
+          "title": "Hypotheses",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        },
+        {
+          "title": "SWOT",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "memo-rivera",
+      "opportunity_id": "opp-alex-inbound",
+      "company_name": "Rivera Labs",
+      "founder_name": "Alex Rivera",
+      "source": "inbound",
+      "has_contradiction": false,
+      "created_at": "2026-07-18T10:45:00Z",
+      "updated_at": "2026-07-18T11:20:00Z",
+      "snapshot": "Deterministic replay for distributed training jobs. Second-time founder, 2x prior exit verified via filings; 312 commits in the trailing 90 days.",
+      "sections": [
+        {
+          "title": "Company snapshot",
+          "not_disclosed": false,
+          "content": "Deterministic replay and checkpointing for multi-node training runs. Solo technical founder, pre-seed, currently three design partners in enterprise ML platform teams.",
+          "evidence": [
+            { "source_type": "deck", "source_locator": "Slide 1", "evidence_snippet": "Solo founder, pre-seed, three named design partners.", "confidence": 0.9 }
+          ]
+        },
+        {
+          "title": "Problem & product",
+          "not_disclosed": false,
+          "content": "A failed training run at hour 40 currently means restarting from the last checkpoint and hoping the failure does not recur. Rivera Labs makes runs bit-reproducible so a failure can be replayed and diagnosed rather than merely retried.",
+          "evidence": [
+            { "source_type": "github", "source_locator": "commit a3f21c", "evidence_snippet": "Core replay engine rewritten solo by the founder over 11 days.", "confidence": 0.94 }
+          ]
+        },
+        {
+          "title": "Traction",
+          "not_disclosed": false,
+          "content": "Three design partners, no revenue yet by the founder's own statement. Deliberately pre-revenue — the team is optimising for depth of integration before pricing.",
+          "evidence": [
+            { "source_type": "call", "source_locator": "Call 03 · 21:05", "evidence_snippet": "Founder stated no revenue and explained the reasoning without prompting.", "confidence": 0.86 }
+          ]
+        },
+        {
+          "title": "Hypotheses",
+          "not_disclosed": false,
+          "content": "If reproducibility becomes a compliance requirement for regulated ML deployments, this moves from a developer convenience to a procurement checkbox. The bet is on that regulatory shift arriving within 24 months.",
+          "evidence": [
+            { "source_type": "web", "source_locator": "EU AI Act Art. 12", "evidence_snippet": "Record-keeping obligations for high-risk systems may imply run reproducibility.", "confidence": 0.58 }
+          ]
+        },
+        {
+          "title": "SWOT",
+          "not_disclosed": false,
+          "content": "Strength: rare systems depth, 2x prior exit verified via filings. Weakness: solo founder, no commercial hire. Opportunity: compliance-driven demand. Threat: the major training frameworks could absorb this natively.",
+          "evidence": [
+            { "source_type": "filing", "source_locator": "Companies House 09218844", "evidence_snippet": "Two prior exits confirmed against the founder's stated history.", "confidence": 0.93 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "memo-lee",
+      "opportunity_id": "opp-jordan-outbound",
+      "company_name": "Lee Analytics",
+      "founder_name": "Jordan Lee",
+      "source": "outbound",
+      "has_contradiction": false,
+      "created_at": "2026-07-16T14:02:00Z",
+      "updated_at": "2026-07-17T16:33:00Z",
+      "snapshot": "Attribution modelling for mid-market e-commerce. Sourced via a 2-hop network path; founder axis is weak and traction claims remain unconfirmed.",
+      "sections": [
+        {
+          "title": "Company snapshot",
+          "not_disclosed": false,
+          "content": "Multi-touch attribution for e-commerce brands in the $5-50M revenue band. Two co-founders, both commercial rather than technical.",
+          "evidence": [
+            { "source_type": "web", "source_locator": "leeanalytics.io/about", "evidence_snippet": "Two named co-founders, both with agency backgrounds.", "confidence": 0.66 }
+          ]
+        },
+        {
+          "title": "Problem & product",
+          "not_disclosed": false,
+          "content": "Post-cookie attribution is genuinely broken for mid-market brands who cannot afford a data team. The product is a hosted model with pre-built connectors. The wedge is real; the differentiation against incumbents is not yet clear from available evidence.",
+          "evidence": [
+            { "source_type": "web", "source_locator": "Product page", "evidence_snippet": "Twelve advertised connectors, no published methodology.", "confidence": 0.6 }
+          ]
+        },
+        {
+          "title": "Traction",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        },
+        {
+          "title": "Hypotheses",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        },
+        {
+          "title": "SWOT",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "memo-lattice",
+      "opportunity_id": "opp-portfolio-lattice",
+      "company_name": "LatticeForge",
+      "founder_name": "Maya Okonkwo",
+      "source": "outbound",
+      "has_contradiction": false,
+      "created_at": "2026-07-14T08:30:00Z",
+      "updated_at": "2026-07-16T09:15:00Z",
+      "snapshot": "Compiler toolchain for sparse tensor kernels. Discovered on GitHub, 1.2k stars in nine days; pricing thesis still rests on a single pilot.",
+      "sections": [
+        {
+          "title": "Company snapshot",
+          "not_disclosed": false,
+          "content": "Compiler toolchain that generates hardware-specific kernels for sparse tensor operations. Discovered through GitHub sourcing rather than inbound.",
+          "evidence": [
+            { "source_type": "github", "source_locator": "latticeforge/lf-core", "evidence_snippet": "1,240 stars in the nine days following first public release.", "confidence": 0.91 }
+          ]
+        },
+        {
+          "title": "Problem & product",
+          "not_disclosed": false,
+          "content": "Sparse kernels are hand-tuned per architecture, so a model that is fast on one accelerator is slow on the next. LatticeForge compiles from a single description to per-target kernels.",
+          "evidence": [
+            { "source_type": "arxiv", "source_locator": "arXiv:2604.11823", "evidence_snippet": "Benchmarks show 3.1x over hand-tuned baselines on two of three targets.", "confidence": 0.84 }
+          ]
+        },
+        {
+          "title": "Traction",
+          "not_disclosed": false,
+          "content": "One paid pilot with a semiconductor vendor; strong open-source adoption that has not yet converted to revenue. Adoption is real but monetisation is unproven.",
+          "evidence": [
+            { "source_type": "call", "source_locator": "Call 01 · 32:10", "evidence_snippet": "Single paid pilot confirmed; no second contract in progress.", "confidence": 0.79 }
+          ]
+        },
+        {
+          "title": "SWOT",
+          "not_disclosed": false,
+          "content": "Strength: genuine technical moat and organic developer pull. Weakness: no commercial motion. Opportunity: accelerator vendors need this. Threat: a vendor builds it in-house and open-sources it.",
+          "evidence": []
+        },
+        {
+          "title": "Hypotheses",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        }
+      ]
+    },
+    {
+      "id": "memo-orbit",
+      "opportunity_id": "opp-portfolio-orbit",
+      "company_name": "OrbitStack",
+      "founder_name": "Jonas Berg",
+      "source": "inbound",
+      "has_contradiction": false,
+      "created_at": "2026-07-18T07:05:00Z",
+      "updated_at": "2026-07-18T07:05:00Z",
+      "snapshot": "Edge orchestration for low-latency inference. Deck parsed but most sections are still gaps — the founder withheld revenue and headcount.",
+      "sections": [
+        {
+          "title": "Company snapshot",
+          "not_disclosed": false,
+          "content": "Orchestration layer that places inference workloads across edge points of presence. Deck received 40 minutes ago; diligence has not started.",
+          "evidence": [
+            { "source_type": "deck", "source_locator": "Slide 1", "evidence_snippet": "Positioning statement and target latency envelope.", "confidence": 0.7 }
+          ]
+        },
+        {
+          "title": "Problem & product",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        },
+        {
+          "title": "Traction",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        },
+        {
+          "title": "Hypotheses",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        },
+        {
+          "title": "SWOT",
+          "not_disclosed": true,
+          "content": null,
+          "evidence": []
+        }
+      ]
+    }
+  ]
+}

@@ -12,6 +12,7 @@ import opportunityFixture from "@/lib/fixtures/opportunity-detail.json";
 import founderFixture from "@/lib/fixtures/founder-profile.json";
 import thesisFixture from "@/lib/fixtures/thesis-active.json";
 import networkGraphFixture from "@/lib/fixtures/network-graph-seed.json";
+import memosFixture from "@/lib/fixtures/memos.json";
 import type { OpportunityDetail, OpportunitySummary } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -180,12 +181,61 @@ export interface MemoListItem {
   created_at?: string | null;
 }
 
+/** A memo section with its supporting evidence. */
+export interface MemoSectionDetail {
+  title: string;
+  content: string | null;
+  not_disclosed: boolean;
+  evidence: EvidenceRef[];
+}
+
+export interface MemoDetail {
+  id: string;
+  opportunity_id: string;
+  company_name: string;
+  founder_name: string;
+  source?: string | null;
+  has_contradiction: boolean;
+  snapshot?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+  sections: MemoSectionDetail[];
+}
+
+const memoFixtures = memosFixture.memos as MemoDetail[];
+
+/** List counts are derived, never stored — they cannot drift from the sections. */
+function toListItem(m: MemoDetail): MemoListItem {
+  return {
+    id: m.id,
+    opportunity_id: m.opportunity_id,
+    company_name: m.company_name,
+    founder_name: m.founder_name,
+    source: m.source,
+    has_contradiction: m.has_contradiction,
+    snapshot: m.snapshot,
+    created_at: m.created_at,
+    updated_at: m.updated_at,
+    section_count: m.sections.length,
+    sections_filled: m.sections.filter((s) => s.content != null).length,
+    gaps_flagged: m.sections.filter((s) => s.not_disclosed).length,
+  };
+}
+
 export async function getMemos(): Promise<MemoListItem[]> {
   if (!USE_FIXTURES) {
     const live = await tryFetch<{ memos: MemoListItem[] }>("/api/v1/memos");
     if (live) return live.memos;
   }
-  return [];
+  return memoFixtures.map(toListItem);
+}
+
+export async function getMemoDetail(id: string): Promise<MemoDetail | null> {
+  if (!USE_FIXTURES) {
+    const live = await tryFetch<MemoDetail>(`/api/v1/memos/${id}`);
+    if (live) return live;
+  }
+  return memoFixtures.find((m) => m.id === id) ?? null;
 }
 
 export interface PortfolioCompany {
