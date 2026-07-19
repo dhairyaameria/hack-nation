@@ -114,7 +114,7 @@ export type WatchlistStage =
   | "screening";
 
 export interface WatchlistSignal {
-  channel: "github" | "hackernews";
+  channel: "github" | "hackernews" | "perplexity" | "web_search" | "arxiv";
   [key: string]: unknown;
 }
 
@@ -195,6 +195,7 @@ export interface SourcingSweepResult {
   thesis: string | null;
   thesis_id?: string;
   leads: SourcingSweepLead[];
+  watchlist_entries?: WatchlistEntry[];
   error: string | null;
 }
 

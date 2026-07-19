@@ -42,27 +42,56 @@ def _today_midnight_iso() -> str:
 
 
 def _from_bronze_signals(client, founder_id: str) -> dict[str, Any] | None:
-    founder_res = client.table("founders").select("source_entity_id").eq("id", founder_id).limit(1).execute()
-    if not founder_res.data or not founder_res.data[0].get("source_entity_id"):
-        return None
-    source_entity_id = founder_res.data[0]["source_entity_id"]
-
-    bronze_res = (
-        client.table("bronze_raw_events")
-        .select("*")
-        .eq("source_entity_id", source_entity_id)
-        .order("fetched_at", desc=True)
+    founder_res = (
+        client.table("founders")
+        .select("source_entity_id, display_name")
+        .eq("id", founder_id)
+        .limit(1)
         .execute()
     )
-    if not bronze_res.data:
+    if not founder_res.data:
+        return None
+    founder = founder_res.data[0]
+    source_entity_id = founder.get("source_entity_id")
+    display_name = founder.get("display_name") or ""
+
+    # Match Bronze by source_entity_id (GitHub login) OR founder display name
+    # (Perplexity/Tavily ingest uses the human name as source_entity_id).
+    ids = [x for x in {source_entity_id, display_name} if x]
+    if not ids:
         return None
 
-    github = next((r["payload"] for r in bronze_res.data if r["source"] == "github"), None)
-    hn = next((r["payload"] for r in bronze_res.data if r["source"] == "hackernews"), None)
-    if not github and not hn:
+    bronze_rows: list[dict[str, Any]] = []
+    for sid in ids:
+        res = (
+            client.table("bronze_raw_events")
+            .select("*")
+            .eq("source_entity_id", sid)
+            .order("fetched_at", desc=True)
+            .limit(20)
+            .execute()
+        )
+        bronze_rows.extend(res.data or [])
+    if not bronze_rows:
         return None
 
-    execution_velocity, technical_depth, public_footprint_depth = 0.4, 0.4, 0.3
+    github = next((r["payload"] for r in bronze_rows if r["source"] == "github"), None)
+    hn = next((r["payload"] for r in bronze_rows if r["source"] == "hackernews"), None)
+    arxiv = next((r["payload"] for r in bronze_rows if r["source"] == "arxiv"), None)
+    pplx = next((r["payload"] for r in bronze_rows if r["source"] == "perplexity"), None)
+    tavily = next((r["payload"] for r in bronze_rows if r["source"] == "tavily"), None)
+
+    if not any((github, hn, arxiv, pplx, tavily)):
+        return None
+
+    # Cold-start / public-footprint path: research richness is a real signal
+    # for pre-track-record or non-GitHub founders — never invent execution
+    # from silence, but do credit corroborating public web footprint.
+    execution_velocity, technical_depth = 0.35, 0.35
+    public_footprint_depth = 0.25
+    resilience_proxy = 0.5
+    derived = "bronze_signals"
+
     if github:
         execution_velocity = min(1.0, (github.get("repos_pushed_last_90d") or 0) / 5)
         technical_depth = min(
@@ -72,15 +101,33 @@ def _from_bronze_signals(client, founder_id: str) -> dict[str, Any] | None:
         public_footprint_depth = min(1.0, (github.get("followers") or 0) / 500)
     if hn:
         public_footprint_depth = max(public_footprint_depth, min(1.0, (hn.get("total_points") or 0) / 300))
+    if arxiv:
+        paper_count = arxiv.get("paper_count") or 0
+        technical_depth = max(technical_depth, min(1.0, 0.4 + paper_count * 0.1))
+        public_footprint_depth = max(public_footprint_depth, min(1.0, paper_count / 8))
+    if pplx or tavily:
+        cite_n = len((pplx or {}).get("citations") or [])
+        web_n = len((tavily or {}).get("results") or [])
+        # Dense independent public coverage → stronger footprint; still capped
+        # and confidence-qualified so it can't dominate a genome snapshot.
+        public_footprint_depth = max(public_footprint_depth, min(0.85, 0.35 + 0.08 * cite_n + 0.06 * web_n))
+        answer = ((pplx or {}).get("answer") or "").lower()
+        if any(k in answer for k in ("raised", "series", "traction", "customers", "arr", "revenue")):
+            execution_velocity = max(execution_velocity, 0.55)
+        if any(k in answer for k in ("engineer", "caltech", "mit", "stanford", "technical", "phd")):
+            technical_depth = max(technical_depth, 0.6)
+        if any(k in answer for k in ("immigrant", "dropout", "pivot", "second-time", "resilien")):
+            resilience_proxy = 0.6
+        derived = "bronze_public_footprint"
 
     return {
         "execution_velocity": round(execution_velocity, 2),
         "technical_depth": round(technical_depth, 2),
-        "resilience_proxy": 0.5,  # no direct signal from a single connector snapshot — neutral, not penalized
+        "resilience_proxy": round(resilience_proxy, 2),
         "public_footprint_depth": round(public_footprint_depth, 2),
         "network_embeddedness": 0.0,
-        "confidence": 0.4,  # derived from Bronze, not a full Genome profile
-        "derived_from": "bronze_signals",
+        "confidence": 0.45 if derived == "bronze_public_footprint" else 0.4,
+        "derived_from": derived,
     }
 
 

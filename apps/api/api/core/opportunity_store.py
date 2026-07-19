@@ -286,7 +286,15 @@ def _db_apply_claims(client, opportunity_id: str, claims: list[dict[str, Any]]) 
     if not is_analysis_output:
         # Fresh deck-parsed claims — insert rows, ignore the router's
         # placeholder claim_id (DB assigns the real one).
-        rows = [{"opportunity_id": opportunity_id, "text": c["text"], "slide_locator": c.get("slide_locator"), "source": "deck"} for c in claims]
+        rows = [
+            {
+                "opportunity_id": opportunity_id,
+                "text": c["text"],
+                "slide_locator": c.get("slide_locator"),
+                "source": c.get("source") or "deck",
+            }
+            for c in claims
+        ]
         client.table("claims").insert(rows).execute()
         return
 

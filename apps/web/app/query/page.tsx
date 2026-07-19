@@ -90,22 +90,24 @@ export default function NaturalLanguageQueryPage() {
 
           <div className="space-y-3">
             {result.results.map((r) => (
-              <Link
+              <div
                 key={r.opportunity_id}
-                href={`/opportunities/${r.opportunity_id}`}
-                className="block rounded-lg border p-4 space-y-2 hover:border-primary/50 transition-colors"
+                className="rounded-lg border p-4 space-y-2 hover:border-primary/50 transition-colors"
               >
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">
-                      {r.company_name}
-                      <span className="text-muted-foreground"> — {r.founder_name}</span>
-                      {r.company_sector && (
-                        <span className="ml-2 text-xs text-muted-foreground">({r.company_sector})</span>
-                      )}
-                    </p>
-                  </div>
-                  <span className="text-sm font-semibold tabular-nums">
+                <div className="flex items-center justify-between gap-3">
+                  <Link
+                    href={`/opportunities/${r.opportunity_id}`}
+                    className="font-medium hover:underline"
+                  >
+                    {r.company_name}
+                    <span className="text-muted-foreground font-normal"> — {r.founder_name}</span>
+                    {r.company_sector && (
+                      <span className="ml-2 text-xs text-muted-foreground font-normal">
+                        ({r.company_sector})
+                      </span>
+                    )}
+                  </Link>
+                  <span className="text-sm font-semibold tabular-nums shrink-0">
                     {r.match_count}/{result.constraints.length} matched
                   </span>
                 </div>
@@ -122,7 +124,7 @@ export default function NaturalLanguageQueryPage() {
                     </p>
                   ))}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </div>

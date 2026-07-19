@@ -13,6 +13,7 @@ import {
   type WatchlistEntry,
 } from "@/lib/api/client";
 import { Badge } from "@/components/ui/badge";
+import { ExternalLink, dedupeUrls } from "@/components/ui/ExternalLink";
 
 const STAGE_STYLE: Record<string, string> = {
   discovered: "bg-slate-100 text-slate-700 border-slate-300",
@@ -79,7 +80,11 @@ export default function SourcingPage() {
     setSweeping(true);
     setError(null);
     try {
-      setSweep(await runSourcingSweep());
+      const result = await runSourcingSweep();
+      setSweep(result);
+      // Sweep now lands named founder/company pairs on the watchlist —
+      // refresh so they appear without a manual reload.
+      await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Sourcing sweep failed");
     } finally {
@@ -196,6 +201,9 @@ export default function SourcingPage() {
             {sweep.thesis && (
               <p className="text-xs text-muted-foreground">
                 Thesis: <span className="font-medium">{sweep.thesis}</span> · {sweep.leads.length} querie(s) with results
+                {sweep.watchlist_entries && sweep.watchlist_entries.length > 0 && (
+                  <> · landed <span className="font-medium">{sweep.watchlist_entries.length}</span> watchlist candidate(s)</>
+                )}
               </p>
             )}
             {sweep.leads.map((lead, i) => (
@@ -203,19 +211,18 @@ export default function SourcingPage() {
                 <p className="text-xs font-medium text-muted-foreground">{lead.query}</p>
                 <p className="text-sm whitespace-pre-wrap">{lead.answer}</p>
                 {lead.evidence.length > 0 && (
-                  <div className="space-y-1 border-t pt-2">
+                  <ul className="space-y-1 border-t pt-2">
                     {lead.evidence.slice(0, 4).map((e, j) => (
-                      <a
-                        key={j}
-                        href={e.source_locator}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="block text-[11px] text-blue-700 hover:underline truncate"
-                      >
-                        [{j + 1}] {e.title || e.source_locator}
-                      </a>
+                      <li key={`${e.source_locator}-${j}`}>
+                        <ExternalLink
+                          href={e.source_locator}
+                          className="inline text-[11px] text-blue-700 hover:underline break-all"
+                        >
+                          [{j + 1}] {e.title || e.source_locator}
+                        </ExternalLink>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             ))}
@@ -252,6 +259,62 @@ export default function SourcingPage() {
                   </Badge>
                 </div>
 
+                {entry.signals.some((s) => s.channel === "perplexity" || s.channel === "web_search") && (
+                  <div className="space-y-2 rounded-md bg-muted/30 p-3 text-xs">
+                    {entry.signals
+                      .filter((s) => s.channel === "perplexity")
+                      .map((s, i) => {
+                        const citations = dedupeUrls(
+                          Array.isArray(s.citations) ? (s.citations as string[]) : []
+                        ).slice(0, 4);
+                        return (
+                          <div key={`pplx-${i}`} className="space-y-1">
+                            <p className="font-medium text-muted-foreground">Perplexity</p>
+                            <p className="whitespace-pre-wrap leading-relaxed">{String(s.answer ?? "").slice(0, 600)}</p>
+                            {citations.length > 0 && (
+                              <ul className="space-y-1">
+                                {citations.map((url, j) => (
+                                  <li key={url}>
+                                    <ExternalLink href={url} className="inline text-blue-700 hover:underline break-all">
+                                      [{j + 1}] {url}
+                                    </ExternalLink>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                          </div>
+                        );
+                      })}
+                    {entry.signals
+                      .filter((s) => s.channel === "web_search")
+                      .map((s, i) => {
+                        const results = Array.isArray(s.results)
+                          ? (s.results as { title?: string; url?: string }[])
+                          : [];
+                        const seen = new Set<string>();
+                        const unique = results.filter((r) => {
+                          if (!r.url || seen.has(r.url)) return false;
+                          seen.add(r.url);
+                          return true;
+                        }).slice(0, 4);
+                        return (
+                          <div key={`tav-${i}`} className="space-y-1 border-t pt-2">
+                            <p className="font-medium text-muted-foreground">Tavily web search</p>
+                            <ul className="space-y-1">
+                              {unique.map((r, j) => (
+                                <li key={r.url}>
+                                  <ExternalLink href={r.url!} className="inline text-blue-700 hover:underline break-all">
+                                    [{j + 1}] {r.title || r.url}
+                                  </ExternalLink>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+
                 {outreachDraft?.id === entry.id && (
                   <pre className="whitespace-pre-wrap rounded-md bg-muted/40 p-3 text-xs">{outreachDraft.draft}</pre>
                 )}
@@ -285,7 +348,11 @@ export default function SourcingPage() {
                     </button>
                   )}
                   {entry.opportunity_id && (
-                    <Link href={`/opportunities/${entry.opportunity_id}`} className="text-sm font-medium text-emerald-700 hover:underline">
+                    <Link
+                      href={`/opportunities/${entry.opportunity_id}`}
+                      className="text-sm font-medium text-emerald-700 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       View opportunity →
                     </Link>
                   )}

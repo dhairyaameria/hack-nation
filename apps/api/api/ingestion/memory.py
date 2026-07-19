@@ -103,19 +103,44 @@ def resolve_founder(
     return client.table("founders").insert(row).execute().data[0]
 
 
-def resolve_company(name: str, *, domain: str | None = None, source: str | None = None) -> dict[str, Any]:
+def resolve_company(
+    name: str,
+    *,
+    domain: str | None = None,
+    source: str | None = None,
+    sector: str | None = None,
+) -> dict[str, Any]:
     client = get_client()
     if client is None:
-        return {"id": f"company-{uuid.uuid4().hex[:8]}", "name": name, "domain": domain}
+        return {"id": f"company-{uuid.uuid4().hex[:8]}", "name": name, "domain": domain, "sector": sector}
 
+    company: dict[str, Any] | None = None
     if domain:
         res = client.table("companies").select("*").eq("domain", domain).limit(1).execute()
         if res.data:
-            return res.data[0]
+            company = res.data[0]
 
-    res = client.table("companies").select("*").ilike("name", name).limit(1).execute()
-    if res.data:
-        return res.data[0]
+    if company is None:
+        res = client.table("companies").select("*").ilike("name", name).limit(1).execute()
+        if res.data:
+            company = res.data[0]
 
-    row = {"name": name, "domain": domain, "status": "active", "source": source, "fetched_at": _now_iso()}
+    if company is not None:
+        # Backfill sector when outbound research learns it later.
+        if sector and not company.get("sector"):
+            try:
+                client.table("companies").update({"sector": sector}).eq("id", company["id"]).execute()
+                company["sector"] = sector
+            except Exception as exc:  # noqa: BLE001
+                print(f"[memory] company sector backfill failed: {exc}")
+        return company
+
+    row = {
+        "name": name,
+        "domain": domain,
+        "sector": sector,
+        "status": "active",
+        "source": source,
+        "fetched_at": _now_iso(),
+    }
     return client.table("companies").insert(row).execute().data[0]
