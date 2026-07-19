@@ -10,10 +10,12 @@ from __future__ import annotations
 
 import re
 
-from fastapi import APIRouter, HTTPException
+import httpx
+from fastapi import APIRouter, File, HTTPException, UploadFile
 from pydantic import BaseModel
 
 from api.agent import memory_chat, nl_query, pipeline_stats, sourcing_sweep, thesis_store
+from api.core.config import settings
 
 router = APIRouter(tags=["thesis", "agent"])
 

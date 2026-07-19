@@ -18,7 +18,7 @@ recommendations. Two areas share ONE Supabase Postgres + pgvector database:
 
 Current status: Waves 1-2 landed (deck parsing, fast screen, real
 Analyst/Validator/Referee scoring wired to OpenAI + Tavily, live Supabase).
-Memory layer + MCP server + pipeline skeleton scaffolded (migration 011,
+Memory layer + MCP server + pipeline skeleton scaffolded (migration 012,
 `api/memory/`, `api/mcp/`, `jobs/pipelines/`).
 
 Binding product rules live in `docs/00-OVERVIEW.md` §4. Key ones: never
