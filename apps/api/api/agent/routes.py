@@ -164,6 +164,32 @@ def agent_message(payload: dict):
     }
 
 
+@router.post("/agent/transcribe")
+async def transcribe_audio(audio: UploadFile = File(...)):
+    """Proxy mic recordings to ElevenLabs speech-to-text (Scribe).
+
+    Keeps the API key server-side; the browser only ever talks to us.
+    """
+    if not settings.elevenlabs_api_key:
+        raise HTTPException(503, "ELEVENLABS_API_KEY not configured")
+    data = await audio.read()
+    if not data:
+        raise HTTPException(400, "empty audio upload")
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            res = await client.post(
+                "https://api.elevenlabs.io/v1/speech-to-text",
+                headers={"xi-api-key": settings.elevenlabs_api_key},
+                data={"model_id": "scribe_v1"},
+                files={"file": (audio.filename or "audio.webm", data, audio.content_type or "audio/webm")},
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(502, f"ElevenLabs unreachable: {exc}") from exc
+    if res.status_code != 200:
+        raise HTTPException(502, f"ElevenLabs error {res.status_code}: {res.text[:200]}")
+    return {"text": (res.json().get("text") or "").strip()}
+
+
 class SourcingSweepPayload(BaseModel):
     thesis_id: str | None = None
 

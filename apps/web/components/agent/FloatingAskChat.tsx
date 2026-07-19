@@ -2,9 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { MessageSquareText, Send, X } from "lucide-react";
+import { MessageSquareText, Mic, Send, Square, X } from "lucide-react";
 import {
   sendAgentMessage,
+  transcribeAudio,
   type AgentMessageResponse,
   type MemoryCitation,
   type NlQueryResponse,
@@ -97,6 +98,9 @@ export function FloatingAskChat() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const recorderRef = useRef<MediaRecorder | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -137,6 +141,43 @@ export function FloatingAskChat() {
       ]);
     } finally {
       setSending(false);
+    }
+  }
+
+  async function toggleRecording() {
+    if (recording) {
+      recorderRef.current?.stop();
+      setRecording(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: Blob[] = [];
+      recorder.ondataavailable = (e) => chunks.push(e.data);
+      recorder.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setTranscribing(true);
+        try {
+          const text = await transcribeAudio(new Blob(chunks, { type: recorder.mimeType }));
+          if (text) void send(text);
+        } catch {
+          setMessages((m) => [
+            ...m,
+            { role: "assistant", content: "Transcription failed — try again or type instead.", mode: "chat" },
+          ]);
+        } finally {
+          setTranscribing(false);
+        }
+      };
+      recorder.start();
+      recorderRef.current = recorder;
+      setRecording(true);
+    } catch {
+      setMessages((m) => [
+        ...m,
+        { role: "assistant", content: "Microphone unavailable — check browser permissions.", mode: "chat" },
+      ]);
     }
   }
 
@@ -222,11 +263,26 @@ export function FloatingAskChat() {
           >
             <input
               className="min-w-0 flex-1 rounded-[2px] border border-line bg-background px-3 py-2 text-xs text-ink placeholder:text-sub focus:outline-none focus:ring-1 focus:ring-brand"
-              placeholder="Filter deals or ask a question…"
+              placeholder={
+                recording ? "Recording… tap ■ to send" : transcribing ? "Transcribing…" : "Filter deals or ask a question…"
+              }
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={sending}
             />
+            <button
+              type="button"
+              onClick={() => void toggleRecording()}
+              disabled={sending || transcribing}
+              className={
+                recording
+                  ? "shrink-0 rounded-[2px] bg-red-600 px-3 py-2 text-white disabled:opacity-40"
+                  : "shrink-0 rounded-[2px] border border-line px-3 py-2 text-sub hover:border-ink hover:text-ink disabled:opacity-40"
+              }
+              aria-label={recording ? "Stop recording" : "Record voice question"}
+            >
+              {recording ? <Square className="h-3.5 w-3.5" /> : <Mic className="h-3.5 w-3.5" />}
+            </button>
             <button
               type="submit"
               disabled={sending || !input.trim()}
