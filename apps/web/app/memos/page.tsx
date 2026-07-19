@@ -66,7 +66,7 @@ export default async function InvestmentMemosPage() {
               <p className="text-xs text-muted-foreground">
                 {memo.sections_filled}/{memo.section_count} sections filled
                 {memo.gaps_flagged > 0 && (
-                  <span className="text-amber-700"> · {memo.gaps_flagged} gap(s) flagged</span>
+                  <span className="text-warn"> · {memo.gaps_flagged} gap(s) flagged</span>
                 )}
               </p>
             </Link>

@@ -31,7 +31,7 @@ export function AnalyzeButton({ opportunityId }: { opportunityId: string }) {
       >
         {running ? "Running Analyst → Validator → Referee…" : "Run analysis"}
       </button>
-      {error && <span className="text-sm text-red-600">{error}</span>}
+      {error && <span className="text-sm text-bad">{error}</span>}
     </div>
   );
 }

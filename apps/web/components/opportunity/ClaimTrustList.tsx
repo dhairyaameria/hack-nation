@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import type { ClaimTrust } from "@/lib/types";
 
 const STATUS_STYLE: Record<ClaimTrust["validation_status"], string> = {
-  verified: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  contradicted: "bg-red-100 text-red-800 border-red-200",
-  weakly_supported: "bg-amber-100 text-amber-800 border-amber-200",
-  unknown: "bg-zinc-100 text-zinc-700 border-zinc-200",
+  verified: "bg-good-bg text-good border-good/30",
+  contradicted: "bg-bad-bg text-bad border-bad-line",
+  weakly_supported: "bg-warn-bg text-warn border-warn-line",
+  unknown: "bg-line2 text-sub border-line3",
 };
 
 const STATUS_LABEL: Record<ClaimTrust["validation_status"], string> = {
@@ -26,7 +26,7 @@ export function ClaimTrustList({ claims }: { claims: ClaimTrust[] }) {
   return (
     <div className="space-y-3">
       {claims.map((claim) => (
-        <Card key={claim.claim_id} className={cn(claim.validation_status === "contradicted" && "border-red-300")}>
+        <Card key={claim.claim_id} className={cn(claim.validation_status === "contradicted" && "border-bad-line")}>
           <CardContent className="pt-4 space-y-2">
             <div className="flex items-start justify-between gap-3">
               <p className="text-sm font-medium">{claim.text}</p>

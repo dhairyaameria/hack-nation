@@ -60,7 +60,7 @@ export function FounderNetworkGraph({
   }
 
   return (
-    <div ref={containerRef} className="h-[320px] rounded-lg border overflow-hidden bg-slate-50">
+    <div ref={containerRef} className="h-[320px] rounded-[2px] border overflow-hidden bg-raise">
       {size.width > 0 && (
         <ForceGraph2D
           graphData={graphData}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
 import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud, Search, FileText, Home } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -45,8 +46,11 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="px-4 py-4 border-t text-xs text-muted-foreground">
-        Deploying $100K checks in 24 hours.
+      <div className="px-4 py-4 border-t space-y-3">
+        <ThemeToggle />
+        <div className="text-xs text-muted-foreground">
+          Deploying $100K checks in 24 hours.
+        </div>
       </div>
     </aside>
   );

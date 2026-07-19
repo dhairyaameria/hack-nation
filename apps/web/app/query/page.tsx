@@ -71,7 +71,7 @@ export default function NaturalLanguageQueryPage() {
         </div>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-bad">{error}</p>}
 
       {result && (
         <div className="space-y-4">
@@ -114,7 +114,7 @@ export default function NaturalLanguageQueryPage() {
                 <div className="space-y-1 border-t pt-2">
                   {r.clause_matches.map((m, i) => (
                     <p key={i} className="text-xs flex gap-2">
-                      <span className={m.matched ? "text-emerald-600" : "text-muted-foreground"}>
+                      <span className={m.matched ? "text-good" : "text-muted-foreground"}>
                         {m.matched ? "✓" : "✕"}
                       </span>
                       <span>

@@ -7,9 +7,9 @@ import { submitApplication, type SubmitApplicationResult } from "@/lib/api/clien
 import { Badge } from "@/components/ui/badge";
 
 const VERDICT_STYLE: Record<string, string> = {
-  pass: "bg-emerald-100 text-emerald-800 border-emerald-300",
-  reject: "bg-red-100 text-red-800 border-red-300",
-  "needs-more-info": "bg-amber-100 text-amber-800 border-amber-300",
+  pass: "bg-good-bg text-good border-good/30",
+  reject: "bg-bad-bg text-bad border-bad-line",
+  "needs-more-info": "bg-warn-bg text-warn border-warn-line",
 };
 
 export default function ApplyPage() {
@@ -90,7 +90,7 @@ export default function ApplyPage() {
         </button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-bad">{error}</p>}
 
       {result && (
         <div className="rounded-lg border p-4 space-y-2">

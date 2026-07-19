@@ -14,7 +14,7 @@ export function MemoView({ memo }: { memo: Memo | null | undefined }) {
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-semibold">{section.title}</h4>
             {section.not_disclosed && (
-              <Badge variant="outline" className="text-amber-700 border-amber-300 bg-amber-50">
+              <Badge variant="outline" className="text-warn border-warn-line bg-warn-bg">
                 Not disclosed
               </Badge>
             )}
