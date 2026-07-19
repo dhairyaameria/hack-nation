@@ -78,7 +78,7 @@ function SearchResults({ search }: { search: NlQueryResponse }) {
             <ul className="space-y-0.5">
               {r.clause_matches.slice(0, 4).map((m, i) => (
                 <li key={i} className="text-[10px] leading-snug text-sub">
-                  <span className={m.matched ? "text-emerald-700" : "text-sub/70"}>
+                  <span className={m.matched ? "text-good" : "text-sub/70"}>
                     {m.matched ? "✓" : "✕"}
                   </span>{" "}
                   <span className="text-ink/80">{m.constraint}</span>

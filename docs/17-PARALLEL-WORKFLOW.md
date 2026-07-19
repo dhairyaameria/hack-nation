@@ -61,20 +61,19 @@ memory tables, so Product 1 can answer questions about them.
 **Deliverable:** dashboard wired to real REST endpoints, not just fixtures. Visual polish
 comes after live data.
 
-### Arman: to be decided (fill in after onboarding)
-
-Arman joins as the fourth teammate. This lane is intentionally empty until he finishes
-onboarding (read `AGENTS.md`, `docs/00-OVERVIEW.md`, `docs/01-CONTRACTS.md`, then this doc)
-and picks his focus with the team. Candidate areas, first to last by current need:
-outbound connectors under `jobs/connectors/`, the network graph (GraphQL resolvers + UI
-handoff with Omar), or demo/QA ownership (seed data, gate checklists, dry runs).
+### Arman: inbound Perplexity rerank (+ future outbound connectors)
 
 | Owns | Notes |
 |---|---|
-| _TBD_ | Fill in owned paths here once decided |
+| `apps/api/api/ingestion/inbound_rerank.py` | Thesis-fit ranking via Perplexity |
+| `apps/api/api/ingestion/deck_storage.py` | Pitch deck upload/download helpers |
+| `apps/api/api/intelligence/perplexity.py` | Shared Perplexity client |
+| `jobs/pipelines/inbound_rerank_cron.py` | Cron entrypoint (same fn as HTTP) |
+| `docs/19-INBOUND-RERANK.md` | Spec + cost/scale debt |
 
-**Deliverable:** _TBD, agree with the team and update this section in the same PR as your
-first task._
+Schema for deck/rank columns: propose via PR; Khaled reviews `db/migrations/010_*`.
+
+**Deliverable:** `POST /api/v1/inbound/rerank` + cron both write `inbound_rank` from deck text in DB/Storage.
 
 ### Shared touchpoints (integrator: Khaled)
 
@@ -94,7 +93,7 @@ main            <- always demoable at the latest gate
 ├── khaled/*    <- memory, MCP, migrations, seed
 ├── dhairya/*   <- intelligence, ingestion, pipelines, connectors
 ├── omar/*      <- apps/web, fixtures
-└── arman/*     <- TBD after onboarding (see §2)
+└── arman/*     <- inbound rerank, perplexity client, deck storage
 ```
 
 - Branch from fresh `main`, keep branches short-lived (merge every 60 to 90 minutes).
@@ -110,7 +109,8 @@ Modules communicate via the database and `shared/schemas` only, with two allowed
 
 1. Anyone may import `api/intelligence/llm.py` as the shared LLM helper
    (e.g. `api/memory/extraction.py` uses `chat_json`).
-2. `jobs/pipelines/` is a thin orchestrator and may import any `api/*` module,
+2. Anyone may import `api/intelligence/perplexity.py` for search-grounded calls.
+3. `jobs/pipelines/` is a thin orchestrator and may import any `api/*` module,
    but must not contain business logic itself.
 
 No other cross-imports between owned modules.
@@ -131,7 +131,10 @@ Allowed paths per lane:
 - **Dhairya's agents:** `apps/api/api/intelligence/**`, `apps/api/api/ingestion/**`,
   `apps/api/api/agent/**`, `jobs/**`
 - **Omar's agents:** `apps/web/**`, `shared/fixtures/**`
-- **Arman's agents:** _TBD, do not dispatch agents for Arman until his lane in §2 is filled in_
+- **Arman's agents:** `apps/api/api/ingestion/inbound_rerank.py`,
+  `apps/api/api/ingestion/deck_storage.py`, `apps/api/api/intelligence/perplexity.py`,
+  `jobs/pipelines/inbound_rerank_cron.py`, `docs/19-INBOUND-RERANK.md`
+  (migrations: describe only — Khaled applies)
 
 ---
 

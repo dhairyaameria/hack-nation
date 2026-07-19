@@ -79,11 +79,75 @@ export async function getNetworkGraphSeed(founderId: string) {
 
 export interface SubmitApplicationResult {
   opportunity_id: string;
+  company_id?: string | null;
   company_name: string;
   deck_filename: string | null;
+  has_deck?: boolean;
+  deck_url?: string | null;
   claims_extracted: number;
   screen_verdict: "pass" | "reject" | "needs-more-info";
   screen_reason: string;
+}
+
+export interface InboundApplication {
+  id: string;
+  company_id?: string | null;
+  company_name: string;
+  company_sector?: string | null;
+  company_stage?: string | null;
+  founder_name: string;
+  founder_id?: string;
+  source: string;
+  screen_verdict?: string | null;
+  thesis_fit_score?: number | null;
+  status?: string;
+  has_deck?: boolean;
+  deck_filename?: string | null;
+  deck_url?: string | null;
+  has_contradiction?: boolean;
+}
+
+export interface CompanyProfile {
+  id: string;
+  name: string;
+  domain?: string | null;
+  sector?: string | null;
+  stage?: string | null;
+  description?: string | null;
+  enrichment?: {
+    summary?: string;
+    citations?: string[];
+    web_results?: { title?: string; url?: string; snippet?: string }[];
+    disclaimer?: string;
+    sources?: string[];
+  };
+  opportunities?: InboundApplication[];
+  primary_opportunity_id?: string | null;
+  deck_url?: string | null;
+  has_deck?: boolean;
+  deck_filename?: string | null;
+}
+
+export function deckAbsoluteUrl(deckUrl: string | null | undefined): string | null {
+  if (!deckUrl) return null;
+  if (deckUrl.startsWith("http")) return deckUrl;
+  return `${API_URL}${deckUrl}`;
+}
+
+export async function getInboundApplications(): Promise<InboundApplication[]> {
+  if (!USE_FIXTURES) {
+    const live = await tryFetch<{ applications: InboundApplication[] }>("/api/v1/inbound/applications");
+    if (live) return live.applications;
+  }
+  const dash = await getPipelineDashboard();
+  return dash.opportunities.filter((o) => o.source === "inbound") as InboundApplication[];
+}
+
+export async function getCompanyProfile(companyId: string): Promise<CompanyProfile | null> {
+  if (!USE_FIXTURES) {
+    return tryFetch<CompanyProfile>(`/api/v1/companies/${companyId}`);
+  }
+  return null;
 }
 
 export async function submitApplication(formData: FormData): Promise<SubmitApplicationResult> {

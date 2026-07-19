@@ -84,10 +84,10 @@
   --line2: #efebe3;
   --line3: #ddd6ca;
   --dotline: #c9c2b6;
-  --dotline-a: #c9997e;
-  --brand: #e25a2b;
-  --brand-ink: #b8430f;
-  --brand-ink-h: #8f3106;
+  --dotline-a: #b49bbc;
+  --brand: #7a4a86;
+  --brand-ink: #5a2f66;
+  --brand-ink-h: #46234f;
   --good-ink: #3e7c4f;
   --good-bg: #e8f0e6;
   --warn-ink: #8a6114;
@@ -133,8 +133,12 @@
   --sidebar-ring: var(--brand);
 }
 
+/*
+ * Dark theme. Same warm paper palette as light, inverted — the accent stays
+ * the brand orange, lifted for legibility on a dark surface. Semantic
+ * good/warn/bad keep their hues, likewise lightened.
+ */
 .dark {
-  /* VC Brain DS — dark */
   --surface: #1d1a16;
   --raise: #242019;
   --ink: #f0ebe2;
@@ -144,10 +148,10 @@
   --line2: #2b2822;
   --line3: #443f35;
   --dotline: #5a5344;
-  --dotline-a: #8a5a3c;
-  --brand: #e86a3c;
-  --brand-ink: #e8895f;
-  --brand-ink-h: #f2a377;
+  --dotline-a: #7a5a85;
+  --brand: #a96fb8;
+  --brand-ink: #c9a5d8;
+  --brand-ink-h: #dcc0e6;
   --good-ink: #8cc79a;
   --good-bg: #22301f;
   --warn-ink: #d9b15e;

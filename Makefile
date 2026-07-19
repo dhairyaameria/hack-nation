@@ -1,4 +1,4 @@
-.PHONY: dev-api dev-web db-reset db-seed mcp pipeline
+.PHONY: dev-api dev-web db-reset db-seed mcp pipeline inbound-rerank
 
 dev-api:
 	cd apps/api && source .venv/bin/activate && uvicorn main:app --reload --port 8000
@@ -24,3 +24,7 @@ mcp:
 # Product 2 daily loop: screens/analyzes seeded opportunities, see jobs/pipelines/
 pipeline:
 	cd apps/api && source .venv/bin/activate && python ../../jobs/pipelines/daily_pipeline.py
+
+# Perplexity inbound rerank (same code path as POST /api/v1/inbound/rerank)
+inbound-rerank:
+	cd apps/api && source .venv/bin/activate && PYTHONPATH=. python ../../jobs/pipelines/inbound_rerank_cron.py

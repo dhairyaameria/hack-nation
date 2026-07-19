@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
 import { Briefcase, LayoutDashboard, Users, CircleUser, UploadCloud, FileText, Home } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -44,16 +45,19 @@ export function Sidebar() {
           );
         })}
       </nav>
-      <div className="px-4 py-4 border-t flex items-center gap-3">
-        <div
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
-          aria-hidden
-        >
-          DA
-        </div>
-        <div className="min-w-0">
-          <div className="text-sm font-medium truncate">Dhairya Ameria</div>
-          <div className="text-xs text-muted-foreground truncate">Investor · VC Brain</div>
+      <div className="px-4 py-4 border-t space-y-3">
+        <ThemeToggle />
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+            aria-hidden
+          >
+            DA
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-medium truncate">Dhairya Ameria</div>
+            <div className="text-xs text-muted-foreground truncate">Investor · VC Brain</div>
+          </div>
         </div>
       </div>
     </aside>

@@ -8,11 +8,21 @@ application code path) lives in `api.ingestion.watchlist`.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Form, HTTPException, UploadFile
+from typing import Any
+
+from fastapi import APIRouter, Body, Form, HTTPException, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel
 
 from api.core import opportunity_store
-from api.ingestion import deck_parser, fast_screen, watchlist
+from api.ingestion import (
+    deck_parser,
+    deck_storage,
+    deck_store,
+    fast_screen,
+    inbound_rerank,
+    watchlist,
+)
 
 router = APIRouter(tags=["ingestion"])
 
@@ -27,8 +37,11 @@ async def submit_application(
     docs/03-SOURCING.md §1 — do not add more required fields.
     """
     claims: list[dict[str, str]] = []
+    file_bytes: bytes | None = None
+    filename: str | None = None
     if deck is not None:
         file_bytes = await deck.read()
+        filename = deck.filename
         claims = deck_parser.parse_deck(file_bytes)
 
     verdict, reason = fast_screen.screen(company_name, claims)
@@ -39,22 +52,124 @@ async def submit_application(
         source="inbound",
         discovery_channel="direct_apply",
     )
+
+    deck_meta: dict[str, str] = {}
+    if file_bytes is not None:
+        # Supabase Storage (shared across deploys) + local mirror for preview API
+        deck_meta = deck_storage.upload_deck(opp["id"], file_bytes, filename)
+        local_meta = deck_store.save_deck(opp["id"], file_bytes, filename)
+        if not deck_meta.get("deck_storage_path"):
+            deck_meta["deck_storage_path"] = local_meta["deck_storage_path"]
+        if not deck_meta.get("deck_filename"):
+            deck_meta["deck_filename"] = local_meta["deck_filename"]
+        # Prefer API-served URL for iframe previews when Storage public URL is empty
+        if not deck_meta.get("deck_url"):
+            deck_meta["deck_url"] = f"/api/v1/inbound/applications/{opp['id']}/deck"
+
     opportunity_store.update_opportunity(
         opp["id"],
         claims=[{**c, "claim_id": f"claim-{i}"} for i, c in enumerate(claims)],
         screen_verdict=verdict,
         status="screening" if verdict == "pass" else "rejected" if verdict == "reject" else "needs-more-info",
+        **deck_meta,
     )
     opportunity_store.set_sla_stage(opp["id"], "screening_at")
 
     return {
         "opportunity_id": opp["id"],
+        "company_id": opp.get("company_id"),
         "company_name": company_name,
-        "deck_filename": deck.filename if deck else None,
+        "deck_filename": deck_meta.get("deck_filename") or filename,
+        "has_deck": bool(deck_meta),
+        "deck_url": deck_meta.get("deck_url")
+        or (f"/api/v1/inbound/applications/{opp['id']}/deck" if deck_meta else None),
+        "deck_storage_path": deck_meta.get("deck_storage_path"),
         "claims_extracted": len(claims),
         "screen_verdict": verdict,
         "screen_reason": reason,
     }
+
+
+@router.post("/inbound/rerank")
+def rerank_inbound(payload: dict[str, Any] | None = Body(default=None)):
+    """Manually trigger Perplexity rerank of all inbound opportunities.
+
+    Same code path as the cron job (`jobs/pipelines/inbound_rerank_cron.py`).
+    Optional body: `{"trigger": "manual"}` (default). UI can call this from
+    a button later — no UI assumptions here.
+    """
+    trigger = "manual"
+    if isinstance(payload, dict) and payload.get("trigger") in {"manual", "cron", "api"}:
+        trigger = payload["trigger"]
+    return inbound_rerank.rerank_inbound(trigger=trigger)  # type: ignore[arg-type]
+
+
+@router.get("/inbound/ranked")
+def list_ranked_inbound():
+    """Inbound opportunities ordered by latest `inbound_rank` (nulls last)."""
+    rows = opportunity_store.list_inbound_for_rerank()
+    rows.sort(
+        key=lambda r: (
+            r.get("inbound_rank") is None,
+            r.get("inbound_rank") if r.get("inbound_rank") is not None else 10**9,
+            r.get("company_name") or "",
+        )
+    )
+    return {
+        "count": len(rows),
+        "opportunities": [
+            {
+                "id": r["id"],
+                "company_name": r["company_name"],
+                "founder_name": r["founder_name"],
+                "screen_verdict": r.get("screen_verdict"),
+                "status": r.get("status"),
+                "thesis_fit_score": r.get("thesis_fit_score"),
+                "inbound_rank": r.get("inbound_rank"),
+                "inbound_rank_rationale": r.get("inbound_rank_rationale"),
+                "deck_url": r.get("deck_url"),
+                "deck_storage_path": r.get("deck_storage_path"),
+            }
+            for r in rows
+        ],
+    }
+
+
+@router.get("/inbound/applications")
+def list_inbound_applications():
+    """Card grid for Inbound Sources — PDF preview + company deep-link."""
+    return {"applications": opportunity_store.list_inbound()}
+
+
+@router.get("/inbound/applications/{opportunity_id}/deck")
+def get_inbound_deck(opportunity_id: str):
+    opp = opportunity_store.get_opportunity(opportunity_id)
+    if opp is None:
+        raise HTTPException(404, "Opportunity not found")
+    storage_path = opp.get("deck_storage_path")
+    data = deck_store.read_deck_bytes(opportunity_id, storage_path)
+    if data is None and storage_path:
+        data = deck_storage.download_deck(storage_path)
+    if not data:
+        raise HTTPException(404, "Deck PDF not found")
+    filename = opp.get("deck_filename") or "deck.pdf"
+    return Response(
+        content=data,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "Cache-Control": "private, max-age=300",
+        },
+    )
+
+
+@router.get("/companies/{company_id}")
+def get_company(company_id: str, enrich: bool = True):
+    """Company profile with research enrichment + linked opportunities."""
+    profile = opportunity_store.get_company_profile(company_id, enrich=enrich)
+    if profile is None:
+        raise HTTPException(404, "Company not found")
+    return profile
 
 
 @router.post("/ingest/founder")

@@ -16,12 +16,12 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, dedupeUrls } from "@/components/ui/ExternalLink";
 
 const STAGE_STYLE: Record<string, string> = {
-  discovered: "bg-slate-100 text-slate-700 border-slate-300",
-  scored: "bg-blue-100 text-blue-800 border-blue-300",
-  "activation-candidate": "bg-violet-100 text-violet-800 border-violet-300",
-  "outreach-sent": "bg-amber-100 text-amber-800 border-amber-300",
-  applied: "bg-cyan-100 text-cyan-800 border-cyan-300",
-  screening: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  discovered: "bg-line2 text-sub border-line3",
+  scored: "bg-raise text-brand-ink border-line3",
+  "activation-candidate": "bg-raise text-brand-ink border-brand/40",
+  "outreach-sent": "bg-warn-bg text-warn border-warn-line",
+  applied: "bg-raise text-ink border-line3",
+  screening: "bg-good-bg text-good border-good/30",
 };
 
 /** Discover form + thesis sweep + watchlist — opened from Outbound Sources via Find Lead. */
@@ -186,7 +186,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
         </button>
       </form>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-bad">{error}</p>}
 
       <section className="rounded-lg border p-4 space-y-4">
         <div className="flex items-center justify-between gap-4">
@@ -211,7 +211,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
 
         {sweep && (
           <div className="space-y-3 border-t pt-3">
-            {sweep.error && <p className="text-sm text-amber-700">{sweep.error}</p>}
+            {sweep.error && <p className="text-sm text-warn">{sweep.error}</p>}
             {sweep.thesis && (
               <p className="text-xs text-muted-foreground">
                 Thesis: <span className="font-medium">{sweep.thesis}</span> · {sweep.leads.length}{" "}
@@ -235,7 +235,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                       <li key={`${e.source_locator}-${j}`}>
                         <ExternalLink
                           href={e.source_locator}
-                          className="inline text-[11px] text-blue-700 hover:underline break-all"
+                          className="inline text-[11px] text-brand-ink hover:underline break-all"
                         >
                           [{j + 1}] {e.title || e.source_locator}
                         </ExternalLink>
@@ -297,14 +297,14 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                             {url ? (
                               <ExternalLink
                                 href={url}
-                                className="inline text-blue-700 hover:underline break-all"
+                                className="inline text-brand-ink hover:underline break-all"
                               >
                                 {url}
                               </ExternalLink>
                             ) : (
                               <p className="text-muted-foreground">No profile URL resolved</p>
                             )}
-                            {(s.headline || s.snippet) && (
+                            {Boolean(s.headline || s.snippet) && (
                               <p className="leading-relaxed">
                                 {String(s.headline ?? "")}
                                 {s.headline && s.snippet ? " — " : ""}
@@ -332,7 +332,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                                   <li key={url}>
                                     <ExternalLink
                                       href={url}
-                                      className="inline text-blue-700 hover:underline break-all"
+                                      className="inline text-brand-ink hover:underline break-all"
                                     >
                                       [{j + 1}] {url}
                                     </ExternalLink>
@@ -365,7 +365,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                                 <li key={r.url}>
                                   <ExternalLink
                                     href={r.url!}
-                                    className="inline text-blue-700 hover:underline break-all"
+                                    className="inline text-brand-ink hover:underline break-all"
                                   >
                                     [{j + 1}] {r.title || r.url}
                                   </ExternalLink>
@@ -418,7 +418,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                   {entry.opportunity_id && (
                     <Link
                       href={`/opportunities/${entry.opportunity_id}`}
-                      className="text-sm font-medium text-emerald-700 hover:underline"
+                      className="text-sm font-medium text-good hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
                       View opportunity →

@@ -1,0 +1,27 @@
+# FastAPI backend — https://render.com
+# Connect this repo, set env vars from .env.example, deploy.
+services:
+  - type: web
+    name: vc-brain-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: PERPLEXITY_API_KEY
+        sync: false
+      - key: TAVILY_API_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: NEXT_PUBLIC_WEB_URL
+        sync: false
