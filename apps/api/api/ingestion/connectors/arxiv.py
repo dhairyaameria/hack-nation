@@ -12,7 +12,7 @@ import httpx
 
 from api.ingestion.memory import ingest_raw
 
-ARXIV_API = "http://export.arxiv.org/api/query"
+ARXIV_API = "https://export.arxiv.org/api/query"
 ATOM = "{http://www.w3.org/2005/Atom}"
 
 

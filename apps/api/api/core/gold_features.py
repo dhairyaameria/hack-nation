@@ -78,10 +78,11 @@ def _from_bronze_signals(client, founder_id: str) -> dict[str, Any] | None:
     github = next((r["payload"] for r in bronze_rows if r["source"] == "github"), None)
     hn = next((r["payload"] for r in bronze_rows if r["source"] == "hackernews"), None)
     arxiv = next((r["payload"] for r in bronze_rows if r["source"] == "arxiv"), None)
+    linkedin = next((r["payload"] for r in bronze_rows if r["source"] == "linkedin"), None)
     pplx = next((r["payload"] for r in bronze_rows if r["source"] == "perplexity"), None)
     tavily = next((r["payload"] for r in bronze_rows if r["source"] == "tavily"), None)
 
-    if not any((github, hn, arxiv, pplx, tavily)):
+    if not any((github, hn, arxiv, linkedin, pplx, tavily)):
         return None
 
     # Cold-start / public-footprint path: research richness is a real signal
@@ -105,6 +106,14 @@ def _from_bronze_signals(client, founder_id: str) -> dict[str, Any] | None:
         paper_count = arxiv.get("paper_count") or 0
         technical_depth = max(technical_depth, min(1.0, 0.4 + paper_count * 0.1))
         public_footprint_depth = max(public_footprint_depth, min(1.0, paper_count / 8))
+    if linkedin:
+        # Public LinkedIn footprint — identity + professional presence, not
+        # network-embeddedness (that stays a separate capped axis slot).
+        public_footprint_depth = max(
+            public_footprint_depth,
+            min(0.8, 0.45 + 0.08 * (linkedin.get("result_count") or 0)),
+        )
+        derived = "bronze_public_footprint"
     if pplx or tavily:
         cite_n = len((pplx or {}).get("citations") or [])
         web_n = len((tavily or {}).get("results") or [])

@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { OpportunitySummary, AxisScore } from "@/lib/types";
 import { DiscoveryChannelBadge, TREND } from "@/components/ui/ds";
@@ -12,10 +15,27 @@ const AXIS_SHORT: Record<AxisScore["axis"], string> = {
 const SLA_TOTAL_H = 24;
 const SLA_WARN_H = 12;
 
-function slaChip(signalAt: string | null) {
+function SlaChip({ signalAt }: { signalAt: string | null }) {
+  const [now, setNow] = useState<number | null>(null);
+
+  useEffect(() => {
+    setNow(Date.now());
+  }, []);
+
   if (!signalAt) return null;
-  // ponytail: computed at render, not live — SlaTimer covers the live countdown
-  const h = SLA_TOTAL_H - (Date.now() - new Date(signalAt).getTime()) / 3_600_000;
+  // Stable until mount so SSR matches the first client paint.
+  if (now == null) {
+    return (
+      <span
+        className="whitespace-nowrap rounded-[2px] border px-2.5 py-1 font-mono text-[11px]"
+        style={{ color: "var(--ink)", background: "var(--background)", borderColor: "var(--line)" }}
+      >
+        ◷ SLA
+      </span>
+    );
+  }
+
+  const h = SLA_TOTAL_H - (now - new Date(signalAt).getTime()) / 3_600_000;
   const urgent = h < SLA_WARN_H;
   const txt =
     h <= 0
@@ -66,7 +86,7 @@ export function OpportunityCard({ opp }: { opp: OpportunitySummary }) {
               FIT {Math.round(opp.thesis_fit_score * 100)}%
             </span>
           )}
-          {slaChip(opp.sla.signal_at)}
+          <SlaChip signalAt={opp.sla.signal_at} />
         </div>
       </div>
       {opp.axis_scores.length > 0 && (

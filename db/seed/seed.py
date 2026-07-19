@@ -100,6 +100,8 @@ FOUNDER_SLUGS = {
     "founder-cold-network-only": "Tomás Ruiz",
     "founder-outbound-signal": "Aisha Khan",
     "founder-excluded-sector": "Nikolai Petrov",
+    "founder-portfolio-lattice": "Maya Okonkwo",
+    "founder-portfolio-orbit": "Jonas Berg",
 }
 
 DOMAIN_AFFINITY = {
@@ -146,6 +148,8 @@ COMPANIES = [
     {"slug": "company-datapulse", "name": "DataPulse", "domain": "datapulse.io", "sector": "b2b_saas", "status": "dead"},
     {"slug": "company-outbound", "name": "KernelDB", "domain": "kerneldb.io", "sector": "devtools", "status": "active"},
     {"slug": "company-crypto", "name": "ChainVault", "domain": "chainvault.xyz", "sector": "crypto", "status": "active"},
+    {"slug": "company-latticeforge", "name": "LatticeForge", "domain": "latticeforge.ai", "sector": "ai_infra", "status": "active"},
+    {"slug": "company-orbitstack", "name": "OrbitStack", "domain": "orbitstack.dev", "sector": "devtools", "status": "active"},
 ]
 
 # ---------------------------------------------------------------------------
@@ -172,6 +176,13 @@ OPPORTUNITIES = [
     {"slug": "opp-crypto-excluded", "founder": "founder-excluded-sector", "company": "company-crypto",
      "source": "inbound", "discovery_channel": "direct_apply", "screen_verdict": "reject",
      "thesis_fit_score": 0.12, "status": "rejected"},
+    {"slug": "opp-portfolio-lattice", "founder": "founder-portfolio-lattice", "company": "company-latticeforge",
+     "source": "outbound", "discovery_channel": "github", "screen_verdict": "pass",
+     "thesis_fit_score": 0.88, "status": "funded", "funded_days_ago": 47,
+     "triggering_signal": "Strong public shipping cadence on GPU kernel tooling"},
+    {"slug": "opp-portfolio-orbit", "founder": "founder-portfolio-orbit", "company": "company-orbitstack",
+     "source": "inbound", "discovery_channel": "direct_apply", "screen_verdict": "pass",
+     "thesis_fit_score": 0.81, "status": "funded", "funded_days_ago": 118},
 ]
 
 # ---------------------------------------------------------------------------
@@ -348,6 +359,28 @@ def main():
             "has_contradiction": o.get("has_contradiction", False),
         })
     upsert(client, "opportunities", opp_rows)
+
+    print("5b. Decision log for funded portfolio")
+    decision_rows = []
+    for o in OPPORTUNITIES:
+        if o.get("status") != "funded":
+            continue
+        funded_at = days_ago(int(o.get("funded_days_ago", 30)))
+        decision_rows.append({
+            "id": sid(f"decision-{o['slug']}"),
+            "opportunity_id": sid(o["slug"]),
+            "recommendation": "yes",
+            "confidence": 0.82,
+            "key_unknowns": [],
+            "bull_summary": f"Funded {o['slug']} — thesis-aligned $100K check.",
+            "bear_summary": "Early-stage execution risk remains.",
+            "signal_at": iso(funded_at - timedelta(hours=20)),
+            "screening_at": iso(funded_at - timedelta(hours=16)),
+            "diligence_at": iso(funded_at - timedelta(hours=6)),
+            "decision_at": iso(funded_at),
+        })
+    if decision_rows:
+        upsert(client, "decision_log", decision_rows)
 
     print("6. Seeded contradiction (claims + evidence + validations)")
     contradiction_opp_id = sid("opp-contradiction")

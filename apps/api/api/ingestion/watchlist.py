@@ -20,7 +20,7 @@ from api.agent import perplexity, thesis_store
 from api.core import opportunity_store
 from api.core.db import get_client
 from api.ingestion import fast_screen, memory, outbound_enrich
-from api.ingestion.connectors import arxiv, github, hackernews
+from api.ingestion.connectors import arxiv, github, hackernews, linkedin
 from api.intelligence import retrieval
 
 _MEMORY: dict[str, dict[str, Any]] = {}
@@ -77,6 +77,19 @@ def _score_signals(signals: list[dict[str, Any]]) -> tuple[float | None, float, 
             weighted_total += arxiv_score * 0.15
             weight_sum += 0.15
             parts.append(f"arXiv: {paper_count} paper(s), top: {s.get('top_title')!r}")
+        elif s["channel"] == "linkedin":
+            # A resolved public profile is a strong identity/public-footprint
+            # signal; snippet richness adds a little, never fabricates merit.
+            li_score = 0.55 if s.get("profile_url") else 0.0
+            li_score += min(0.35, (s.get("result_count") or 0) * 0.1)
+            if s.get("snippet"):
+                li_score = min(1.0, li_score + 0.1)
+            weighted_total += li_score * 0.2
+            weight_sum += 0.2
+            parts.append(
+                f"LinkedIn: {s.get('profile_url') or 'no profile URL'} "
+                f"({s.get('result_count', 0)} public hit(s))"
+            )
 
     conviction = round(weighted_total / weight_sum, 2) if weight_sum else None
     confidence = round(min(0.9, 0.3 + 0.3 * len(signals)), 2)
@@ -168,27 +181,31 @@ def discover(
     company_name: str | None = None,
     github_username: str | None = None,
     hn_query: str | None = None,
+    linkedin_url: str | None = None,
 ) -> dict[str, Any]:
     """Runs connectors + live research, resolves identity, and creates a
     `scored` watchlist entry in one call (discover -> scored is cheap
     enough to collapse into a single request for the demo).
 
-    Signal stack: GitHub, Hacker News, Perplexity research, Tavily web
-    search. Perplexity/Tavily land in Bronze as provenance-tagged raw
-    events; they are watchlist corroboration, not pre-trusted facts.
+    Signal stack: GitHub, Hacker News, arXiv, LinkedIn (public web),
+    Perplexity, Tavily. Research lands in Bronze as provenance-tagged
+    raw events — watchlist corroboration, not pre-trusted facts.
     """
     research_query = (
         f"Who is {founder_name}"
         + (f", founder of {company_name}" if company_name else "")
-        + "? Company overview, funding, background, and any public GitHub profile."
+        + "? Company overview, funding, background, public GitHub, and LinkedIn profile URL."
     )
 
-    # Perplexity first — often surfaces the right GitHub handle when the
-    # caller didn't supply one, and always gives citable research.
+    # Perplexity first — often surfaces GitHub / LinkedIn handles when the
+    # caller didn't supply them, and always gives citable research.
     pplx = perplexity.research(research_query)
-    if pplx and not github_username:
+    if pplx:
         blob = pplx["answer"] + " " + " ".join(pplx.get("citations", []))
-        github_username = _extract_github_username(blob)
+        if not github_username:
+            github_username = _extract_github_username(blob)
+        if not linkedin_url:
+            linkedin_url = linkedin.extract_profile_url_from_text(blob)
 
     founder = memory.resolve_founder(
         founder_name,
@@ -210,6 +227,14 @@ def discover(
     ax = arxiv.fetch_paper_signals(f"{founder_name} {company_name or ''}".strip())
     if ax:
         signals.append(ax if ax.get("channel") else {"channel": "arxiv", **ax})
+
+    li = linkedin.fetch_profile_signals(
+        founder_name,
+        company_name=company_name,
+        linkedin_url=linkedin_url,
+    )
+    if li:
+        signals.append(li)
 
     if pplx:
         bronze = memory.ingest_raw(
@@ -247,6 +272,7 @@ def discover(
     stage = "scored" if signals else "discovered"
     primary_source = (
         "github" if github_username
+        else "linkedin" if li
         else "perplexity" if pplx
         else "tavily" if web_results
         else "hackernews"
@@ -467,6 +493,17 @@ def ingest_sweep_lead(
     hn = hackernews.fetch_launch_signals(company_name)
     if hn:
         signals.append({"channel": "hackernews", **hn})
+
+    li_url = linkedin.extract_profile_url_from_text(
+        answer + " " + " ".join(citations)
+    )
+    li = linkedin.fetch_profile_signals(
+        founder_name,
+        company_name=company_name,
+        linkedin_url=li_url,
+    )
+    if li:
+        signals.append(li)
 
     conviction_score, confidence, rationale = _score_signals(signals)
     stage = "scored" if signals else "discovered"

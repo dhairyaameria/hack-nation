@@ -16,16 +16,19 @@ const STAGES: { key: keyof SlaTimestamps; label: string }[] = [
  * See docs/06-FRONTEND-UX.md §P0.1.
  */
 export function SlaTimer({ sla }: { sla: SlaTimestamps }) {
-  const [now, setNow] = useState(() => Date.now());
+  // Defer Date.now() until after mount so SSR HTML matches the first client paint.
+  const [now, setNow] = useState<number | null>(null);
 
   useEffect(() => {
+    setNow(Date.now());
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
 
   if (!sla.signal_at) return null;
 
-  const elapsedMs = now - new Date(sla.signal_at).getTime();
+  const signalMs = new Date(sla.signal_at).getTime();
+  const elapsedMs = now == null ? 0 : Math.max(0, now - signalMs);
   const totalMs = 24 * 60 * 60 * 1000;
   const pctElapsed = Math.min(100, (elapsedMs / totalMs) * 100);
   const hours = Math.floor(elapsedMs / 3_600_000);

@@ -107,6 +107,54 @@
         "diligence_at": "2026-07-18T09:15:00Z",
         "decision_at": null
       }
+    },
+    {
+      "id": "opp-portfolio-lattice",
+      "company_name": "LatticeForge",
+      "company_sector": "ai_infra",
+      "company_domain": "latticeforge.ai",
+      "founder_name": "Maya Okonkwo",
+      "founder_id": "founder-portfolio-lattice",
+      "source": "outbound",
+      "discovery_channel": "github",
+      "triggering_signal": "Strong public shipping cadence on GPU kernel tooling",
+      "screen_verdict": "pass",
+      "thesis_fit_score": 0.88,
+      "status": "funded",
+      "recommendation": "yes",
+      "check_size_usd": 100000,
+      "has_contradiction": false,
+      "axis_scores": [],
+      "sla": {
+        "signal_at": "2026-05-30T10:00:00Z",
+        "screening_at": "2026-05-30T14:00:00Z",
+        "diligence_at": "2026-05-31T09:00:00Z",
+        "decision_at": "2026-06-01T12:00:00Z"
+      }
+    },
+    {
+      "id": "opp-portfolio-orbit",
+      "company_name": "OrbitStack",
+      "company_sector": "devtools",
+      "company_domain": "orbitstack.dev",
+      "founder_name": "Jonas Berg",
+      "founder_id": "founder-portfolio-orbit",
+      "source": "inbound",
+      "discovery_channel": "direct_apply",
+      "triggering_signal": null,
+      "screen_verdict": "pass",
+      "thesis_fit_score": 0.81,
+      "status": "funded",
+      "recommendation": "yes",
+      "check_size_usd": 100000,
+      "has_contradiction": false,
+      "axis_scores": [],
+      "sla": {
+        "signal_at": "2026-03-18T10:00:00Z",
+        "screening_at": "2026-03-18T15:00:00Z",
+        "diligence_at": "2026-03-19T11:00:00Z",
+        "decision_at": "2026-03-20T16:00:00Z"
+      }
     }
   ]
 }

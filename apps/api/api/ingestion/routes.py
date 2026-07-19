@@ -72,6 +72,7 @@ class DiscoverPayload(BaseModel):
     company_name: str | None = None
     github_username: str | None = None
     hn_query: str | None = None
+    linkedin_url: str | None = None
 
 
 @router.get("/sourcing/watchlist")
@@ -81,15 +82,16 @@ def get_watchlist():
 
 @router.post("/sourcing/discover")
 def discover(payload: DiscoverPayload):
-    """Runs GitHub + Hacker News connectors for a candidate founder,
-    resolves identity, and creates a scored watchlist entry."""
-    if not payload.github_username and not payload.hn_query and not payload.company_name:
-        raise HTTPException(400, "Provide at least one of github_username, hn_query, or company_name to search a channel.")
+    """Runs outbound connectors (GitHub, HN, arXiv, LinkedIn, Perplexity,
+    Tavily) for a candidate founder and creates a scored watchlist entry."""
+    if not payload.founder_name.strip():
+        raise HTTPException(400, "founder_name is required")
     return watchlist.discover(
         payload.founder_name,
         company_name=payload.company_name,
         github_username=payload.github_username,
         hn_query=payload.hn_query,
+        linkedin_url=payload.linkedin_url,
     )
 
 

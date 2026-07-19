@@ -4,6 +4,9 @@ Watchlist research (Perplexity / Tavily / connectors) is turned into
 provisional claims + company context so activated leads enter the SAME
 screening path as a deck application — not an empty opportunity shell.
 Claims are provenance-tagged as `outbound_research`, never pre-trusted.
+
+`gather_live_signals` is also the research-first step for Analyze: pull
+every public channel BEFORE Analyst/Validator/Referee run.
 """
 
 from __future__ import annotations
@@ -11,7 +14,15 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from api.intelligence import llm
+from api.agent import perplexity
+from api.ingestion.connectors import arxiv, github, hackernews, linkedin
+from api.intelligence import llm, retrieval
+
+_GITHUB_RE = re.compile(r"github\.com/([A-Za-z0-9_-]+)", re.IGNORECASE)
+_GH_BLOCK = {
+    "features", "about", "pricing", "topics", "sponsors", "orgs",
+    "marketplace", "collections", "settings",
+}
 
 
 def _research_blob(signals: list[dict[str, Any]]) -> str:
@@ -38,6 +49,11 @@ def _research_blob(signals: list[dict[str, Any]]) -> str:
         elif ch == "arxiv":
             parts.append(
                 f"[arXiv] {s.get('paper_count', 0)} papers — top: {s.get('top_title', '')}"
+            )
+        elif ch == "linkedin":
+            parts.append(
+                f"[LinkedIn] {s.get('profile_url') or 'profile'} — "
+                f"{s.get('headline') or ''} {(s.get('snippet') or '')[:200]}"
             )
     return "\n".join(parts)
 
@@ -74,6 +90,123 @@ def _heuristic_claims(blob: str, company_name: str, founder_name: str) -> list[d
             "slide_locator": "outbound_research",
         })
     return claims
+
+
+def _extract_github(text: str) -> str | None:
+    for m in _GITHUB_RE.finditer(text or ""):
+        login = m.group(1)
+        if login.lower() not in _GH_BLOCK:
+            return login
+    return None
+
+
+def gather_live_signals(
+    founder_name: str,
+    company_name: str,
+    *,
+    github_username: str | None = None,
+    linkedin_url: str | None = None,
+) -> list[dict[str, Any]]:
+    """Research-first: hit every public connector before analysis.
+
+    Order: Perplexity → GitHub (hint or extracted) → LinkedIn → HN → arXiv → Tavily.
+    Missing channels are omitted (cold-start friendly), never scored as negative.
+    """
+    signals: list[dict[str, Any]] = []
+
+    research_q = (
+        f"Diligence brief on {founder_name}, founder of {company_name}. "
+        f"Cover: what the company builds, founding story, public funding if any, "
+        f"team background, GitHub/OSS footprint, LinkedIn profile URL, competitors, "
+        f"and any Hacker News or arXiv presence. Cite sources. "
+        f"Do NOT invent ARR, customer counts, or funding amounts that are not cited."
+    )
+    pplx = perplexity.research(research_q)
+    if pplx:
+        signals.append({
+            "channel": "perplexity",
+            "query": research_q,
+            "answer": pplx.get("answer"),
+            "citations": pplx.get("citations") or [],
+            "evidence": pplx.get("evidence") or [],
+        })
+        blob = (pplx.get("answer") or "") + " " + " ".join(pplx.get("citations") or [])
+        if not github_username:
+            github_username = _extract_github(blob)
+        if not linkedin_url:
+            linkedin_url = linkedin.extract_profile_url_from_text(blob)
+
+    if github_username:
+        gh = github.fetch_profile_signals(github_username)
+        if gh:
+            signals.append({"channel": "github", **gh})
+
+    li = linkedin.fetch_profile_signals(
+        founder_name,
+        company_name=company_name,
+        linkedin_url=linkedin_url,
+    )
+    if li:
+        signals.append(li)
+
+    hn = hackernews.fetch_launch_signals(company_name or founder_name)
+    if hn:
+        signals.append({"channel": "hackernews", **hn})
+
+    ax = arxiv.fetch_paper_signals(f"{founder_name} {company_name}".strip())
+    if ax:
+        signals.append(ax if ax.get("channel") else {"channel": "arxiv", **ax})
+
+    web_q = f"{founder_name} {company_name} founder startup"
+    if retrieval.is_available():
+        web = retrieval.search(web_q, max_results=6)
+        if web:
+            signals.append({"channel": "web_search", "query": web_q, "results": web})
+
+    return signals
+
+
+def enrich_for_analysis(
+    *,
+    founder_name: str,
+    company_name: str,
+    existing_claims: list[dict[str, Any]] | None = None,
+    github_username: str | None = None,
+    linkedin_url: str | None = None,
+) -> dict[str, Any]:
+    """Gather live public research and merge into provisional claims for Analyze."""
+    signals = gather_live_signals(
+        founder_name,
+        company_name,
+        github_username=github_username,
+        linkedin_url=linkedin_url,
+    )
+    research_claims = claims_from_signals(
+        signals, founder_name=founder_name, company_name=company_name
+    )
+    # Prefer research claims when the opportunity had none (typical outbound).
+    existing = [
+        c for c in (existing_claims or [])
+        if isinstance(c, dict) and (c.get("text") or "").strip()
+    ]
+    if not existing:
+        claims = research_claims
+    else:
+        # Keep deck claims; append research claims that aren't near-duplicates.
+        seen = {c["text"].strip().lower()[:80] for c in existing}
+        claims = list(existing)
+        for c in research_claims:
+            key = c["text"].strip().lower()[:80]
+            if key not in seen:
+                claims.append(c)
+                seen.add(key)
+
+    return {
+        "signals": signals,
+        "research_blob": _research_blob(signals),
+        "claims": claims[:12],
+        "sector": sector_from_signals(signals, company_name=company_name, founder_name=founder_name),
+    }
 
 
 def claims_from_signals(

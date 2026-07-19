@@ -32,6 +32,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
   const [companyName, setCompanyName] = useState("");
   const [githubUsername, setGithubUsername] = useState("");
   const [hnQuery, setHnQuery] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
   const [discovering, setDiscovering] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -120,8 +121,8 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Find Lead</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Outbound discovery via GitHub, HN, arXiv, Perplexity, and Tavily. Promotion needs
-            multi-signal corroboration — no signal is never scored as a negative.
+            Outbound discovery via GitHub, HN, arXiv, LinkedIn, Perplexity, and Tavily. Promotion
+            needs multi-signal corroboration — no signal is never scored as a negative.
           </p>
         </div>
         <button
@@ -279,8 +280,40 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                   </Badge>
                 </div>
 
-                {entry.signals.some((s) => s.channel === "perplexity" || s.channel === "web_search") && (
+                {entry.signals.some(
+                  (s) =>
+                    s.channel === "perplexity" ||
+                    s.channel === "web_search" ||
+                    s.channel === "linkedin"
+                ) && (
                   <div className="space-y-2 rounded-md bg-muted/30 p-3 text-xs">
+                    {entry.signals
+                      .filter((s) => s.channel === "linkedin")
+                      .map((s, i) => {
+                        const url = typeof s.profile_url === "string" ? s.profile_url : null;
+                        return (
+                          <div key={`li-${i}`} className="space-y-1">
+                            <p className="font-medium text-muted-foreground">LinkedIn (public web)</p>
+                            {url ? (
+                              <ExternalLink
+                                href={url}
+                                className="inline text-blue-700 hover:underline break-all"
+                              >
+                                {url}
+                              </ExternalLink>
+                            ) : (
+                              <p className="text-muted-foreground">No profile URL resolved</p>
+                            )}
+                            {(s.headline || s.snippet) && (
+                              <p className="leading-relaxed">
+                                {String(s.headline ?? "")}
+                                {s.headline && s.snippet ? " — " : ""}
+                                {String(s.snippet ?? "").slice(0, 240)}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
                     {entry.signals
                       .filter((s) => s.channel === "perplexity")
                       .map((s, i) => {
