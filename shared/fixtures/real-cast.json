@@ -1,0 +1,905 @@
+{
+  "version": 2,
+  "harvested_at": "2026-07-19T02:14:35.972466+00:00",
+  "source": "investor-supplied LinkedIn URLs + curated identity cleanup",
+  "disclaimer": "Public-web footprints only. Wrong-name GitHub/HN collisions removed. Funding/ARR from research are citations \u2014 memos must gap-flag unless independently verified.",
+  "people": [
+    {
+      "slug": "founder-amit-shah",
+      "display_name": "Amit Shah",
+      "linkedin_url": "https://www.linkedin.com/in/amitshahny",
+      "linkedin_slug": "amitshahny",
+      "company_name": "InstaLILY AI",
+      "company_domain": "instalily.ai",
+      "sector": "ai_infra",
+      "role": "Leadership (public LinkedIn associates with InstaLILY AI)",
+      "location": "New York, NY",
+      "github_username": null,
+      "github_org": "instalily",
+      "identity_confidence": "medium",
+      "identity_notes": "LinkedIn public snippet ties amitshahny \u2192 InstaLILY AI. Name collision is severe; do not use HN/GitHub personal hits without verification.",
+      "signals": {
+        "linkedin": {
+          "channel": "linkedin",
+          "query": "https://www.linkedin.com/in/amitshahny Amit Shah",
+          "profile_url": "https://www.linkedin.com/in/amitshahny",
+          "vanity_slug": "amitshahny",
+          "headline": "Amit Shah",
+          "snippet": "Amit Shah\nInstaLILY AI\nNew York, New York, United States\n500 connections, 18454 followers\n\n\nAbout\nNone\n\n\nExperience\nN/A\n\n\nEducation\nN/A",
+          "result_count": 4,
+          "results": [
+            {
+              "title": "Amit Shah",
+              "url": "https://www.linkedin.com/in/amitshahny",
+              "content": "Amit Shah\nInstaLILY AI\nNew York, New York, United States\n500 connections, 18454 followers\n\n\nAbout\nNone\n\n\nExperience\nN/A\n\n\nEducation\nN/A"
+            },
+            {
+              "title": "Amit Shah - Knowles Corporation",
+              "url": "https://www.linkedin.com/in/amitpshah",
+              "content": "Amit Shah. Knowles Corporation New York University - Leonard N. Stern School of Business. New York City Metropolitan Area."
+            },
+            {
+              "title": "Amit Shah - President and Founder of Creative Technology ...",
+              "url": "https://www.linkedin.com/in/amit-shah-38338b161",
+              "content": "Amit Shah has expertise in program management, information technology (IT) strategy, enterprise and system architecture and IT service management"
+            },
+            {
+              "title": "Amit Shah",
+              "url": "https://www.linkedin.com/in/amit-shah-771bb44",
+              "content": "Amit Shah\nCreative Technology Solutions\nMcLean, Virginia, United States\n500 connections, 1674 followers\n\n\nAbout\nMr. Amit Shah is a Senior Leader who utilizes his background in program management\u2026\n\n\nExperience\nN/A\n\n\nEducation\nUniversity of Maryland - Robert H. Smith School of Business\nN/A\n1993 - 1996"
+            }
+          ],
+          "access_mode": "public_web_search"
+        },
+        "perplexity": {
+          "answer": "The LinkedIn profile `https://www.linkedin.com/in/amitshahny` belongs to an **Amit Shah** whose specific current role, company, GitHub username, arXiv papers, and Hacker News mentions **cannot be identified from the provided search results**, as the results only contain profiles for multiple other individuals named Amit Shah in India and the US with different career paths.\n\nThe search results reveal at least 10 distinct professionals named Amit Shah, none matching the \"NY\" (New York) suffix or the specific tech/VC profile implied by requests for GitHub/arXiv data:\n\n| Name/Role | Current Company | Location | Key Details |\n| :--- | :--- | :--- | :--- |\n| **Amit Shah** (CMO) | Zycus | Bengaluru, India | CMO & Head of Global BD; ex-OakNorth UK [3][11] |\n| **Amit Shah** (IT Head) | Covestro (India) | India | Head of IT & D; ex-Bayer CropScience [2] |\n| **Amit Shah** (Principal) | SR One (VC) | London, UK | Life sciences VC; MD from Cambridge [6] |\n| **Amit Shah** (CTO) | Ahold Delhaize USA | US | Chief Technology Officer; ex-United Airlines [8] |\n| **Amit Shah** (Director) | Thacker & Co. Ltd | India | Independent Non-Executive Director since 2024 [1] |\n| **Amit Shah** (COO) | The Hankey Group | US | Chief Operating Officer; MBA from USC [4] |\n| **Amit Shah** (MP) | **Ministry of Home Affairs** | India | **Union Home Minister of India**; BJP President (2014\u20132020) [7][14][15] |\n| **Amit Shah** (Professor) | Army Hospital | New Delhi, India | Urologist & Robotic Surgeon; Professor & HOD [10] |\n| **Amit Shah** (Director) | Sayaji Industries Ltd | India | Whole Time Director (Technical) [9] |\n| **Amit Shah** (Biz Dev) | Kenil Healthcare | Ahmedabad, India | Partner \u2013 International Business Development [5] |\n\n### Specific Data Points Requested\n*   **GitHub Username:** No public GitHub username is listed for any of the Amit Shah profiles in the results.\n*   **arXiv Papers:** No arXiv papers are attributed to any Amit Shah in the search results. The Amit Shah with an MD from Ca",
+          "citations": [
+            "https://www.marketscreener.com/insider/AMIT-SHAH-A3YRIA/",
+            "https://theorg.com/org/covestro/org-chart/amit-shah",
+            "https://contactout.com/Amit-Shah-74973728",
+            "https://www.marketscreener.com/insider/AMIT-SHAH-A1R5A9/",
+            "https://www.linkedin.com/in/amit-shah-13a898310",
+            "https://startupintros.com/people/amit-shah",
+            "https://en.wikipedia.org/wiki/Amit_Shah",
+            "https://theorg.com/org/ahold-delhaize-usa/org-chart/amit-shah"
+          ]
+        },
+        "github": null,
+        "github_org": {
+          "username": "instalily",
+          "public_repos": 3,
+          "followers": 19,
+          "own_repo_count": 3,
+          "total_stars": 3,
+          "repos_pushed_last_90d": 1,
+          "bio": "Instalily deploys AI agents that plug into Salesforce, SAP, and ERPs to automate sales, service, and back-office workflows.",
+          "company": null,
+          "profile_url": "https://github.com/Instalily",
+          "top_repos": [
+            {
+              "name": "case-study",
+              "stars": 3,
+              "url": "https://github.com/Instalily/case-study"
+            },
+            {
+              "name": ".github",
+              "stars": 0,
+              "url": "https://github.com/Instalily/.github"
+            },
+            {
+              "name": "hackathon-gpu",
+              "stars": 0,
+              "url": "https://github.com/Instalily/hackathon-gpu"
+            }
+          ]
+        },
+        "hackernews": {
+          "query": "InstaLILY",
+          "story_count": 5,
+          "total_points": 10344,
+          "total_comments": 5299,
+          "top_story_title": "Google will allow only apps from verified developers to be installed on Android",
+          "top_story_points": 3050,
+          "top_story_url": "https://9to5google.com/2025/08/25/android-apps-developer-verification/"
+        },
+        "arxiv": null
+      }
+    },
+    {
+      "slug": "founder-ana-montero",
+      "display_name": "Ana Montero",
+      "linkedin_url": "https://www.linkedin.com/in/anamonterohoras",
+      "linkedin_slug": "anamonterohoras",
+      "company_name": "Atlas",
+      "company_domain": null,
+      "sector": "hardware",
+      "role": "Co-founder & CEO",
+      "location": null,
+      "github_username": null,
+      "github_org": null,
+      "identity_confidence": "high",
+      "identity_notes": "LinkedIn headline: Co-founder & CEO at Atlas. No verified personal GitHub. Funding figures in research are citations only \u2014 gap-flag in memos.",
+      "signals": {
+        "linkedin": {
+          "channel": "linkedin",
+          "query": "https://www.linkedin.com/in/anamonterohoras Ana Montero",
+          "profile_url": "https://www.linkedin.com/in/anamonterohoras",
+          "vanity_slug": "anamonterohoras",
+          "headline": "Ana Montero - Co-founder & CEO at Atlas",
+          "snippet": "Co-founder & CEO at Atlas \u00b7 Discipline is freedom. Never forget your roots. Extract and provide value. Brazilian Jiu Jitsu, Surf & Dance. Curiosity. Humour.",
+          "result_count": 2,
+          "results": [
+            {
+              "title": "Ana Montero - Co-founder & CEO at Atlas",
+              "url": "https://www.linkedin.com/in/anamonterohoras",
+              "content": "Co-founder & CEO at Atlas \u00b7 Discipline is freedom. Never forget your roots. Extract and provide value. Brazilian Jiu Jitsu, Surf & Dance. Curiosity. Humour."
+            },
+            {
+              "title": "Ana Montero",
+              "url": "https://www.linkedin.com/in/ana-montero-a394aa298",
+              "content": "Experience: Trident Seafoods \u00b7 Location: Edmonds. View Ana Montero's profile on LinkedIn, a professional community of 1 billion members."
+            }
+          ],
+          "access_mode": "public_web_search"
+        },
+        "perplexity": {
+          "answer": "The LinkedIn profile you provided (`anamonterohoras`) does not appear in the search results, and the name **Ana Montero** corresponds to multiple distinct individuals with no single public figure matching a tech co-founder role with a public GitHub, arXiv papers, or Hacker News mentions in the available data.\n\nHowever, one notable candidate is **Ana Montero, Co-founder & CEO of Atlas**, a hardware startup focused on the \"world\u2019s smallest brain wearable.\" According to a LinkedIn post by her co-founder Andre Marques-Smith, she is a **CTO and Hardware Founder** with an **Oxford PhD**, has raised **>$14M**, and is based in the UK/SF/Lisbon [9].\n\n| Attribute | Detail |\n|-----------|--------|\n| **Current Role** | Co-founder & CEO (also described as CTO/Hardware Founder) [9] |\n| **Company** | **Atlas** (hardware startup, brain wearable) [9] |\n| **GitHub** | Not publicly listed in search results |\n| **arXiv papers** | Not found in search results (despite Oxford PhD) |\n| **Hacker News / Show HN** | No mentions found in search results |\n| **Funding** | **>$14M raised** (per co-founder post) [9] |\n\nOther Ana Monteros found include:\n- A **Gerente Propietaria** in Bolivia [1]\n- An **Inventory Specialist** at Trident Seafoods in Washington [2]\n- A **Psic\u00f3loga** at Actia Social in Spain [8]\n- A **Professor** at Willamette University in Oregon [12]\n- A **Sr. Director** at Visa in the US [5]\n\nSince your query specifies a LinkedIn URL (`anamonterohoras`) that is not in the search results, and no public GitHub, arXiv, or HN mentions are found for the Atlas CEO Ana Montero, **I cannot confirm additional technical details** (GitHub, papers, HN) without accessing the private LinkedIn profile. The funding figure of **>$14M** is explicitly stated by her co-founder and should not be inventoried as ARR or additional funding [9].",
+          "citations": [
+            "https://www.linkedin.com/in/ana-montero-4a447875",
+            "https://www.linkedin.com/in/ana-montero-a394aa298",
+            "https://www.linkedin.com/in/ana-montero-5a6149b9",
+            "https://www.linkedin.com/in/ana-montero-3abb50b2",
+            "https://www.linkedin.com/in/ana-montero-6b1556b4",
+            "https://www.linkedin.com/in/ana-montero-48912341",
+            "https://www.linkedin.com/in/ana-montero-74b92b56",
+            "https://www.linkedin.com/in/ana-montero-20323a280"
+          ]
+        },
+        "github": null,
+        "hackernews": null,
+        "arxiv": null
+      }
+    },
+    {
+      "slug": "founder-seb-peralta",
+      "display_name": "Sebastian Peralta",
+      "linkedin_url": "https://www.linkedin.com/in/sebjperalta",
+      "linkedin_slug": "sebjperalta",
+      "company_name": "Mbodi AI",
+      "company_domain": "mbodi.ai",
+      "sector": "ai_infra",
+      "role": "Co-Founder & CEO",
+      "location": "New York, NY",
+      "github_username": "sebbyjp",
+      "github_org": "mbodiai",
+      "identity_confidence": "high",
+      "identity_notes": "GitHub sebbyjp name+company @mbodiai matches LinkedIn Mbodi AI / UPenn / robotics bio.",
+      "signals": {
+        "linkedin": {
+          "channel": "linkedin",
+          "query": "https://www.linkedin.com/in/sebjperalta Sebastian Peralta",
+          "profile_url": "https://www.linkedin.com/in/sebjperalta",
+          "vanity_slug": "sebjperalta",
+          "headline": "Sebastian Peralta",
+          "snippet": "Sebastian Peralta\nMbodi AI\nNew York, New York, United States\n500 connections, 1901 followers\n\n\nAbout\nDeep learning, robotics, machine reasoning, and elegant software solutions.\n\n\nExperience\nN/A\n\n\nEducation\nUniversity of Pennsylvania\nN/A\n2020 - 2021\nNone",
+          "result_count": 3,
+          "results": [
+            {
+              "title": "Sebastian Peralta",
+              "url": "https://www.linkedin.com/in/sebjperalta",
+              "content": "Sebastian Peralta\nMbodi AI\nNew York, New York, United States\n500 connections, 1901 followers\n\n\nAbout\nDeep learning, robotics, machine reasoning, and elegant software solutions.\n\n\nExperience\nN/A\n\n\nEducation\nUniversity of Pennsylvania\nN/A\n2020 - 2021\nNone"
+            },
+            {
+              "title": "Sebasti\u00e1n Peralta Hiraldo - Consulting Analyst @ Deloitte",
+              "url": "https://www.linkedin.com/in/sebastianperaltahiraldo",
+              "content": "Sebastian Peralta is a Cyber Strategy and Transformation Analyst in Deloitte Consulting. Sebasti\u00e1n is an alumni in the Gallatin School of Individualized"
+            },
+            {
+              "title": "Sebastian Peralta - Operating Engineer",
+              "url": "https://www.linkedin.com/in/sebastian-peralta-21a944199",
+              "content": "Operating Engineer \u00b7 Experience: DOE \u00b7 Education: The Turner School \u00b7 Location: New York City Metropolitan Area \u00b7 6 connections on LinkedIn."
+            }
+          ],
+          "access_mode": "public_web_search"
+        },
+        "perplexity": {
+          "answer": "**Sebastian Peralta** (LinkedIn: `sebjperalta`) is the **Co-Founder and CEO** of **Mbodi AI** (also referred to as **mbodi**), a New York-based startup revolutionizing industrial robotics with generative AI and agentic infrastructure [1][19].\n\n### Key Details\n| Attribute | Information |\n| :--- | :--- |\n| **Current Role** | **Co-Founder & CEO** |\n| **Company** | **Mbodi AI** (founded February 2024) [1][19] |\n| **Location** | New York, New York, United States [1] |\n| **Background** | **Ex-Google** Software Engineer (Jan 2022 \u2013 Apr 2024) [1] |\n| **YC Batch** | **Y Combinator X25** alum [1][19] |\n| **Notable Work** | Built **MbodiOS** (cloud-to-edge OS blending AI with robotics) [19]; Led development of adaptable robots understanding natural language [19] |\n| **Google Project** | Back/front-end developer for **Google Public DNS** (largest DNS resolver on the planet) [1] |\n\n### Public Profiles & Publications\n*   **GitHub:** The search results do not contain a public GitHub username for Sebastian Peralta.\n*   **arXiv Papers:** No arXiv papers are listed in the provided search results.\n*   **Hacker News / Show HN:** No mentions of Sebastian Peralta, Mbodi AI, or MbodiOS on Hacker News or Show HN were found in the search results.\n\n### Differentiation\nThis profile is distinct from other individuals named Sebastian Peralta, such as the Senior IT Specialist at IBM in Argentina [2], the Senior Vice President of Operations at McKibbon Hospitality in Florida [4][18], or the Prime Brokerage Associate at Interactive Brokers [13]. The specific LinkedIn handle `sebjperalta` confirms the identity as the Mbodi AI CEO [1].",
+          "citations": [
+            "https://www.linkedin.com/in/sebjperalta",
+            "https://www.linkedin.com/in/sebastian-peralta-519374165",
+            "https://www.linkedin.com/in/sebastian-peralta-670a32a9",
+            "https://www.linkedin.com/in/sebastian-peralta-83395b4b",
+            "https://www.linkedin.com/in/sebastian-peralta-b287a7239",
+            "https://www.linkedin.com/in/sebastian-peralta-8aa634230",
+            "https://www.linkedin.com/in/sebastian-peralta-a3989a78",
+            "https://www.linkedin.com/in/sebastian-peralta-21a944199"
+          ]
+        },
+        "github": {
+          "username": "sebbyjp",
+          "public_repos": 86,
+          "followers": 22,
+          "own_repo_count": 5,
+          "total_stars": 40,
+          "repos_pushed_last_90d": 1,
+          "bio": "Roboticist interested in accelerating AI research to bring deep learning to the real world. Previously @google",
+          "company": "@mbodiai ",
+          "profile_url": "https://github.com/sebbyjp",
+          "top_repos": [
+            {
+              "name": "robo_transformers",
+              "stars": 18,
+              "url": "https://github.com/sebbyjp/robo_transformers"
+            },
+            {
+              "name": "ros2_transformers",
+              "stars": 17,
+              "url": "https://github.com/sebbyjp/ros2_transformers"
+            },
+            {
+              "name": "cgn_pytorch",
+              "stars": 5,
+              "url": "https://github.com/sebbyjp/cgn_pytorch"
+            },
+            {
+              "name": "whisper-client",
+              "stars": 0,
+              "url": "https://github.com/sebbyjp/whisper-client"
+            },
+            {
+              "name": "docs",
+              "stars": 0,
+              "url": "https://github.com/sebbyjp/docs"
+            }
+          ]
+        },
+        "github_org": {
+          "username": "mbodiai",
+          "public_repos": 23,
+          "followers": 63,
+          "own_repo_count": 14,
+          "total_stars": 296,
+          "repos_pushed_last_90d": 0,
+          "bio": "Continual Learning for Embodied Agents",
+          "company": null,
+          "profile_url": "https://github.com/mbodiai",
+          "top_repos": [
+            {
+              "name": "embodied-agents",
+              "stars": 294,
+              "url": "https://github.com/mbodiai/embodied-agents"
+            },
+            {
+              "name": "embodied-data",
+              "stars": 1,
+              "url": "https://github.com/mbodiai/embodied-data"
+            },
+            {
+              "name": "pyproject-pip",
+              "stars": 1,
+              "url": "https://github.com/mbodiai/pyproject-pip"
+            },
+            {
+              "name": "dequedict",
+              "stars": 0,
+              "url": "https://github.com/mbodiai/dequedict"
+            },
+            {
+              "name": "cython",
+              "stars": 0,
+              "url": "https://github.com/mbodiai/cython"
+            }
+          ]
+        },
+        "hackernews": {
+          "query": "Mbodi",
+          "story_count": 5,
+          "total_points": 1843,
+          "total_comments": 413,
+          "top_story_title": "Mbodi AI \u2013 A New Paradigm for AI Robotics and Our Partnership with ABB",
+          "top_story_points": 2,
+          "top_story_url": "https://www.mbodi.ai/blog/mbodi-ai"
+        },
+        "arxiv": null
+      }
+    },
+    {
+      "slug": "founder-dylan-ma",
+      "display_name": "Dylan Ma",
+      "linkedin_url": "https://www.linkedin.com/in/dylanma5621",
+      "linkedin_slug": "dylanma5621",
+      "company_name": "Polymath",
+      "company_domain": null,
+      "sector": "ai_infra",
+      "role": "Co-Founder & CEO",
+      "location": "United States",
+      "github_username": "dylanma5621",
+      "github_org": null,
+      "identity_confidence": "high",
+      "identity_notes": "LinkedIn slug matches GitHub login dylanma5621; company Polymath from public research (YC-backed claim \u2014 treat as citation).",
+      "signals": {
+        "linkedin": {
+          "channel": "linkedin",
+          "query": "https://www.linkedin.com/in/dylanma5621 Dylan Ma",
+          "profile_url": "https://www.linkedin.com/in/dylanma5621",
+          "vanity_slug": "dylanma5621",
+          "headline": "Dylan Ma",
+          "snippet": "Dylan Ma\nPolymath\nUnited States\n500 connections, 3146 followers\n\n\nAbout\nN/A\n\n\nExperience\nN/A\n\n\nEducation\nUniversity of California, Berkeley\nN/A\n2018 - 2022\nNone",
+          "result_count": 4,
+          "results": [
+            {
+              "title": "Dylan Ma",
+              "url": "https://www.linkedin.com/in/dylanma5621",
+              "content": "Dylan Ma\nPolymath\nUnited States\n500 connections, 3146 followers\n\n\nAbout\nN/A\n\n\nExperience\nN/A\n\n\nEducation\nUniversity of California, Berkeley\nN/A\n2018 - 2022\nNone"
+            },
+            {
+              "title": "Dylan Ma - Graduate student at University of Waterloo",
+              "url": "https://ca.linkedin.com/in/dylanhma",
+              "content": "Graduate student at University of Waterloo \u00b7 Experience: University of Waterloo \u00b7 Education: University of Waterloo \u00b7 Location: Waterloo \u00b7 113 connections"
+            },
+            {
+              "title": "Dylan Ma - Student at University of California, Santa Cruz",
+              "url": "https://www.linkedin.com/in/dylan-ma-46b181195",
+              "content": "Dylan Ma - Student at University of California, Santa Cruz. Bachelor's degree Astronomy and Astrophysics 2019 - 2023"
+            },
+            {
+              "title": "Dylan Ma - Student at Stuyvesant High School",
+              "url": "https://www.linkedin.com/in/dylan-ma-480460275",
+              "content": "Student at Stuyvesant High School \u00b7 Education: Stuyvesant High School \u00b7 Location: New York \u00b7 153 connections on LinkedIn. View Dylan Ma's profile on"
+            }
+          ],
+          "access_mode": "public_web_search"
+        },
+        "perplexity": {
+          "answer": "**Dylan Ma** (LinkedIn: `dylanma5621`) is the **Co-Founder and CEO** of **Polymath**, a San Francisco-based company developing **RL environments for long-horizon software engineering agents** that is **backed by Y Combinator** [1]. He is currently a **computer science student** in the United States and was selected for the **2025 NSF Fellowship**, receiving **$159,000** to pursue a PhD in Computer Science [1].\n\n| Attribute | Detail |\n| :--- | :--- |\n| **Current Role** | Co-Founder / CEO [1] |\n| **Company** | **Polymath** (San Francisco, CA; Y Combinator-backed) [1] |\n| **Company Focus** | RL environments for long-horizon software engineering agents [1] |\n| **Education** | Computer Science student; NSF Fellowship recipient for PhD (2025) [1] |\n| **Key Award** | **Amazon Inventor Award** (2024) for reducing LLM inference latency by >30% [1] |\n| **GitHub** | Not listed in public search results [1] |\n| **arXiv Papers** | Not listed in public search results [1] |\n| **HN/Show HN** | Not mentioned in search results [1] |\n\nThe search results do not contain a public **GitHub username**, **arXiv paper titles**, or any **Hacker News/Show HN mentions** for this specific individual [1]. While he received significant NSF funding for his PhD, no private company funding or ARR figures for Polymath are disclosed in the provided sources [1].\n\n*Note: There are multiple other individuals named \"Dylan Ma\" on LinkedIn with different roles (e.g., at NVIDIA, Brown University, Kawasaki Robotics), but the profile `dylanma5621` uniquely matches the Polymath CEO and NSF Fellow described above [1][2][4][5].*",
+          "citations": [
+            "https://www.linkedin.com/in/dylanma5621",
+            "https://www.linkedin.com/in/dylan-ma-30100a295",
+            "https://www.linkedin.com/in/dylan-ma-114805246",
+            "https://www.linkedin.com/in/dylan-ma-b4b84a38",
+            "https://www.linkedin.com/in/dylan-ma-b44358196",
+            "https://www.linkedin.com/in/dylan-ma-496a16217",
+            "https://www.linkedin.com/in/dylan-ma-59b465328",
+            "https://www.linkedin.com/in/dylan-ma-73a25048"
+          ]
+        },
+        "github": {
+          "username": "dylanma5621",
+          "public_repos": 0,
+          "followers": 3,
+          "own_repo_count": 0,
+          "total_stars": 0,
+          "repos_pushed_last_90d": 0,
+          "bio": null,
+          "company": null,
+          "profile_url": "https://github.com/dylanma5621",
+          "top_repos": []
+        },
+        "hackernews": null,
+        "arxiv": null
+      }
+    },
+    {
+      "slug": "founder-ardalan-javadi",
+      "display_name": "Ardalan Javadi",
+      "linkedin_url": "https://www.linkedin.com/in/ardalanjam1369",
+      "linkedin_slug": "ardalanjam1369",
+      "company_name": "BLUZAR",
+      "company_domain": null,
+      "sector": "ai_infra",
+      "role": "Founder",
+      "location": "San Francisco, CA",
+      "github_username": null,
+      "github_org": null,
+      "identity_confidence": "medium",
+      "identity_notes": "Perplexity identifies profile as Ardalan Javadi / BLUZAR. LinkedIn public search returned weak/wrong headline matches; confirm name before demo.",
+      "signals": {
+        "linkedin": {
+          "channel": "linkedin",
+          "query": "https://www.linkedin.com/in/ardalanjam1369 Ardalan Jam",
+          "profile_url": "https://www.linkedin.com/in/ardalanjam1369",
+          "vanity_slug": "ardalanjam1369",
+          "headline": "ardalan hashemi - ardalan at ardalan999",
+          "snippet": "ardalan at ardalan999 \u00b7 Experience: ardalan999 \u00b7 Location: Iran. View ardalan hashemi's profile on LinkedIn, a professional community of 1 billion members.",
+          "result_count": 2,
+          "results": [
+            {
+              "title": "ardalan hashemi - ardalan at ardalan999",
+              "url": "https://www.linkedin.com/in/ardalan-hashemi-873b6965",
+              "content": "ardalan at ardalan999 \u00b7 Experience: ardalan999 \u00b7 Location: Iran. View ardalan hashemi's profile on LinkedIn, a professional community of 1 billion members."
+            },
+            {
+              "title": "Ardalan \"Ardi\" Salam - AI Transformation + Marketing ...",
+              "url": "https://www.linkedin.com/in/ardisalam",
+              "content": "Ardalan \"Ardi\" Salam. I build the marketing technology, analytics, and AI infrastructure behind modern growth organizations."
+            }
+          ],
+          "access_mode": "public_web_search"
+        },
+        "perplexity": {
+          "answer": "The LinkedIn profile you provided (`ardalanjam1369`) belongs to **Ardalan Javadi** (not \"Ardalan Jam\"), whose current role is **Founder** of **BLUZAR**, a company building infrastructure for \"one market\" in San Francisco, California [1].\n\n**Key Details:**\n| Attribute | Information |\n|-----------|-------------|\n| **Full Name** | Ardalan Javadi [1] |\n| **Current Role** | **Founder** [1] |\n| **Company** | **BLUZAR** (Infrastructure for one market) [1] |\n| **Start Date** | March 2026 \u2013 Present [1] |\n| **Location** | San Francisco, California, USA [1] |\n| **Previous Role** | Head of GTM at **KavAI** (July 2024 \u2013 January 2026) [1] |\n\n**Unverified/Not Found in Search Results:**\n- **GitHub username**: Not publicly listed in the available LinkedIn snippet [1].\n- **arXiv papers**: No arXiv publications found in the search results.\n- **Hacker News / Show HN mentions**: None identified in the provided sources.\n\n*Note: The name discrepancy (\"Jam\" vs. \"Javadi\") is confirmed by the LinkedIn profile data, which consistently uses \"Ardalan Javadi\" [1]. No funding or ARR figures are available in the search results, and none are invented.*",
+          "citations": [
+            "https://www.linkedin.com/in/ardalanjam1369",
+            "https://www.linkedin.com/in/ardalan-zargarian-jam",
+            "https://www.linkedin.com/in/ardalan-jamal-a74847b4",
+            "https://www.linkedin.com/in/ardalan-jamal-100779294",
+            "https://www.linkedin.com/in/ardalan-aj-487667b8",
+            "https://www.linkedin.com/in/ardalan-863117114",
+            "https://www.linkedin.com/in/ardalan-mahdavieh",
+            "https://www.linkedin.com/in/amirardalanlotfi"
+          ]
+        },
+        "github": null,
+        "hackernews": null,
+        "arxiv": null
+      }
+    },
+    {
+      "slug": "founder-andi-partovi",
+      "display_name": "Andi Partovi",
+      "linkedin_url": "https://www.linkedin.com/in/andi-partovi",
+      "linkedin_slug": "andi-partovi",
+      "company_name": "Veris AI",
+      "company_domain": "veris.ai",
+      "sector": "ai_infra",
+      "role": "Co-Founder",
+      "location": "San Francisco, CA",
+      "github_username": "andisheh-partovi",
+      "github_org": null,
+      "identity_confidence": "high",
+      "identity_notes": "GitHub andisheh-partovi matches name; Veris AI from LinkedIn activity + public talks. Seed funding figures are citations only.",
+      "signals": {
+        "linkedin": {
+          "channel": "linkedin",
+          "query": "https://www.linkedin.com/in/andi-partovi Andi Partovi",
+          "profile_url": "https://www.linkedin.com/in/andi-partovi",
+          "vanity_slug": "andi-partovi",
+          "headline": "Andi Partovi - Making AI agents world-ready",
+          "snippet": "Doctor of Philosophy - PhD Computer Science ... I am working on deep learning approaches in decoding brain activity, focusing on self-supervised transfer learning",
+          "result_count": 1,
+          "results": [
+            {
+              "title": "Andi Partovi - Making AI agents world-ready",
+              "url": "https://www.linkedin.com/in/andi-partovi",
+              "content": "Doctor of Philosophy - PhD Computer Science ... I am working on deep learning approaches in decoding brain activity, focusing on self-supervised transfer learning"
+            }
+          ],
+          "access_mode": "public_web_search"
+        },
+        "perplexity": {
+          "answer": "**Andi Partovi** is the **Co-Founder** of **Veris AI**, an infrastructure AI company that builds high-fidelity simulation environments for training and testing enterprise AI agents [1][6][8].\n\n### Key Details\n\n| Attribute | Information |\n| :--- | :--- |\n| **Current Role** | **Co-Founder** (also identified as **CTO** in a talk) [1][10] |\n| **Company** | **Veris AI** (emerged from stealth in mid-2025) [1][2] |\n| **Location** | San Francisco, California, United States [1] |\n| **Previous Role** | **Generative AI Solution Architect** at **Google** (3 years) [1][8] |\n| **Education** | **Ph.D. in Computer Science** from the **University of Melbourne** [8] |\n| **Funding** | Veris AI raised **$8.5M in seed funding** from Decibel Partners, Acrew Capital, and others [2] |\n\n### Additional Information Requested\n\n*   **GitHub Username:** Not publicly listed in the provided search results.\n*   **arXiv Papers:** No arXiv papers are mentioned in the search results, though he holds a Ph.D. in Computer Science [8].\n*   **Hacker News / Show HN:** No mentions found in the provided search results.\n*   **Other Mentions:**\n    *   He was a speaker at **QCon San Francisco 2025** on the topic of making AI agents world-ready [8].\n    *   He presented at **AI Dev 26 x SF**, discussing why every agent needs a simulation environment [10].\n    *   He is a **Fellow of ODF24** (Open Data Fellowship) [1].\n\nAndi Partovi co-founded Veris AI with **Mehdi Jamei** earlier in 2025, focusing on the problem that simulation environments are the only way to systematically train task-specific AI agents [2][7].",
+          "citations": [
+            "https://www.linkedin.com/in/andi-partovi",
+            "https://www.linkedin.com/posts/andi-partovi_ai-aiagents-reinforcementlearning-activity-7335687271829934080-Zv3t",
+            "https://www.linkedin.com/posts/andi-partovi_love-seeing-veris-ai-making-waves-with-the-activity-7373920984384331776-jZk5",
+            "https://www.linkedin.com/posts/andi-partovi_decibel-partners-is-the-best-partner-any-activity-7345594491233280001-QXbS",
+            "https://www.linkedin.com/posts/andi-partovi_seeing-your-logo-on-an-office-door-is-probably-activity-7352117472046534656-kB_g",
+            "https://www.linkedin.com/company/veris-ai",
+            "https://www.linkedin.com/posts/mehdijamei_when-andi-partovi-and-i-started-veris-ai-activity-7364991921691238400-Y9dt",
+            "https://qconsf.com/speakers/andipartovi"
+          ]
+        },
+        "github": {
+          "username": "andisheh-partovi",
+          "public_repos": 9,
+          "followers": 2,
+          "own_repo_count": 9,
+          "total_stars": 3,
+          "repos_pushed_last_90d": 0,
+          "bio": "Andi Partovi is an entrepreneur and data scientist. He cofounded KeyLead Health, a digital health data nalytics company in 2019",
+          "company": null,
+          "profile_url": "https://github.com/andisheh-partovi",
+          "top_repos": [
+            {
+              "name": "ChangeDetection",
+              "stars": 1,
+              "url": "https://github.com/andisheh-partovi/ChangeDetection"
+            },
+            {
+              "name": "PhoneticErrorCorrector",
+              "stars": 1,
+              "url": "https://github.com/andisheh-partovi/PhoneticErrorCorrector"
+            },
+            {
+              "name": "HMM",
+              "stars": 1,
+              "url": "https://github.com/andisheh-partovi/HMM"
+            },
+            {
+              "name": "founder-sim-game",
+              "stars": 0,
+              "url": "https://github.com/andisheh-partovi/founder-sim-game"
+            },
+            {
+              "name": "TGA_medication_shortage",
+              "stars": 0,
+              "url": "https://github.com/andisheh-partovi/TGA_medication_shortage"
+            }
+          ]
+        },
+        "hackernews": {
+          "query": "Veris AI",
+          "story_count": 5,
+          "total_points": 28,
+          "total_comments": 4,
+          "top_story_title": "Show HN: Veris \u2013 Agent sandboxes with simulated external services",
+          "top_story_points": 9,
+          "top_story_url": "https://veris.ai/sandbox"
+        },
+        "arxiv": null
+      }
+    }
+  ],
+  "network": {
+    "nodes": [
+      {
+        "slug": "anchor-yc",
+        "type": "Accelerator",
+        "label": "Y Combinator",
+        "confidence": 0.95,
+        "tags": [
+          "anchor"
+        ]
+      },
+      {
+        "slug": "anchor-a16z",
+        "type": "VC",
+        "label": "Andreessen Horowitz",
+        "confidence": 0.9,
+        "tags": [
+          "anchor",
+          "tier1_vc"
+        ]
+      },
+      {
+        "slug": "anchor-github",
+        "type": "Institution",
+        "label": "GitHub OSS community",
+        "confidence": 0.75,
+        "tags": [
+          "anchor"
+        ]
+      },
+      {
+        "slug": "anchor-google",
+        "type": "Company",
+        "label": "Google",
+        "confidence": 0.9,
+        "tags": [
+          "anchor"
+        ]
+      },
+      {
+        "slug": "anchor-upenn",
+        "type": "Institution",
+        "label": "University of Pennsylvania",
+        "confidence": 0.85,
+        "tags": [
+          "anchor"
+        ]
+      },
+      {
+        "slug": "anchor-berkeley",
+        "type": "Institution",
+        "label": "UC Berkeley",
+        "confidence": 0.85,
+        "tags": [
+          "anchor"
+        ]
+      },
+      {
+        "slug": "founder-amit-shah",
+        "type": "Founder",
+        "label": "Amit Shah",
+        "confidence": 0.65,
+        "tags": [
+          "real_cast",
+          "medium"
+        ],
+        "linkedin_url": "https://www.linkedin.com/in/amitshahny",
+        "github_username": null
+      },
+      {
+        "slug": "company-instalily-ai",
+        "type": "Company",
+        "label": "InstaLILY AI",
+        "confidence": 0.75,
+        "tags": [
+          "real_cast"
+        ],
+        "domain": "instalily.ai",
+        "sector": "ai_infra"
+      },
+      {
+        "slug": "founder-ana-montero",
+        "type": "Founder",
+        "label": "Ana Montero",
+        "confidence": 0.85,
+        "tags": [
+          "real_cast",
+          "high"
+        ],
+        "linkedin_url": "https://www.linkedin.com/in/anamonterohoras",
+        "github_username": null
+      },
+      {
+        "slug": "company-atlas",
+        "type": "Company",
+        "label": "Atlas",
+        "confidence": 0.75,
+        "tags": [
+          "real_cast"
+        ],
+        "domain": null,
+        "sector": "hardware"
+      },
+      {
+        "slug": "founder-seb-peralta",
+        "type": "Founder",
+        "label": "Sebastian Peralta",
+        "confidence": 0.85,
+        "tags": [
+          "real_cast",
+          "high"
+        ],
+        "linkedin_url": "https://www.linkedin.com/in/sebjperalta",
+        "github_username": "sebbyjp"
+      },
+      {
+        "slug": "company-mbodi-ai",
+        "type": "Company",
+        "label": "Mbodi AI",
+        "confidence": 0.75,
+        "tags": [
+          "real_cast"
+        ],
+        "domain": "mbodi.ai",
+        "sector": "ai_infra"
+      },
+      {
+        "slug": "founder-dylan-ma",
+        "type": "Founder",
+        "label": "Dylan Ma",
+        "confidence": 0.85,
+        "tags": [
+          "real_cast",
+          "high"
+        ],
+        "linkedin_url": "https://www.linkedin.com/in/dylanma5621",
+        "github_username": "dylanma5621"
+      },
+      {
+        "slug": "company-polymath",
+        "type": "Company",
+        "label": "Polymath",
+        "confidence": 0.75,
+        "tags": [
+          "real_cast"
+        ],
+        "domain": null,
+        "sector": "ai_infra"
+      },
+      {
+        "slug": "founder-ardalan-javadi",
+        "type": "Founder",
+        "label": "Ardalan Javadi",
+        "confidence": 0.65,
+        "tags": [
+          "real_cast",
+          "medium"
+        ],
+        "linkedin_url": "https://www.linkedin.com/in/ardalanjam1369",
+        "github_username": null
+      },
+      {
+        "slug": "company-bluzar",
+        "type": "Company",
+        "label": "BLUZAR",
+        "confidence": 0.75,
+        "tags": [
+          "real_cast"
+        ],
+        "domain": null,
+        "sector": "ai_infra"
+      },
+      {
+        "slug": "founder-andi-partovi",
+        "type": "Founder",
+        "label": "Andi Partovi",
+        "confidence": 0.85,
+        "tags": [
+          "real_cast",
+          "high"
+        ],
+        "linkedin_url": "https://www.linkedin.com/in/andi-partovi",
+        "github_username": "andisheh-partovi"
+      },
+      {
+        "slug": "company-veris-ai",
+        "type": "Company",
+        "label": "Veris AI",
+        "confidence": 0.75,
+        "tags": [
+          "real_cast"
+        ],
+        "domain": "veris.ai",
+        "sector": "ai_infra"
+      }
+    ],
+    "edges": [
+      {
+        "from": "founder-amit-shah",
+        "to": "company-instalily-ai",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.9,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_public_or_research"
+      },
+      {
+        "from": "founder-ana-montero",
+        "to": "company-atlas",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.9,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_public_or_research"
+      },
+      {
+        "from": "founder-seb-peralta",
+        "to": "company-mbodi-ai",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.9,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_public_or_research"
+      },
+      {
+        "from": "founder-seb-peralta",
+        "to": "anchor-github",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.7,
+        "first_seen_at": "2026-07-19",
+        "evidence": "github:sebbyjp"
+      },
+      {
+        "from": "founder-dylan-ma",
+        "to": "company-polymath",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.9,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_public_or_research"
+      },
+      {
+        "from": "founder-dylan-ma",
+        "to": "anchor-github",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.7,
+        "first_seen_at": "2026-07-19",
+        "evidence": "github:dylanma5621"
+      },
+      {
+        "from": "founder-ardalan-javadi",
+        "to": "company-bluzar",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.9,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_public_or_research"
+      },
+      {
+        "from": "founder-andi-partovi",
+        "to": "company-veris-ai",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.9,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_public_or_research"
+      },
+      {
+        "from": "founder-andi-partovi",
+        "to": "anchor-github",
+        "relation_type": "CO_CONTRIBUTED",
+        "weight": 0.7,
+        "first_seen_at": "2026-07-19",
+        "evidence": "github:andisheh-partovi"
+      },
+      {
+        "from": "founder-seb-peralta",
+        "to": "anchor-google",
+        "relation_type": "ALUMNI_OF",
+        "weight": 0.8,
+        "first_seen_at": "2026-07-19",
+        "evidence": "research_citation:ex-Google"
+      },
+      {
+        "from": "founder-seb-peralta",
+        "to": "anchor-upenn",
+        "relation_type": "ALUMNI_OF",
+        "weight": 0.75,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_education"
+      },
+      {
+        "from": "founder-seb-peralta",
+        "to": "anchor-yc",
+        "relation_type": "CO_PARTICIPATED",
+        "weight": 0.85,
+        "first_seen_at": "2026-07-19",
+        "evidence": "research_citation:YC X25"
+      },
+      {
+        "from": "founder-dylan-ma",
+        "to": "anchor-berkeley",
+        "relation_type": "ALUMNI_OF",
+        "weight": 0.7,
+        "first_seen_at": "2026-07-19",
+        "evidence": "linkedin_education"
+      },
+      {
+        "from": "founder-dylan-ma",
+        "to": "anchor-yc",
+        "relation_type": "CO_PARTICIPATED",
+        "weight": 0.8,
+        "first_seen_at": "2026-07-19",
+        "evidence": "research_citation:YC-backed Polymath"
+      },
+      {
+        "from": "founder-andi-partovi",
+        "to": "anchor-google",
+        "relation_type": "ALUMNI_OF",
+        "weight": 0.8,
+        "first_seen_at": "2026-07-19",
+        "evidence": "research_citation:ex-Google"
+      },
+      {
+        "from": "founder-amit-shah",
+        "to": "founder-seb-peralta",
+        "relation_type": "CO_PARTICIPATED",
+        "weight": 0.3,
+        "first_seen_at": "2026-07-19",
+        "evidence": "same_investor_sourcing_batch"
+      },
+      {
+        "from": "founder-seb-peralta",
+        "to": "founder-dylan-ma",
+        "relation_type": "CO_PARTICIPATED",
+        "weight": 0.3,
+        "first_seen_at": "2026-07-19",
+        "evidence": "same_investor_sourcing_batch"
+      },
+      {
+        "from": "founder-dylan-ma",
+        "to": "founder-andi-partovi",
+        "relation_type": "CO_PARTICIPATED",
+        "weight": 0.3,
+        "first_seen_at": "2026-07-19",
+        "evidence": "same_investor_sourcing_batch"
+      },
+      {
+        "from": "founder-ana-montero",
+        "to": "founder-andi-partovi",
+        "relation_type": "CO_PARTICIPATED",
+        "weight": 0.25,
+        "first_seen_at": "2026-07-19",
+        "evidence": "same_investor_sourcing_batch"
+      },
+      {
+        "from": "founder-ardalan-javadi",
+        "to": "founder-andi-partovi",
+        "relation_type": "CO_PARTICIPATED",
+        "weight": 0.25,
+        "first_seen_at": "2026-07-19",
+        "evidence": "same_investor_sourcing_batch_sf"
+      }
+    ]
+  },
+  "summary": {
+    "count": 6,
+    "high_confidence": 4,
+    "with_github": 3,
+    "companies": [
+      "InstaLILY AI",
+      "Atlas",
+      "Mbodi AI",
+      "Polymath",
+      "BLUZAR",
+      "Veris AI"
+    ]
+  }
+}

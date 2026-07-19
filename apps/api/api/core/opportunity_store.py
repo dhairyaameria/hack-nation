@@ -163,6 +163,8 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
         claims_out.append({
             "claim_id": c["id"],
             "text": c["text"],
+            "slide_locator": c.get("slide_locator"),
+            "source": c.get("source"),
             "trust_score": validation.get("trust_score"),
             "validation_status": validation.get("status", "unknown"),
             "evidence": evidence_by_claim.get(c["id"], []),
@@ -196,6 +198,92 @@ def list_opportunities() -> list[dict[str, Any]]:
     if client is None:
         return list(_memory().values())
     return _db_list_opportunities(client)
+
+
+def list_portfolio() -> list[dict[str, Any]]:
+    """Companies the fund has already funded (`status=funded` or yes decision)."""
+    client = get_client()
+    if client is None:
+        out = []
+        for opp in _memory().values():
+            if opp.get("status") != "funded":
+                continue
+            sla = opp.get("sla") or {}
+            out.append({
+                "opportunity_id": opp["id"],
+                "company_name": opp.get("company_name"),
+                "company_sector": opp.get("company_sector"),
+                "company_domain": opp.get("company_domain"),
+                "founder_name": opp.get("founder_name"),
+                "founder_id": opp.get("founder_id"),
+                "source": opp.get("source"),
+                "discovery_channel": opp.get("discovery_channel"),
+                "thesis_fit_score": opp.get("thesis_fit_score"),
+                "check_size_usd": opp.get("check_size_usd") or 100_000,
+                "recommendation": opp.get("recommendation") or "yes",
+                "funded_at": sla.get("decision_at"),
+                "status": "funded",
+            })
+        out.sort(key=lambda r: r.get("funded_at") or "", reverse=True)
+        return out
+
+    funded_res = (
+        client.table("opportunities")
+        .select("*, founders(display_name), companies(name, sector, domain)")
+        .eq("status", "funded")
+        .execute()
+    )
+    opps = list(funded_res.data or [])
+    seen = {o["id"] for o in opps}
+
+    yes_res = (
+        client.table("decision_log")
+        .select("opportunity_id, recommendation, decision_at, confidence")
+        .eq("recommendation", "yes")
+        .execute()
+    )
+    yes_by_opp = {r["opportunity_id"]: r for r in (yes_res.data or []) if r.get("opportunity_id")}
+    missing_ids = [oid for oid in yes_by_opp if oid not in seen]
+    if missing_ids:
+        extra = (
+            client.table("opportunities")
+            .select("*, founders(display_name), companies(name, sector, domain)")
+            .in_("id", missing_ids)
+            .execute()
+        )
+        opps.extend(extra.data or [])
+
+    ids = [o["id"] for o in opps]
+    decision_by_opp: dict[str, dict[str, Any]] = dict(yes_by_opp)
+    if ids:
+        dres = client.table("decision_log").select("*").in_("opportunity_id", ids).execute()
+        for row in dres.data or []:
+            decision_by_opp[row["opportunity_id"]] = row
+
+    active = thesis_store.get_active_thesis()
+    default_check = (active or {}).get("check_size_usd") or 100_000
+
+    out = []
+    for o in opps:
+        d = decision_by_opp.get(o["id"]) or {}
+        company = o.get("companies") or {}
+        out.append({
+            "opportunity_id": o["id"],
+            "company_name": company.get("name", "Unknown"),
+            "company_sector": company.get("sector"),
+            "company_domain": company.get("domain"),
+            "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
+            "founder_id": o["founder_id"],
+            "source": o["source"],
+            "discovery_channel": o.get("discovery_channel"),
+            "thesis_fit_score": o.get("thesis_fit_score"),
+            "check_size_usd": default_check,
+            "recommendation": d.get("recommendation") or "yes",
+            "funded_at": d.get("decision_at"),
+            "status": "funded",
+        })
+    out.sort(key=lambda r: r.get("funded_at") or "", reverse=True)
+    return out
 
 
 def list_memos() -> list[dict[str, Any]]:

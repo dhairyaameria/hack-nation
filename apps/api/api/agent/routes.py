@@ -1,9 +1,14 @@
-"""Agent D — Thesis Engine CRUD + VC Agent Chat stub.
+"""Agent D — Thesis Engine CRUD + VC Agent Chat.
 
 Full spec: `docs/12-THESIS-SETTINGS-UI.md`, `docs/05-CURSOR-SKILLS.md`.
+
+`POST /agent/message` is the single entry: search-shaped asks run the
+natural-language query path; diligence/action asks route toward Cursor skills.
 """
 
 from __future__ import annotations
+
+import re
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -11,6 +16,15 @@ from pydantic import BaseModel
 from api.agent import nl_query, sourcing_sweep, thesis_store
 
 router = APIRouter(tags=["thesis", "agent"])
+
+_ACTION_RE = re.compile(
+    r"\b("
+    r"compare|verify|trust\s*score|genome|memo|proximity|wayback|"
+    r"screen|channel\s*quality|what'?s|tell\s+me|how\s+(?:is|are|does)|"
+    r"diligence|outreach"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 @router.get("/thesis")
@@ -47,21 +61,57 @@ def activate_thesis(thesis_id: str):
     return thesis
 
 
+def _is_action_intent(message: str) -> bool:
+    return bool(_ACTION_RE.search(message or ""))
+
+
 @router.post("/agent/message")
 def agent_message(payload: dict):
-    """VC Agent Chat stub — routes to `.cursor/skills/vc-agent-router` in Wave 3.
+    """Unified Ask entry: pipeline search OR diligence skill routing.
 
-    Wave 1: echoes a placeholder so the frontend chat panel can be built
-    against a real shape now.
+    Search (default): compound filters → `nl_query` with per-clause matches.
+    Action: keyword-routed stub toward `.cursor/skills/*` until Wave 3.D
+    wires the full Cursor skill runner.
     """
-    message = payload.get("message", "")
+    message = (payload.get("message") or "").strip()
+    if not message:
+        raise HTTPException(400, "message must not be empty")
+
+    if _is_action_intent(message):
+        return {
+            "mode": "action",
+            "reply": (
+                "That looks like a diligence action. Skill routing "
+                "(compare, verify-claim, genome, memo, …) lands in Wave 3 — "
+                f"for now try a pipeline filter like "
+                f"“technical founder, AI infra, no prior VC backing”. "
+                f"You asked: {message!r}"
+            ),
+            "skills_used": ["vc-agent-router"],
+            "citations": [],
+            "search": None,
+        }
+
+    result = nl_query.run(message)
+    n = len(result.get("results") or [])
+    constraints = result.get("constraints") or []
+    top = (result.get("results") or [{}])[0] if n else {}
+    top_bit = (
+        f" Top match: {top.get('company_name')} "
+        f"({top.get('match_count')}/{len(constraints)} clauses)."
+        if n and top.get("company_name")
+        else ""
+    )
     return {
+        "mode": "search",
         "reply": (
-            "VC Agent Chat is not wired to Cursor Skills yet (Wave 3 task 3.D). "
-            f"You asked: {message!r}"
+            f"Resolved {len(constraints)} constraint(s); "
+            f"{n} opportunit{'y' if n == 1 else 'ies'} ranked with per-clause matches."
+            f"{top_bit}"
         ),
-        "skills_used": [],
+        "skills_used": ["natural-language-query"],
         "citations": [],
+        "search": result,
     }
 
 

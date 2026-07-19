@@ -112,7 +112,7 @@ export default function ApplyPage() {
               View opportunity →
             </Link>
             <button
-              onClick={() => router.push("/")}
+              onClick={() => router.push("/outbound")}
               className="text-sm font-medium text-muted-foreground hover:underline"
             >
               Back to outbound sources

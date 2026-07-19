@@ -4,17 +4,16 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
-import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud, Search, FileText, Home } from "lucide-react";
+import { Briefcase, LayoutDashboard, Users, CircleUser, UploadCloud, FileText, Home } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/apply", label: "Inbound Sources", icon: UploadCloud },
-  { href: "/", label: "Outbound Sources", icon: LayoutDashboard },
+  { href: "/outbound", label: "Outbound Sources", icon: LayoutDashboard },
+  { href: "/portfolio", label: "Portfolio", icon: Briefcase },
   { href: "/memos", label: "Investment Memos", icon: FileText },
   { href: "/founders", label: "Founder Book", icon: Users },
-  { href: "/query", label: "NL Query", icon: Search },
-  { href: "/agent", label: "Agent", icon: MessageSquareText },
-  { href: "/settings/thesis", label: "Settings", icon: Settings },
+  { href: "/profile", label: "Profile", icon: CircleUser },
 ];
 
 export function Sidebar() {
@@ -22,13 +21,13 @@ export function Sidebar() {
 
   return (
     <aside className="w-56 shrink-0 border-r bg-muted/30 flex flex-col h-screen sticky top-0">
-      <div className="px-5 py-5 border-b">
-        <div className="font-semibold text-lg tracking-tight">VC Brain</div>
+      <Link href="/" className="px-5 py-5 border-b block hover:opacity-90 transition-opacity">
+        <div className="font-semibold text-lg tracking-tight text-foreground">VC Brain</div>
         <div className="text-xs text-muted-foreground">Maschmeyer Group</div>
-      </div>
+      </Link>
       <nav className="flex-1 px-2 py-4 space-y-1">
         {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const active = pathname === href || (href !== "/" && pathname.startsWith(href));
           return (
             <Link
               key={href}
@@ -48,8 +47,17 @@ export function Sidebar() {
       </nav>
       <div className="px-4 py-4 border-t space-y-3">
         <ThemeToggle />
-        <div className="text-xs text-muted-foreground">
-          Deploying $100K checks in 24 hours.
+        <div className="flex items-center gap-3">
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold"
+            aria-hidden
+          >
+            DA
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-medium truncate">Dhairya Ameria</div>
+            <div className="text-xs text-muted-foreground truncate">Investor · VC Brain</div>
+          </div>
         </div>
       </div>
     </aside>

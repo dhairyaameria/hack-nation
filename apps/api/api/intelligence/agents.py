@@ -205,35 +205,75 @@ def run_validator(claims: list[dict], company_name: str) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def _heuristic_referee(company_name: str, claims: list[dict], analyst_out: dict) -> dict:
-    has_traction_claim = any("traction" in c.get("text", "").lower() or "$" in c.get("text", "") for c in claims)
+def _heuristic_referee(
+    company_name: str,
+    claims: list[dict],
+    analyst_out: dict,
+    research_blob: str = "",
+) -> dict:
+    has_traction_claim = any(
+        "traction" in c.get("text", "").lower() or "$" in c.get("text", "") or "raised" in c.get("text", "").lower()
+        for c in claims
+    )
+    snapshot_bits = [f"{company_name} — {len(claims)} research/deck claim(s)."]
+    if research_blob:
+        snapshot_bits.append(research_blob[:400].replace("\n", " "))
+    claim_texts = [c.get("text", "") for c in claims if c.get("text")]
     sections = [
-        {"title": "Company snapshot", "content": f"{company_name} — inbound submission, {len(claims)} claims extracted.", "not_disclosed": False},
-        {"title": "Investment hypotheses", "content": "Draft hypotheses pending deeper research.", "not_disclosed": False},
-        {"title": "SWOT", "content": None, "not_disclosed": True},
-        {"title": "Problem & product", "content": claims[0]["text"] if claims else None, "not_disclosed": len(claims) == 0},
-        {"title": "Traction & KPIs", "content": next((c["text"] for c in claims if "traction" in c.get("text", "").lower() or "$" in c.get("text", "")), None) if has_traction_claim else None, "not_disclosed": not has_traction_claim},
+        {"title": "Company snapshot", "content": " ".join(snapshot_bits)[:600], "not_disclosed": False},
+        {
+            "title": "Investment hypotheses",
+            "content": (claim_texts[0] if claim_texts else None) and f"Hypothesis from public signals: {claim_texts[0]}",
+            "not_disclosed": not claim_texts,
+        },
+        {
+            "title": "SWOT",
+            "content": ("Strengths/opportunities inferred from public claims:\n- " + "\n- ".join(claim_texts[:3])) if claim_texts else None,
+            "not_disclosed": not claim_texts,
+        },
+        {"title": "Problem & product", "content": claim_texts[0] if claim_texts else None, "not_disclosed": not claim_texts},
+        {
+            "title": "Traction & KPIs",
+            "content": next(
+                (c for c in claim_texts if any(k in c.lower() for k in ("$", "raised", "arr", "customers", "users", "funding"))),
+                None,
+            ) if has_traction_claim else None,
+            "not_disclosed": not has_traction_claim,
+        },
     ]
-    return {"sections": sections, "axis_scores": analyst_out["axis_scores"], "prompt_version": "heuristic-referee-v1"}
+    return {"sections": sections, "axis_scores": analyst_out["axis_scores"], "prompt_version": "heuristic-referee-v2"}
 
 
-def _llm_referee(company_name: str, claims: list[dict], analyst_out: dict, validations: list[dict]) -> dict | None:
+def _llm_referee(
+    company_name: str,
+    claims: list[dict],
+    analyst_out: dict,
+    validations: list[dict],
+    *,
+    research_blob: str = "",
+    founder_name: str = "",
+) -> dict | None:
     val_by_id = {v["claim_id"]: v for v in validations}
     claims_block = "\n".join(
         f"- {c.get('text', '')} [validator status: {val_by_id.get(c.get('claim_id'), {}).get('status', 'unknown')}"
         f"{', reason: ' + val_by_id[c['claim_id']]['contradiction_reason'] if val_by_id.get(c.get('claim_id'), {}).get('contradiction_reason') else ''}]"
         for c in claims
-    ) or "(no claims extracted from deck)"
+    ) or "(no structured claims yet)"
     axis_block = "\n".join(f"- {a['axis']}: {a['value']} (confidence {a['confidence']})" for a in analyst_out["axis_scores"])
+    research_block = (research_blob or "").strip()[:7000] or "(no live research dossier)"
 
     system = (
-        "You are the Referee in a VC diligence pipeline, resolving disagreement between a bull-case "
-        "Analyst and a bear-case Validator. Write a concise investment memo. HARD RULES:\n"
-        "1. Any claim the validator marked 'contradicted' must NOT be presented as fact — flag it "
-        "explicitly instead (e.g. 'Deck claims X, but this was contradicted by independent evidence').\n"
-        "2. If there is no information for a required section, set not_disclosed=true and content=null. "
-        "NEVER invent data to fill a gap — a gap-marked memo is more trustworthy than a padded one.\n"
-        "3. Be brief — no padding.\n\n"
+        "You are the Referee in a VC diligence pipeline. You receive (1) a LIVE RESEARCH DOSSIER "
+        "from GitHub/LinkedIn/HN/arXiv/Perplexity/Tavily and (2) structured claims with validator "
+        "verdicts. Write a concise investment memo grounded in that dossier.\n"
+        "HARD RULES:\n"
+        "1. USE the research dossier to fill Company snapshot, Problem & product, Investment "
+        "hypotheses, and SWOT whenever evidence exists — do NOT leave those 'not disclosed' if "
+        "the dossier describes the company/founder.\n"
+        "2. Traction & KPIs: only state numbers that appear in claims/dossier; otherwise "
+        "not_disclosed=true (never invent ARR/customers/funding).\n"
+        "3. Validator 'contradicted' claims must be flagged, not presented as fact.\n"
+        "4. Be brief — no padding.\n\n"
         "Return strict JSON:\n"
         '{"sections": [\n'
         '  {"title": "Company snapshot", "content": <string or null>, "not_disclosed": <bool>},\n'
@@ -243,7 +283,12 @@ def _llm_referee(company_name: str, claims: list[dict], analyst_out: dict, valid
         '  {"title": "Traction & KPIs", "content": <string or null>, "not_disclosed": <bool>}\n'
         "]}"
     )
-    user = f"Company: {company_name}\n\nClaims + validator verdicts:\n{claims_block}\n\nAnalyst axis scores:\n{axis_block}"
+    user = (
+        f"Company: {company_name}\nFounder: {founder_name or 'unknown'}\n\n"
+        f"LIVE RESEARCH DOSSIER:\n{research_block}\n\n"
+        f"Claims + validator verdicts:\n{claims_block}\n\n"
+        f"Analyst axis scores:\n{axis_block}"
+    )
     data = llm.chat_json(system, user)
     if not data or "sections" not in data:
         return None
@@ -254,21 +299,40 @@ def _llm_referee(company_name: str, claims: list[dict], analyst_out: dict, valid
         s = by_title.get(title)
         if not s:
             sections.append({"title": title, "content": None, "not_disclosed": True})
-        else:
-            sections.append({
-                "title": title,
-                "content": s.get("content"),
-                "not_disclosed": bool(s.get("not_disclosed", s.get("content") is None)),
-            })
-    return {"sections": sections, "axis_scores": analyst_out["axis_scores"], "prompt_version": f"openai:{llm.MODEL}:referee-v1"}
+            continue
+        content = s.get("content")
+        if isinstance(content, str) and content.strip().lower() in {"not_disclosed", "not_disclosed=true", "null", "none", "n/a"}:
+            content = None
+        undisclosed = bool(s.get("not_disclosed")) or content is None or content == ""
+        sections.append({
+            "title": title,
+            "content": None if undisclosed else content,
+            "not_disclosed": undisclosed,
+        })
+    return {"sections": sections, "axis_scores": analyst_out["axis_scores"], "prompt_version": f"openai:{llm.MODEL}:referee-v2"}
 
 
-def run_referee(company_name: str, claims: list[dict], analyst_out: dict, validations: list[dict]) -> dict:
+def run_referee(
+    company_name: str,
+    claims: list[dict],
+    analyst_out: dict,
+    validations: list[dict],
+    *,
+    research_blob: str = "",
+    founder_name: str = "",
+) -> dict:
     if llm.is_available():
-        result = _llm_referee(company_name, claims, analyst_out, validations)
+        result = _llm_referee(
+            company_name,
+            claims,
+            analyst_out,
+            validations,
+            research_blob=research_blob,
+            founder_name=founder_name,
+        )
         if result:
             return result
-    return _heuristic_referee(company_name, claims, analyst_out)
+    return _heuristic_referee(company_name, claims, analyst_out, research_blob=research_blob)
 
 
 # ---------------------------------------------------------------------------
@@ -295,19 +359,44 @@ def _build_founder_axis_override(founder_id: str | None) -> dict | None:
     return gold_features.founder_axis_from_gold(gold, score, trend)
 
 
-def run_pipeline(opportunity_id: str, company_name: str, claims: list[dict], founder_id: str | None = None) -> dict:
+def run_pipeline(
+    opportunity_id: str,
+    company_name: str,
+    claims: list[dict],
+    founder_id: str | None = None,
+    *,
+    founder_name: str = "",
+    research_blob: str = "",
+) -> dict:
     trace_id = f"trace-{uuid.uuid4().hex[:8]}"
+    # Ensure every claim has an id before validate/persist.
+    for c in claims:
+        if not c.get("claim_id"):
+            c["claim_id"] = f"claim-{uuid.uuid4().hex[:10]}"
     claim_ids = [c.get("claim_id") for c in claims]
 
     founder_axis_override = _build_founder_axis_override(founder_id)
     analyst_out = run_analyst(company_name, claims, founder_axis_override)
     validations = run_validator(claims, company_name)
-    referee_out = run_referee(company_name, claims, analyst_out, validations)
+    referee_out = run_referee(
+        company_name,
+        claims,
+        analyst_out,
+        validations,
+        research_blob=research_blob,
+        founder_name=founder_name,
+    )
 
     trace = {
         "trace_id": trace_id,
         "opportunity_id": opportunity_id,
         "stages": [
+            {
+                "stage": "research",
+                "inputs_used": [company_name, founder_name] if founder_name else [company_name],
+                "decision_rule_or_prompt_version": "live-connectors-v1",
+                "output_claim_ids": claim_ids,
+            },
             {"stage": "analyst", "inputs_used": claim_ids, "decision_rule_or_prompt_version": analyst_out["prompt_version"], "output_claim_ids": claim_ids},
             {"stage": "validate", "inputs_used": claim_ids, "decision_rule_or_prompt_version": ",".join({v["prompt_version"] for v in validations}) or "n/a", "output_claim_ids": claim_ids},
             {"stage": "referee", "inputs_used": claim_ids, "decision_rule_or_prompt_version": referee_out["prompt_version"], "output_claim_ids": claim_ids},
@@ -318,11 +407,13 @@ def run_pipeline(opportunity_id: str, company_name: str, claims: list[dict], fou
     claims_with_trust = []
     for c in claims:
         v = val_by_id.get(c.get("claim_id"), {})
+        locator = c.get("slide_locator") or "unknown"
+        source_type = "outbound_research" if locator == "outbound_research" else "deck"
         evidence = [{
-            "source_type": "deck",
-            "source_locator": c.get("slide_locator", "unknown"),
+            "source_type": source_type,
+            "source_locator": locator,
             "evidence_snippet": c.get("text", ""),
-            "confidence": 0.9,
+            "confidence": 0.75 if source_type == "outbound_research" else 0.9,
         }]
         for web in v.get("web_evidence", []):
             evidence.append({
@@ -345,4 +436,5 @@ def run_pipeline(opportunity_id: str, company_name: str, claims: list[dict], fou
         "memo": {"sections": referee_out["sections"]},
         "claims": claims_with_trust,
         "trace": trace,
+        "research_channels": [],
     }

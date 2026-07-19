@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Newsreader, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { AppShell } from "@/components/layout/AppShell";
 
 const newsreader = Newsreader({
   variable: "--font-newsreader",
@@ -17,7 +17,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "VC Brain — Maschmeyer Group",
-  description: "Deploying $100K checks in 24 hours.",
+  description: "Find exceptional founders. Deploy $100K checks in 24 hours.",
 };
 
 // Runs before first paint so a dark-mode user never sees a flash of the
@@ -46,8 +46,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
       </head>
       <body className="min-h-full flex bg-background">
-        <Sidebar />
-        <main className="flex-1 min-w-0">{children}</main>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

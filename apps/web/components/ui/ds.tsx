@@ -9,6 +9,7 @@
 import type { ReactNode } from "react";
 import {
   ArrowDownToLine,
+  CircleUser,
   FileText,
   GitBranch,
   Radar,
@@ -148,6 +149,7 @@ const CHANNEL_ICON: Record<string, typeof Radar> = {
   github: GitBranch,
   hackathon: Zap,
   arxiv: FileText,
+  linkedin: CircleUser,
   producthunt: Rocket,
   referral: Users,
   network_proximity: Share2,

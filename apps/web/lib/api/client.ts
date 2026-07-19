@@ -124,6 +124,50 @@ export async function getMemos(): Promise<MemoListItem[]> {
   return [];
 }
 
+export interface PortfolioCompany {
+  opportunity_id: string;
+  company_name: string;
+  company_sector?: string | null;
+  company_domain?: string | null;
+  founder_name: string;
+  founder_id: string;
+  source?: string | null;
+  discovery_channel?: string | null;
+  thesis_fit_score?: number | null;
+  check_size_usd: number;
+  recommendation: string;
+  funded_at?: string | null;
+  status: string;
+}
+
+function portfolioFromDashboard(dash: PipelineDashboard): PortfolioCompany[] {
+  return dash.opportunities
+    .filter((o) => o.status === "funded")
+    .map((o) => ({
+      opportunity_id: o.id,
+      company_name: o.company_name,
+      company_sector: (o as { company_sector?: string }).company_sector ?? null,
+      company_domain: (o as { company_domain?: string }).company_domain ?? null,
+      founder_name: o.founder_name,
+      founder_id: o.founder_id,
+      source: o.source,
+      discovery_channel: o.discovery_channel,
+      thesis_fit_score: o.thesis_fit_score,
+      check_size_usd: (o as { check_size_usd?: number }).check_size_usd ?? 100_000,
+      recommendation: (o as { recommendation?: string }).recommendation ?? "yes",
+      funded_at: o.sla?.decision_at ?? null,
+      status: "funded",
+    }));
+}
+
+export async function getPortfolio(): Promise<PortfolioCompany[]> {
+  if (!USE_FIXTURES) {
+    const live = await tryFetch<{ companies: PortfolioCompany[] }>("/api/v1/portfolio");
+    if (live?.companies?.length) return live.companies;
+  }
+  return portfolioFromDashboard(await getPipelineDashboard());
+}
+
 // ---------------------------------------------------------------------------
 // Outbound sourcing + watchlist (docs/03-SOURCING.md §2-4)
 // ---------------------------------------------------------------------------
@@ -137,7 +181,7 @@ export type WatchlistStage =
   | "screening";
 
 export interface WatchlistSignal {
-  channel: "github" | "hackernews" | "perplexity" | "web_search" | "arxiv";
+  channel: "github" | "hackernews" | "perplexity" | "web_search" | "arxiv" | "linkedin";
   [key: string]: unknown;
 }
 
@@ -174,6 +218,7 @@ export async function discoverFounder(payload: {
   company_name?: string;
   github_username?: string;
   hn_query?: string;
+  linkedin_url?: string;
 }): Promise<WatchlistEntry> {
   const res = await fetch(`${API_URL}/api/v1/sourcing/discover`, {
     method: "POST",
@@ -263,5 +308,24 @@ export async function runNaturalLanguageQuery(query: string): Promise<NlQueryRes
     body: JSON.stringify({ query }),
   });
   if (!res.ok) throw new Error(`Natural-language query failed (${res.status})`);
+  return res.json();
+}
+
+export interface AgentMessageResponse {
+  mode: "search" | "action" | "chat";
+  reply: string;
+  skills_used: string[];
+  citations: unknown[];
+  search: NlQueryResponse | null;
+}
+
+/** Unified Ask entry — search filters run NL query; diligence verbs route to skills. */
+export async function sendAgentMessage(message: string): Promise<AgentMessageResponse> {
+  const res = await fetch(`${API_URL}/api/v1/agent/message`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message }),
+  });
+  if (!res.ok) throw new Error(`Agent message failed (${res.status})`);
   return res.json();
 }
