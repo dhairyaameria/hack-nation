@@ -1051,14 +1051,16 @@ def get_company_profile(company_id: str, *, enrich: bool = True) -> dict[str, An
     if primary is None and linked:
         primary = linked[0]
 
+    enrichment = profile.get("enrichment") or {}
     return {
         "id": profile["id"],
         "name": profile["name"],
         "domain": profile.get("domain"),
         "sector": profile.get("sector"),
         "stage": profile.get("stage"),
-        "description": profile.get("description"),
-        "enrichment": profile.get("enrichment") or {},
+        # Full brief lives in enrichment.summary; description may be a clipped preview.
+        "description": enrichment.get("summary") or profile.get("description"),
+        "enrichment": enrichment,
         "opportunities": linked,
         "primary_opportunity_id": primary["id"] if primary else None,
         "deck_url": primary.get("deck_url") if primary else None,

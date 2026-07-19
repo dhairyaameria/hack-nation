@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { Components } from "react-markdown";
+import { tidyIncompleteMarkdown } from "@/lib/utils";
 
 function citationHref(citations: string[], marker: string): string | null {
   const n = Number(marker);
@@ -135,7 +136,7 @@ export function MarkdownBrief({
   return (
     <div className="markdown-brief">
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
-        {content}
+        {tidyIncompleteMarkdown(content)}
       </ReactMarkdown>
     </div>
   );

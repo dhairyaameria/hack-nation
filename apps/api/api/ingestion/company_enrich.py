@@ -10,6 +10,7 @@ from typing import Any
 
 from api.agent import perplexity
 from api.core.db import get_client
+from api.core.text_clip import clip_text, plain_snippet
 from api.intelligence import retrieval
 
 
@@ -40,7 +41,8 @@ def enrich_company(company_name: str, *, domain: str | None = None) -> dict[str,
         {
             "title": r.get("title"),
             "url": r.get("url"),
-            "snippet": (r.get("content") or "")[:320],
+            # Prose excerpt — strip markdown noise then boundary-clip.
+            "snippet": plain_snippet(r.get("content") or "", 280),
         }
         for r in (web or [])
         if r.get("url")
@@ -68,10 +70,13 @@ def persist_company_enrichment(company_id: str, enrichment: dict[str, Any]) -> N
     client = get_client()
     if client is None:
         return
+    # Keep full markdown in enrichment.summary; description is a short preview
+    # column — clip on sentence/word boundaries, never mid-token.
+    full = enrichment.get("summary") or ""
     client.table("companies").update({
         "enrichment": enrichment,
         "enrichment_at": enrichment.get("enriched_at"),
-        "description": (enrichment.get("summary") or "")[:2000] or None,
+        "description": clip_text(full, 2000) or None,
     }).eq("id", company_id).execute()
 
 
@@ -102,7 +107,8 @@ def get_or_enrich_company(
                     "domain": existing.get("domain"),
                     "sector": existing.get("sector"),
                     "stage": existing.get("stage"),
-                    "description": existing.get("description"),
+                    # Prefer full enrichment brief over the clipped description column.
+                    "description": enrich.get("summary") or existing.get("description"),
                     "enrichment": enrich,
                 }
 

@@ -15,6 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, dedupeUrls } from "@/components/ui/ExternalLink";
 import { MarkdownBrief } from "@/components/company/MarkdownBrief";
+import { clipText, plainSnippet } from "@/lib/utils";
 
 const STAGE_STYLE: Record<string, string> = {
   discovered: "bg-line2 text-sub border-line3",
@@ -347,7 +348,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                               <p className="leading-relaxed">
                                 {String(s.headline ?? "")}
                                 {s.headline && s.snippet ? " — " : ""}
-                                {String(s.snippet ?? "").slice(0, 240)}
+                                {plainSnippet(String(s.snippet ?? ""), 240)}
                               </p>
                             )}
                           </div>
@@ -365,7 +366,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                             <p className="font-medium text-muted-foreground">Perplexity</p>
                             {answer ? (
                               <MarkdownBrief
-                                content={answer.length > 1200 ? `${answer.slice(0, 1200)}…` : answer}
+                                content={clipText(answer, 1200)}
                                 citations={citations}
                                 compact
                               />

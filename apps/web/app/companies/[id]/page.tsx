@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnalyzeButton } from "@/components/opportunity/AnalyzeButton";
 import { MarkdownBrief } from "@/components/company/MarkdownBrief";
 import { CompanyLogo } from "@/components/company/CompanyLogo";
+import { plainSnippet } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,8 @@ export default async function CompanyProfilePage({
 
   const pdfUrl = deckAbsoluteUrl(company.deck_url);
   const enrichment = company.enrichment || {};
-  const summary = company.description || enrichment.summary || "";
+  // enrichment.summary is the full brief; description may be a clipped DB preview.
+  const summary = enrichment.summary || company.description || "";
   const citations = enrichment.citations || [];
   const webResults = enrichment.web_results || [];
   const primaryOpp = company.primary_opportunity_id;
@@ -158,7 +160,7 @@ export default async function CompanyProfilePage({
                           </a>
                           {r.snippet && (
                             <p className="mt-0.5 leading-relaxed text-muted-foreground">
-                              {r.snippet}
+                              {plainSnippet(r.snippet, 280)}
                             </p>
                           )}
                         </li>
