@@ -598,6 +598,16 @@ export interface AgentMessageResponse {
   search: NlQueryResponse | null;
 }
 
+/** Mic recording -> ElevenLabs speech-to-text (proxied through the API). */
+export async function transcribeAudio(audio: Blob): Promise<string> {
+  const form = new FormData();
+  form.append("audio", audio, "recording.webm");
+  const res = await fetch(`${API_URL}/api/v1/agent/transcribe`, { method: "POST", body: form });
+  if (!res.ok) throw new Error(`Transcription failed (${res.status})`);
+  const data = (await res.json()) as { text: string };
+  return data.text;
+}
+
 /** Unified Ask entry — search filters run NL query; diligence verbs route to skills. */
 export async function sendAgentMessage(message: string): Promise<AgentMessageResponse> {
   const res = await fetch(`${API_URL}/api/v1/agent/message`, {
