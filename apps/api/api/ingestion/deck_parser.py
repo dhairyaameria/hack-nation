@@ -19,6 +19,28 @@ TRACTION_KEYWORDS = re.compile(
 )
 
 
+def extract_deck_text(file_bytes: bytes, *, max_chars: int = 12000) -> str:
+    """Full-text extract from a PDF for rerank / research prompts.
+
+    Truncates to `max_chars` so Perplexity prompts stay bounded. Never raises.
+    """
+    try:
+        import io
+
+        reader = PdfReader(io.BytesIO(file_bytes))
+        parts: list[str] = []
+        for page_num, page in enumerate(reader.pages, start=1):
+            text = (page.extract_text() or "").strip()
+            if text:
+                parts.append(f"[slide {page_num}]\n{text}")
+        joined = "\n\n".join(parts)
+        if len(joined) > max_chars:
+            return joined[:max_chars] + "\n…[truncated]"
+        return joined
+    except Exception:
+        return ""
+
+
 def parse_deck(file_bytes: bytes) -> list[dict[str, str]]:
     """Returns a list of `{text, slide_locator}` claims extracted from a PDF.
 

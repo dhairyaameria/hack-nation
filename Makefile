@@ -1,4 +1,4 @@
-.PHONY: dev-api dev-web db-reset db-seed
+.PHONY: dev-api dev-web db-reset db-seed inbound-rerank
 
 dev-api:
 	cd apps/api && source .venv/bin/activate && uvicorn main:app --reload --port 8000
@@ -16,3 +16,7 @@ db-reset:
 
 db-seed:
 	cd apps/api && source .venv/bin/activate && python ../../db/seed/seed.py
+
+# Perplexity inbound rerank (same code path as POST /api/v1/inbound/rerank)
+inbound-rerank:
+	cd apps/api && source .venv/bin/activate && PYTHONPATH=. python ../../jobs/pipelines/inbound_rerank_cron.py
