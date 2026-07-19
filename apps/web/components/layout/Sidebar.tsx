@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud, Search, FileText } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud, Search, FileText, Home } from "lucide-react";
 
 const NAV_ITEMS = [
+  { href: "/home", label: "Home", icon: Home },
   { href: "/apply", label: "Inbound Sources", icon: UploadCloud },
   { href: "/", label: "Outbound Sources", icon: LayoutDashboard },
   { href: "/memos", label: "Investment Memos", icon: FileText },
