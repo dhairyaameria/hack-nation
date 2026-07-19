@@ -216,9 +216,34 @@ def get_trace(opportunity_id: str):
     return trace
 
 
+@router.get("/founders")
+def list_founders():
+    """Founder Book index — all known founders with latest Founder Score."""
+    return {"founders": founder_store.list_founders()}
+
+
 @router.get("/founders/{founder_id}")
-def get_founder(founder_id: str):
-    profile = founder_store.get_founder_profile(founder_id)
+def get_founder(founder_id: str, enrich: bool = False):
+    """Founder profile. Fast by default — use POST /founders/{id}/enrich or
+    `?enrich=true` to run Perplexity/Tavily (can take 30s+)."""
+    profile = founder_store.get_founder_profile(founder_id, enrich=enrich)
+    if profile is None:
+        raise HTTPException(404, "Founder not found")
+    return profile
+
+
+@router.post("/founders/{founder_id}/enrich")
+def enrich_founder(founder_id: str, force: bool = False):
+    """Force-refresh founder research via Perplexity + Tavily."""
+    from api.ingestion import founder_enrich
+
+    try:
+        founder_enrich.get_or_enrich_founder(founder_id, force=force)
+    except KeyError:
+        raise HTTPException(404, "Founder not found") from None
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(502, f"Founder enrichment failed: {exc}") from exc
+    profile = founder_store.get_founder_profile(founder_id, enrich=False)
     if profile is None:
         raise HTTPException(404, "Founder not found")
     return profile

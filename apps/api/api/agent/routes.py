@@ -175,6 +175,12 @@ def run_sourcing_sweep(payload: SourcingSweepPayload = SourcingSweepPayload()):
     return sourcing_sweep.run(payload.thesis_id)
 
 
+@router.post("/skills/founder-sourcing-sweep/run")
+def run_founder_sourcing_sweep(payload: SourcingSweepPayload = SourcingSweepPayload()):
+    """Founder-first thesis sweep via Perplexity (+ Tavily) -> watchlist + enrichment."""
+    return founder_sourcing_sweep.run(payload.thesis_id)
+
+
 class NaturalLanguageQueryPayload(BaseModel):
     query: str
 
@@ -193,6 +199,7 @@ def list_skills():
     """Catalog mirror of `.cursor/skills/*/SKILL.md` — see `docs/01-CONTRACTS.md` §4."""
     return [
         "thesis-sourcing-sweep",
+        "founder-sourcing-sweep",
         "memo-research",
         "generate-memo",
         "verify-claim",

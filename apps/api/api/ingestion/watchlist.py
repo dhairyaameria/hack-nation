@@ -312,6 +312,42 @@ def discover(
 
     out["confidence"] = confidence
     out["rationale"] = rationale
+
+    # Persist dossier + Gold from research already fetched (no second Perplexity call).
+    if pplx or web_results:
+        try:
+            from api.ingestion import founder_enrich
+
+            enrichment = {
+                "summary": (pplx or {}).get("answer") or "",
+                "citations": list((pplx or {}).get("citations") or [])[:16],
+                "web_results": [
+                    {
+                        "title": r.get("title"),
+                        "url": r.get("url"),
+                        "snippet": (r.get("content") or "")[:320],
+                    }
+                    for r in (web_results or [])
+                    if r.get("url")
+                ],
+                "evidence": list((pplx or {}).get("evidence") or [])[:12],
+                "sources": (
+                    ["perplexity", "tavily"] if (pplx and web_results)
+                    else (["perplexity"] if pplx else ["tavily"])
+                ),
+                "enriched_at": _now_iso(),
+                "access_mode": "public_web_research",
+                "company_name": company_name,
+                "disclaimer": (
+                    "Enriched from public web research (Perplexity/Tavily). "
+                    "Not a licensed LinkedIn or Crunchbase API feed."
+                ),
+            }
+            founder_enrich.persist_founder_enrichment(founder["id"], enrichment)
+            founder_enrich.refresh_genome_from_bronze(founder["id"])
+        except Exception as enrich_exc:  # noqa: BLE001 — discover still succeeds
+            print(f"[watchlist.discover] founder enrich skipped: {enrich_exc}")
+
     return out
 
 
@@ -566,4 +602,44 @@ def ingest_sweep_lead(
         out = _row_out(created, founder_name, company_name)
     out["confidence"] = confidence
     out["rationale"] = rationale
+
+    try:
+        from api.ingestion import founder_enrich
+
+        enrichment = {
+            "summary": answer,
+            "citations": list(citations or [])[:16],
+            "web_results": [
+                {
+                    "title": r.get("title"),
+                    "url": r.get("url"),
+                    "snippet": (r.get("content") or "")[:320],
+                }
+                for r in (web_results or [])
+                if r.get("url")
+            ],
+            "evidence": list(evidence or [])[:12],
+            "sources": (
+                ["perplexity", "tavily"] if web_results else ["perplexity"]
+            ),
+            "enriched_at": _now_iso(),
+            "access_mode": "public_web_research",
+            "company_name": company_name,
+            "disclaimer": (
+                "Enriched from public web research (Perplexity/Tavily). "
+                "Not a licensed LinkedIn or Crunchbase API feed."
+            ),
+        }
+        # Also land Perplexity under the founder name so Gold bronze matching works.
+        memory.ingest_raw(
+            "perplexity",
+            {"query": f"thesis-sourcing-sweep:{company_name}", "answer": answer, "citations": citations},
+            entity_type="founder_research",
+            source_entity_id=founder_name,
+        )
+        founder_enrich.persist_founder_enrichment(founder["id"], enrichment)
+        founder_enrich.refresh_genome_from_bronze(founder["id"])
+    except Exception as enrich_exc:  # noqa: BLE001
+        print(f"[watchlist.ingest_sweep_lead] founder enrich skipped: {enrich_exc}")
+
     return out

@@ -191,6 +191,29 @@ def append_score_history(founder_id: str, score: float, confidence: float) -> No
         print(f"[gold_features] failed to append founder_score_history: {exc}")
 
 
+def upsert_genome_snapshot(founder_id: str, gold: dict[str, Any]) -> None:
+    """Persist a Gold feature vector as today's genome snapshot (idempotent per UTC day)."""
+    client = get_client()
+    if client is None:
+        return
+    try:
+        client.table("founder_genome_snapshots").upsert(
+            {
+                "founder_id": founder_id,
+                "execution_velocity": gold.get("execution_velocity") or 0.0,
+                "technical_depth": gold.get("technical_depth") or 0.0,
+                "resilience_proxy": gold.get("resilience_proxy") or 0.0,
+                "public_footprint_depth": gold.get("public_footprint_depth") or 0.0,
+                "network_embeddedness": gold.get("network_embeddedness") or 0.0,
+                "confidence": gold.get("confidence") or 0.4,
+                "recorded_at": _today_midnight_iso(),
+            },
+            on_conflict="founder_id,recorded_at",
+        ).execute()
+    except Exception as exc:  # noqa: BLE001 — scoring must never crash enrichment
+        print(f"[gold_features] failed to upsert founder_genome_snapshots: {exc}")
+
+
 def get_score_trend(founder_id: str) -> str:
     client = get_client()
     if client is None:

@@ -23,9 +23,12 @@ interface PipelineDashboard {
   opportunities: OpportunitySummary[];
 }
 
-async function tryFetch<T>(path: string): Promise<T | null> {
+async function tryFetch<T>(path: string, timeoutMs = 12_000): Promise<T | null> {
   try {
-    const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
+    const res = await fetch(`${API_URL}${path}`, {
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {
@@ -54,12 +57,81 @@ export async function getOpportunityDetail(id: string): Promise<OpportunityDetai
   return summary ? { ...summary, claims: [], memo: null, trace_id: null } : null;
 }
 
-export async function getFounderProfile(id: string) {
+export interface FounderEnrichment {
+  summary?: string;
+  citations?: string[];
+  web_results?: { title?: string; url?: string; snippet?: string }[];
+  disclaimer?: string;
+  sources?: string[];
+  enriched_at?: string;
+}
+
+export interface FounderProfile {
+  id: string;
+  display_name: string;
+  location?: string | null;
+  founder_score?: number | null;
+  founder_score_trend?: string | null;
+  genome?: Record<string, { value: number; trend?: string; confidence?: number }> | null;
+  founder_score_history?: { recorded_at: string; score: number }[];
+  domain_affinity?: { sector: string; weight: number; evidence_source: string }[];
+  enrichment?: FounderEnrichment;
+  network_proximity?: {
+    proximity_score: number;
+    confidence: number;
+    disclosure: string;
+  } | null;
+}
+
+export interface FounderListItem {
+  id: string;
+  display_name: string;
+  founder_score?: number | null;
+  founder_score_trend?: string | null;
+  company_name?: string | null;
+  source?: string | null;
+  has_enrichment?: boolean;
+}
+
+export async function getFounders(): Promise<FounderListItem[]> {
   if (!USE_FIXTURES) {
-    const live = await tryFetch<typeof founderFixture>(`/api/v1/founders/${id}`);
+    const live = await tryFetch<{ founders: FounderListItem[] }>("/api/v1/founders");
+    if (live) return live.founders;
+  }
+  return [
+    {
+      id: founderFixture.id,
+      display_name: founderFixture.display_name,
+      founder_score: founderFixture.founder_score,
+      founder_score_trend: founderFixture.founder_score_trend,
+      company_name: "Rivera Labs",
+      source: "outbound",
+      has_enrichment: true,
+    },
+  ];
+}
+
+export async function getFounderProfile(id: string, opts?: { enrich?: boolean }): Promise<FounderProfile | null> {
+  // Default off — live Perplexity/Tavily must not block SSR page loads.
+  const enrich = opts?.enrich === true;
+  if (!USE_FIXTURES) {
+    const qs = enrich ? "?enrich=true" : "?enrich=false";
+    const live = await tryFetch<FounderProfile>(
+      `/api/v1/founders/${id}${qs}`,
+      enrich ? 45_000 : 12_000,
+    );
     if (live) return live;
   }
-  return founderFixture.id === id ? founderFixture : null;
+  return founderFixture.id === id ? (founderFixture as FounderProfile) : null;
+}
+
+export async function enrichFounder(id: string, force = false): Promise<FounderProfile> {
+  const res = await fetch(
+    `${API_URL}/api/v1/founders/${id}/enrich?force=${force ? "true" : "false"}`,
+    { method: "POST" },
+  );
+  if (!res.ok) throw new Error(`Founder enrich failed (${res.status})`);
+  return res.json();
 }
 
 export async function getActiveThesis() {
@@ -465,6 +537,16 @@ export async function runSourcingSweep(thesisId?: string): Promise<SourcingSweep
     body: JSON.stringify({ thesis_id: thesisId ?? null }),
   });
   if (!res.ok) throw new Error(`Sourcing sweep failed (${res.status})`);
+  return res.json();
+}
+
+export async function runFounderSourcingSweep(thesisId?: string): Promise<SourcingSweepResult> {
+  const res = await fetch(`${API_URL}/api/v1/skills/founder-sourcing-sweep/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ thesis_id: thesisId ?? null }),
+  });
+  if (!res.ok) throw new Error(`Founder sourcing sweep failed (${res.status})`);
   return res.json();
 }
 
