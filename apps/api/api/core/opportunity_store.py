@@ -124,6 +124,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
             "thesis_fit_score": o.get("thesis_fit_score"),
             "status": o["status"],
             "has_contradiction": o["has_contradiction"],
+            "created_at": o.get("created_at"),
             "deck_url": o.get("deck_url"),
             "deck_storage_path": o.get("deck_storage_path"),
             "deck_filename": o.get("deck_filename"),

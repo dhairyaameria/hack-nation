@@ -375,11 +375,17 @@ export async function runNaturalLanguageQuery(query: string): Promise<NlQueryRes
   return res.json();
 }
 
+export interface MemoryCitation {
+  source_type: string | null;
+  source_locator: string | null;
+  snippet: string;
+}
+
 export interface AgentMessageResponse {
-  mode: "search" | "action" | "chat";
+  mode: "search" | "action" | "chat" | "stats" | "memory";
   reply: string;
   skills_used: string[];
-  citations: unknown[];
+  citations: MemoryCitation[];
   search: NlQueryResponse | null;
 }
 

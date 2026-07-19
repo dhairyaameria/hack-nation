@@ -18,6 +18,7 @@ ScreenVerdict = Literal["pass", "reject", "needs-more-info"]
 OpportunitySource = Literal["inbound", "outbound"]
 Stage = Literal["pre_seed", "seed", "series_a"]
 RiskAppetite = Literal["conservative", "balanced", "aggressive"]
+MemoryFactType = Literal["actor", "decision", "commitment", "claim"]
 
 
 class EvidenceRef(BaseModel):
@@ -142,3 +143,50 @@ class OpportunityDetail(BaseModel):
     claims: list[ClaimTrust] = Field(default_factory=list)
     memo: Memo | None = None
     trace_id: str | None = None
+
+
+class Provenance(BaseModel):
+    """Where a chunk/fact came from. Mandatory on every memory row."""
+
+    source_type: str  # deck | memo | note | email | web | ...
+    source_locator: str  # filename, message id, URL, "<locator>#chunk-<n>"
+    source_timestamp: str | None = None
+
+
+class Document(BaseModel):
+    id: str | None = None
+    title: str
+    doc_type: str | None = None  # deck | memo | note | email
+    raw_text: str
+    founder_id: str | None = None
+    company_id: str | None = None
+    provenance: Provenance
+
+
+class DocumentChunk(BaseModel):
+    id: str | None = None
+    document_id: str
+    chunk_index: int
+    content: str
+    founder_id: str | None = None
+    company_id: str | None = None
+    provenance: Provenance
+    similarity: float | None = None  # populated by search_memory
+
+
+class MemoryFact(BaseModel):
+    """Write-time extracted fact. Bi-temporal-lite: invalidated facts keep
+    their row with valid_until set, never deleted."""
+
+    id: str | None = None
+    fact_type: MemoryFactType
+    subject: str  # canonical actor/company name the fact is about
+    body: str  # one-sentence plain-language statement
+    payload: dict = Field(default_factory=dict)
+    founder_id: str | None = None
+    company_id: str | None = None
+    document_id: str | None = None
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    valid_from: str | None = None
+    valid_until: str | None = None
+    provenance: Provenance

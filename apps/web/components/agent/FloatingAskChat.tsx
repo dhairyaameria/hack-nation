@@ -6,13 +6,14 @@ import { MessageSquareText, Send, X } from "lucide-react";
 import {
   sendAgentMessage,
   type AgentMessageResponse,
+  type MemoryCitation,
   type NlQueryResponse,
 } from "@/lib/api/client";
 
 const SUGGESTIONS = [
+  "Catch me up on Rivera Labs: what did we agree on the intro call?",
+  "How many new inbound leads did we receive today?",
   "technical founder, AI infra, enterprise traction, no prior VC backing",
-  "cold-start founder with strong execution signal",
-  "compare Rivera Labs and Lee Analytics",
 ];
 
 type ChatMessage =
@@ -22,8 +23,25 @@ type ChatMessage =
       content: string;
       mode?: AgentMessageResponse["mode"];
       skills_used?: string[];
+      citations?: MemoryCitation[];
       search?: NlQueryResponse | null;
     };
+
+function Citations({ citations }: { citations: MemoryCitation[] }) {
+  return (
+    <div className="mt-2 space-y-1 border-t border-line pt-2">
+      <p className="font-mono text-[9px] uppercase tracking-[0.1em] text-sub">Sources</p>
+      {citations.slice(0, 4).map((c, i) => (
+        <p key={i} className="text-[10px] leading-snug text-sub">
+          <span className="rounded-[2px] border border-line px-1 py-px font-mono text-[9px] text-ink/70">
+            {c.source_type ?? "doc"}
+          </span>{" "}
+          {c.source_locator}
+        </p>
+      ))}
+    </div>
+  );
+}
 
 function SearchResults({ search }: { search: NlQueryResponse }) {
   return (
@@ -108,6 +126,7 @@ export function FloatingAskChat() {
           content: data.reply,
           mode: data.mode,
           skills_used: data.skills_used,
+          citations: data.citations,
           search: data.search,
         },
       ]);
@@ -157,6 +176,9 @@ export function FloatingAskChat() {
                 >
                   <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
                   {m.role === "assistant" && m.search && <SearchResults search={m.search} />}
+                  {m.role === "assistant" && m.citations && m.citations.length > 0 && (
+                    <Citations citations={m.citations} />
+                  )}
                 </div>
                 {m.role === "assistant" && m.skills_used && m.skills_used.length > 0 && (
                   <div className="mt-1 flex flex-wrap gap-1">
