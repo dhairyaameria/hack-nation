@@ -13,7 +13,7 @@ import founderFixture from "@/lib/fixtures/founder-profile.json";
 import thesisFixture from "@/lib/fixtures/thesis-active.json";
 import networkGraphFixture from "@/lib/fixtures/network-graph-seed.json";
 import memosFixture from "@/lib/fixtures/memos.json";
-import type { OpportunityDetail, OpportunitySummary } from "@/lib/types";
+import type { AdversarialView, OpportunityDetail, OpportunitySummary } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 const USE_FIXTURES = process.env.NEXT_PUBLIC_USE_FIXTURES === "true";
@@ -283,6 +283,7 @@ export interface MemoDetail {
   status?: string | null;
   recommendation?: string | null;
   has_contradiction: boolean;
+  adversarial?: AdversarialView | null;
   snapshot?: string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -369,6 +370,7 @@ async function memoDetailFromOpportunity(opportunityOrMemoId: string): Promise<M
     status: opp.status,
     recommendation: opp.recommendation,
     has_contradiction: opp.has_contradiction,
+    adversarial: opp.adversarial ?? null,
     snapshot: match.snapshot,
     created_at: match.created_at,
     updated_at: match.updated_at,

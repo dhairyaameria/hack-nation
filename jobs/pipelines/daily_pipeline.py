@@ -61,6 +61,7 @@ def run_daily() -> None:
                 axis_scores=result["axis_scores"],
                 memo=result["memo"],
                 claims=result["claims"],
+                adversarial=result["adversarial"],
                 trace=result["trace"],
                 status="diligence",
             )

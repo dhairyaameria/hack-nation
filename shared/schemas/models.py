@@ -132,6 +132,25 @@ class Memo(BaseModel):
     sections: list[MemoSection]
 
 
+class AdversarialBearPoint(BaseModel):
+    point: str
+    severity: str = "medium"  # high | medium | low
+    basis: str | None = None
+
+
+class AdversarialView(BaseModel):
+    """Devil's-advocate pass after the Referee memo — the system's call for
+    the human to overrule. bull/bear summaries prefill the decision log."""
+
+    bull_summary: str | None = None
+    bear_summary: str | None = None
+    bear_points: list[AdversarialBearPoint] = Field(default_factory=list)
+    kill_criteria: list[str] = Field(default_factory=list)
+    recommendation: str = "needs-more-info"  # yes | no | needs-more-info
+    confidence: float = Field(default=0.5, ge=0, le=1)
+    prompt_version: str
+
+
 class OpportunityDetail(BaseModel):
     id: str
     company_name: str
@@ -143,6 +162,7 @@ class OpportunityDetail(BaseModel):
     axis_scores: list[AxisScore] = Field(default_factory=list)
     claims: list[ClaimTrust] = Field(default_factory=list)
     memo: Memo | None = None
+    adversarial: AdversarialView | None = None
     trace_id: str | None = None
 
 
