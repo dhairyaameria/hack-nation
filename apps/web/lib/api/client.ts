@@ -172,6 +172,9 @@ export interface MemoListItem {
   company_name: string;
   founder_name: string;
   source?: string | null;
+  status?: string | null;
+  recommendation?: string | null;
+  decision_at?: string | null;
   has_contradiction: boolean;
   section_count: number;
   sections_filled: number;
@@ -186,6 +189,7 @@ export interface MemoSectionDetail {
   title: string;
   content: string | null;
   not_disclosed: boolean;
+  required?: boolean;
   evidence: EvidenceRef[];
 }
 
@@ -195,6 +199,8 @@ export interface MemoDetail {
   company_name: string;
   founder_name: string;
   source?: string | null;
+  status?: string | null;
+  recommendation?: string | null;
   has_contradiction: boolean;
   snapshot?: string | null;
   created_at?: string | null;
@@ -212,6 +218,8 @@ function toListItem(m: MemoDetail): MemoListItem {
     company_name: m.company_name,
     founder_name: m.founder_name,
     source: m.source,
+    status: m.status,
+    recommendation: m.recommendation,
     has_contradiction: m.has_contradiction,
     snapshot: m.snapshot,
     created_at: m.created_at,
@@ -220,6 +228,19 @@ function toListItem(m: MemoDetail): MemoListItem {
     sections_filled: m.sections.filter((s) => s.content != null).length,
     gaps_flagged: m.sections.filter((s) => s.not_disclosed).length,
   };
+}
+
+export async function decideOpportunity(
+  id: string,
+  body: { recommendation?: "yes" | "no" | "needs-more-info"; confidence?: number } = {},
+): Promise<{ opportunity_id: string; recommendation: string; status: string; decision_at: string }> {
+  const res = await fetch(`${API_URL}/api/v1/opportunity/${id}/decide`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ recommendation: body.recommendation ?? "yes", confidence: body.confidence ?? 0.8 }),
+  });
+  if (!res.ok) throw new Error(`Decision failed (${res.status})`);
+  return res.json();
 }
 
 export async function getMemos(): Promise<MemoListItem[]> {
@@ -233,9 +254,51 @@ export async function getMemos(): Promise<MemoListItem[]> {
 export async function getMemoDetail(id: string): Promise<MemoDetail | null> {
   if (!USE_FIXTURES) {
     const live = await tryFetch<MemoDetail>(`/api/v1/memos/${id}`);
-    if (live) return live;
+    if (live) {
+      return {
+        ...live,
+        sections: (live.sections ?? []).map((s) => ({
+          ...s,
+          evidence: s.evidence ?? [],
+        })),
+      };
+    }
+    // Fallback: accept opportunity_id in the URL (older links / list glitches)
+    const fromOpp = await memoDetailFromOpportunity(id);
+    if (fromOpp) return fromOpp;
   }
   return memoFixtures.find((m) => m.id === id) ?? null;
+}
+
+/** Build a MemoDetail from opportunity payload when /memos/{id} is unavailable. */
+async function memoDetailFromOpportunity(opportunityOrMemoId: string): Promise<MemoDetail | null> {
+  const list = await tryFetch<{ memos: MemoListItem[] }>("/api/v1/memos");
+  const match = list?.memos?.find(
+    (m) => m.id === opportunityOrMemoId || m.opportunity_id === opportunityOrMemoId,
+  );
+  if (!match) return null;
+  const opp = await tryFetch<OpportunityDetail>(`/api/v1/opportunity/${match.opportunity_id}`);
+  if (!opp?.memo?.sections?.length) return null;
+  return {
+    id: match.id,
+    opportunity_id: match.opportunity_id,
+    company_name: opp.company_name,
+    founder_name: opp.founder_name,
+    source: opp.source,
+    status: opp.status,
+    recommendation: opp.recommendation,
+    has_contradiction: opp.has_contradiction,
+    snapshot: match.snapshot,
+    created_at: match.created_at,
+    updated_at: match.updated_at,
+    sections: opp.memo.sections.map((s) => ({
+      title: s.title,
+      content: s.content ?? null,
+      not_disclosed: s.not_disclosed,
+      required: s.required,
+      evidence: [],
+    })),
+  };
 }
 
 export interface PortfolioCompany {
@@ -277,7 +340,9 @@ function portfolioFromDashboard(dash: PipelineDashboard): PortfolioCompany[] {
 export async function getPortfolio(): Promise<PortfolioCompany[]> {
   if (!USE_FIXTURES) {
     const live = await tryFetch<{ companies: PortfolioCompany[] }>("/api/v1/portfolio");
-    if (live?.companies?.length) return live.companies;
+    // Prefer live API even when empty — otherwise a just-funded company can be
+    // masked by fixture/dashboard fallback after Approve investment.
+    if (live && Array.isArray(live.companies)) return live.companies;
   }
   return portfolioFromDashboard(await getPipelineDashboard());
 }

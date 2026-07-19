@@ -125,6 +125,7 @@ class MemoSection(BaseModel):
     title: str
     content: str | None = None
     not_disclosed: bool = False
+    required: bool | None = None
 
 
 class Memo(BaseModel):

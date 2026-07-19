@@ -119,6 +119,7 @@ export interface MemoSection {
   title: string;
   content?: string | null;
   not_disclosed: boolean;
+  required?: boolean;
 }
 
 export interface Memo {

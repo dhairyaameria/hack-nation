@@ -4,12 +4,29 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { analyzeOpportunity } from "@/lib/api/client";
 
-export function AnalyzeButton({ opportunityId }: { opportunityId: string }) {
+export function AnalyzeButton({
+  opportunityId,
+  label = "Run analysis",
+  runningLabel = "Running Analyst → Validator → Referee…",
+  className = "rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium disabled:opacity-50",
+  stopPropagation = false,
+}: {
+  opportunityId: string;
+  label?: string;
+  runningLabel?: string;
+  className?: string;
+  /** Use when nested inside a Link/card so click doesn't navigate */
+  stopPropagation?: boolean;
+}) {
   const router = useRouter();
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleClick() {
+  async function handleClick(e: React.MouseEvent) {
+    if (stopPropagation) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setRunning(true);
     setError(null);
     try {
@@ -23,15 +40,16 @@ export function AnalyzeButton({ opportunityId }: { opportunityId: string }) {
   }
 
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex flex-col gap-1.5">
       <button
+        type="button"
         onClick={handleClick}
         disabled={running}
-        className="rounded-md bg-primary text-primary-foreground px-3 py-1.5 text-sm font-medium disabled:opacity-50"
+        className={className}
       >
-        {running ? "Running Analyst → Validator → Referee…" : "Run analysis"}
+        {running ? runningLabel : label}
       </button>
-      {error && <span className="text-sm text-bad">{error}</span>}
+      {error && <span className="text-xs text-bad">{error}</span>}
     </div>
   );
 }

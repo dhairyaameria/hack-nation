@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { DiscoveryChannelBadge } from "@/components/ui/ds";
 
 export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function formatCheck(usd: number) {
   return `$${Math.round(usd / 1000)}K`;

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Newsreader, IBM_Plex_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 
@@ -16,12 +17,15 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VC Brain — Maschmeyer Group",
-  description: "Find exceptional founders. Deploy $100K checks in 24 hours.",
+  title: "Brain Venture — Deploy $100K checks in 24 hours",
+  description:
+    "Source exceptional founders before they raise. Screen with transparent trust. Decide with evidence-backed memos.",
 };
 
-// Runs before first paint so a dark-mode user never sees a flash of the
+// Runs beforeInteractive so a dark-mode user never sees a flash of the
 // light theme. Falls back to the OS preference when nothing is stored.
+// Use next/script (not a raw <script>) — React 19 / Next 16 warn on
+// client-rendered script tags inside components.
 const THEME_INIT = `
 try {
   var t = localStorage.getItem('theme');
@@ -42,10 +46,10 @@ export default function RootLayout({
       className={`${newsreader.variable} ${plexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
-      </head>
       <body className="min-h-full flex bg-background">
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT}
+        </Script>
         <AppShell>{children}</AppShell>
       </body>
     </html>

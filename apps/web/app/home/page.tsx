@@ -120,7 +120,7 @@ export default async function HomePage() {
       {/* ---------- hero ---------- */}
       <div className="border-b border-ink pb-8">
         <SectionLabel className="text-sub">
-          VC Brain · {thesisName}
+          Brain Venture · {thesisName}
         </SectionLabel>
         <h1 className="mt-3.5 font-serif text-[56px] font-medium leading-[1.05] tracking-[-0.01em]">
           Welcome back, VC
@@ -160,7 +160,7 @@ export default async function HomePage() {
                     <span className="font-serif text-[17px] font-semibold">{o.company_name}</span>
                     <DiscoveryChannelBadge channel={o.discovery_channel ?? o.source} />
                     {o.has_contradiction && (
-                      <span className="rounded-[2px] bg-bad-bg px-[7px] py-[3px] font-mono text-[9.5px] uppercase tracking-[0.06em] text-bad">
+                      <span className="rounded-[2px] border border-brand/30 bg-accent px-[7px] py-[3px] font-mono text-[9.5px] uppercase tracking-[0.06em] text-brand-ink">
                         Contradiction
                       </span>
                     )}
@@ -201,12 +201,12 @@ export default async function HomePage() {
                 </div>
                 <div className="mt-0.5 font-mono text-[10.5px] text-sub">
                   {m.filled}/{m.total} sections
-                  {m.gaps > 0 && <span className="text-warn"> · {m.gaps} gap(s) flagged</span>}
+                  {m.gaps > 0 && <span className="text-brand-ink"> · {m.gaps} gap(s) flagged</span>}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">
                 {m.contradiction && (
-                  <span className="rounded-[2px] bg-bad-bg px-[7px] py-[3px] font-mono text-[9.5px] uppercase text-bad">
+                  <span className="rounded-[2px] border border-brand/30 bg-accent px-[7px] py-[3px] font-mono text-[9.5px] uppercase text-brand-ink">
                     Contradiction
                   </span>
                 )}

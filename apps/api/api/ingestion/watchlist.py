@@ -383,7 +383,14 @@ def _submit_outbound_application(entry: dict[str, Any]) -> dict[str, Any]:
     signals = entry.get("signals") or []
     company_name = entry["company_name"] or f"{entry['founder_name']}'s company"
     founder_name = entry["founder_name"]
-    primary_channel = signals[0]["channel"] if signals else "outbound"
+    # Persist every connector channel (comma-separated) so outbound cards can
+    # show "sources extracted from" without another round-trip.
+    channels: list[str] = []
+    for s in signals:
+        ch = (s.get("channel") or "").strip()
+        if ch and ch not in channels:
+            channels.append(ch)
+    primary_channel = ",".join(channels) if channels else "outbound"
 
     claims = outbound_enrich.claims_from_signals(
         signals, founder_name=founder_name, company_name=company_name

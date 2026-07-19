@@ -18,9 +18,11 @@ def enrich_company(company_name: str, *, domain: str | None = None) -> dict[str,
     q = (
         f"Company profile for {company_name}"
         + (f" ({domain})" if domain else "")
-        + ". Summarize: what they build, sector, stage, founding year if known, "
-        "notable funding rounds and investors if public, competitors, and website. "
-        "Prefer Crunchbase, PitchBook, company site, and reputable news as sources."
+        + ". Write a concise diligence brief using markdown headings (###) and "
+        "bullet lists — avoid markdown tables. Cover: what they build, sector, stage, "
+        "founding year if known, notable funding/investors if public, competitors, "
+        "and website. Prefer Crunchbase, PitchBook, company site, and reputable news. "
+        "Keep citation markers like [1] inline where claims need sources."
     )
     answer = ""
     citations: list[str] = []

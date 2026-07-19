@@ -7,7 +7,10 @@ fixtures/in-memory data otherwise (see `docs/17-PARALLEL-WORKFLOW.md` §4).
 
 from __future__ import annotations
 
+from typing import Literal
+
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
 
 from api.agent import thesis_store
 from api.core import founder_store, opportunity_store
@@ -16,6 +19,13 @@ from api.ingestion import outbound_enrich
 from api.intelligence import agents
 
 router = APIRouter(tags=["intelligence"])
+
+
+class DecideBody(BaseModel):
+    recommendation: Literal["yes", "no", "needs-more-info"] = "yes"
+    confidence: float | None = Field(default=0.8, ge=0, le=1)
+    bull_summary: str | None = None
+    bear_summary: str | None = None
 
 
 @router.get("/opportunities")
@@ -32,6 +42,15 @@ def list_opportunities():
 def list_memos():
     """Index of all generated investment memos (required sections + gap counts)."""
     return {"memos": opportunity_store.list_memos()}
+
+
+@router.get("/memos/{memo_id}")
+def get_memo_detail(memo_id: str):
+    """Full investment memo document (sections + evidence + decision status)."""
+    detail = opportunity_store.get_memo_detail(memo_id)
+    if detail is None:
+        raise HTTPException(404, "Memo not found")
+    return detail
 
 
 @router.get("/portfolio")
@@ -165,6 +184,26 @@ def get_memo(opportunity_id: str):
     if opp is None:
         raise HTTPException(404, "Opportunity not found")
     return opp.get("memo")
+
+
+@router.post("/opportunity/{opportunity_id}/decide")
+def decide_opportunity(opportunity_id: str, body: DecideBody | None = None):
+    """Human close: approve (yes → funded/portfolio), reject, or needs-more-info."""
+    payload = body or DecideBody()
+    if opportunity_store.get_opportunity(opportunity_id) is None:
+        raise HTTPException(404, "Opportunity not found")
+    try:
+        return opportunity_store.record_decision(
+            opportunity_id,
+            recommendation=payload.recommendation,
+            confidence=payload.confidence,
+            bull_summary=payload.bull_summary,
+            bear_summary=payload.bear_summary,
+        )
+    except KeyError:
+        raise HTTPException(404, "Opportunity not found") from None
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @router.get("/recommendation/{opportunity_id}/trace")

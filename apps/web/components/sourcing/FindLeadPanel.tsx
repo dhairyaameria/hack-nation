@@ -14,6 +14,7 @@ import {
 } from "@/lib/api/client";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, dedupeUrls } from "@/components/ui/ExternalLink";
+import { MarkdownBrief } from "@/components/company/MarkdownBrief";
 
 const STAGE_STYLE: Record<string, string> = {
   discovered: "bg-line2 text-sub border-line3",
@@ -55,8 +56,6 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
     if (open) refresh();
   }, [open]);
 
-  if (!open) return null;
-
   async function handleDiscover(e: React.FormEvent) {
     e.preventDefault();
     setDiscovering(true);
@@ -67,11 +66,13 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
         company_name: companyName || undefined,
         github_username: githubUsername || undefined,
         hn_query: hnQuery || undefined,
+        linkedin_url: linkedinUrl || undefined,
       });
       setFounderName("");
       setCompanyName("");
       setGithubUsername("");
       setHnQuery("");
+      setLinkedinUrl("");
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Discover failed");
@@ -116,36 +117,54 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
   }
 
   return (
-    <div className="rounded-lg border bg-background p-5 space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">Find Lead</h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Outbound discovery via GitHub, HN, arXiv, LinkedIn, Perplexity, and Tavily. Promotion
-            needs multi-signal corroboration — no signal is never scored as a negative.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="shrink-0 text-sm text-muted-foreground hover:text-foreground"
-        >
-          Close
-        </button>
-      </div>
+    <>
+      {/* Backdrop — click to collapse; does not affect card layout */}
+      <button
+        type="button"
+        aria-label="Close find lead"
+        onClick={onClose}
+        className={`fixed inset-0 z-40 bg-ink/25 transition-opacity duration-200 ${
+          open ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
 
-      <form onSubmit={handleDiscover} className="rounded-lg border p-4 space-y-4">
+      <aside
+        role="dialog"
+        aria-modal="true"
+        aria-label="Find Lead"
+        className={`fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-border bg-background shadow-xl transition-transform duration-200 ease-out ${
+          open ? "translate-x-0" : "translate-x-full pointer-events-none"
+        }`}
+      >
+        <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold tracking-tight">Find Lead</h2>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              GitHub, HN, arXiv, LinkedIn, Perplexity, Tavily — multi-signal before promote.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+      <form onSubmit={handleDiscover} className="rounded-lg border p-4 space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           Discover a candidate
         </h3>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-3">
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Founder name</label>
             <input
               required
               value={founderName}
               onChange={(e) => setFounderName(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
+              className="w-full rounded-md border px-3 py-2 text-sm bg-background"
               placeholder="Ada Lovelace"
             />
           </div>
@@ -154,7 +173,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
             <input
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
+              className="w-full rounded-md border px-3 py-2 text-sm bg-background"
               placeholder="Analytical Engines Inc."
             />
           </div>
@@ -163,7 +182,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
             <input
               value={githubUsername}
               onChange={(e) => setGithubUsername(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
+              className="w-full rounded-md border px-3 py-2 text-sm bg-background"
               placeholder="octocat"
             />
           </div>
@@ -172,15 +191,24 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
             <input
               value={hnQuery}
               onChange={(e) => setHnQuery(e.target.value)}
-              className="w-full rounded-md border px-3 py-2 text-sm"
+              className="w-full rounded-md border px-3 py-2 text-sm bg-background"
               placeholder="defaults to company/founder name"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">LinkedIn URL (optional)</label>
+            <input
+              value={linkedinUrl}
+              onChange={(e) => setLinkedinUrl(e.target.value)}
+              className="w-full rounded-md border px-3 py-2 text-sm bg-background"
+              placeholder="https://linkedin.com/in/…"
             />
           </div>
         </div>
         <button
           type="submit"
           disabled={discovering || !founderName}
-          className="rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-50"
+          className="w-full rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium disabled:opacity-50"
         >
           {discovering ? "Running connectors…" : "Discover"}
         </button>
@@ -225,10 +253,20 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                 )}
               </p>
             )}
-            {sweep.leads.map((lead, i) => (
+            {sweep.leads.map((lead, i) => {
+              const citeUrls = lead.evidence
+                .map((e) => e.source_locator)
+                .filter((u): u is string => Boolean(u));
+              return (
               <div key={i} className="rounded-md bg-muted/30 p-3 space-y-2">
                 <p className="text-xs font-medium text-muted-foreground">{lead.query}</p>
-                <p className="text-sm whitespace-pre-wrap">{lead.answer}</p>
+                {lead.answer ? (
+                  <MarkdownBrief
+                    content={lead.answer}
+                    citations={citeUrls}
+                    compact
+                  />
+                ) : null}
                 {lead.evidence.length > 0 && (
                   <ul className="space-y-1 border-t pt-2">
                     {lead.evidence.slice(0, 4).map((e, j) => (
@@ -244,7 +282,8 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                   </ul>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
@@ -320,12 +359,17 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
                         const citations = dedupeUrls(
                           Array.isArray(s.citations) ? (s.citations as string[]) : []
                         ).slice(0, 4);
+                        const answer = String(s.answer ?? "");
                         return (
                           <div key={`pplx-${i}`} className="space-y-1">
                             <p className="font-medium text-muted-foreground">Perplexity</p>
-                            <p className="whitespace-pre-wrap leading-relaxed">
-                              {String(s.answer ?? "").slice(0, 600)}
-                            </p>
+                            {answer ? (
+                              <MarkdownBrief
+                                content={answer.length > 1200 ? `${answer.slice(0, 1200)}…` : answer}
+                                citations={citations}
+                                compact
+                              />
+                            ) : null}
                             {citations.length > 0 && (
                               <ul className="space-y-1">
                                 {citations.map((url, j) => (
@@ -430,6 +474,8 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
           </div>
         )}
       </section>
-    </div>
+        </div>
+      </aside>
+    </>
   );
 }

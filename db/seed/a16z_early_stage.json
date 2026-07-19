@@ -1,0 +1,112 @@
+[
+  {
+    "company_name": "ElevenLabs",
+    "founder_name": "Mati Staniszewski",
+    "domain": "elevenlabs.io",
+    "website": "https://elevenlabs.io",
+    "linkedin_url": "https://www.linkedin.com/company/elevenlabsio",
+    "sector": "ai",
+    "stage": "Series C",
+    "a16z_note": "a16z portfolio — AI voice / speech",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Harvey",
+    "founder_name": "Winston Weinberg",
+    "domain": "harvey.ai",
+    "website": "https://www.harvey.ai",
+    "linkedin_url": "https://www.linkedin.com/company/harvey-ai",
+    "sector": "ai",
+    "stage": "Series C",
+    "a16z_note": "a16z portfolio — AI for legal work",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Hebbia",
+    "founder_name": "George Sivulka",
+    "domain": "hebbia.com",
+    "website": "https://www.hebbia.com",
+    "linkedin_url": "https://www.linkedin.com/company/hebbia",
+    "sector": "ai",
+    "stage": "Series B",
+    "a16z_note": "a16z portfolio — AI research / knowledge work",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Hippocratic AI",
+    "founder_name": "Munjal Shah",
+    "domain": "hippocraticai.com",
+    "website": "https://www.hippocraticai.com",
+    "linkedin_url": "https://www.linkedin.com/company/hippocratic-ai",
+    "sector": "healthcare_ai",
+    "stage": "Series A",
+    "a16z_note": "a16z portfolio — healthcare AI agents",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Cresta",
+    "founder_name": "Zayd Enam",
+    "domain": "cresta.com",
+    "website": "https://www.cresta.com",
+    "linkedin_url": "https://www.linkedin.com/company/cresta",
+    "sector": "ai",
+    "stage": "Series C",
+    "a16z_note": "a16z portfolio — AI for contact centers",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Anyscale",
+    "founder_name": "Robert Nishihara",
+    "domain": "anyscale.com",
+    "website": "https://www.anyscale.com",
+    "linkedin_url": "https://www.linkedin.com/company/anyscale",
+    "sector": "ai_infra",
+    "stage": "Series C",
+    "a16z_note": "a16z portfolio — Ray / AI infra",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Pinecone",
+    "founder_name": "Edo Liberty",
+    "domain": "pinecone.io",
+    "website": "https://www.pinecone.io",
+    "linkedin_url": "https://www.linkedin.com/company/pinecone-io",
+    "sector": "ai_infra",
+    "stage": "Series B",
+    "a16z_note": "a16z portfolio — vector database",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Replicate",
+    "founder_name": "Ben Firshman",
+    "domain": "replicate.com",
+    "website": "https://replicate.com",
+    "linkedin_url": "https://www.linkedin.com/company/replicate",
+    "sector": "ai_infra",
+    "stage": "Series B",
+    "a16z_note": "a16z portfolio — open model hosting",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "Character.AI",
+    "founder_name": "Noam Shazeer",
+    "domain": "character.ai",
+    "website": "https://character.ai",
+    "linkedin_url": "https://www.linkedin.com/company/character-ai",
+    "sector": "ai",
+    "stage": "Series A",
+    "a16z_note": "a16z portfolio — conversational AI",
+    "source": "a16z-portfolio"
+  },
+  {
+    "company_name": "MotherDuck",
+    "founder_name": "Jordan Tigani",
+    "domain": "motherduck.com",
+    "website": "https://motherduck.com",
+    "linkedin_url": "https://www.linkedin.com/company/motherduck",
+    "sector": "data_infra",
+    "stage": "Series B",
+    "a16z_note": "a16z portfolio — cloud DuckDB / analytics",
+    "source": "a16z-portfolio"
+  }
+]

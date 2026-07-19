@@ -1,4 +1,4 @@
-# VC Brain — Hack-Nation
+# VC Brain 
 
 Data- and AI-first venture operating system for discovering founders, running diligence, and producing $100K investment recommendations within 24 hours.
 

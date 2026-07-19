@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { getMemoDetail, type MemoSectionDetail } from "@/lib/api/client";
 import { SectionLabel, DiscoveryChannelBadge, DisclosureBadge } from "@/components/ui/ds";
 import { EvidenceCard } from "@/components/opportunity/EvidenceCard";
+import { InvestButton } from "@/components/opportunity/InvestButton";
 import type { EvidenceRef, ValidationStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
       {/* withheld != not-yet-generated. Only the not_disclosed flag licenses the
           claim that the founder withheld something. */}
       {section.content ? (
-        <p className="mt-3 max-w-[720px] text-[15px] leading-[1.65]">{section.content}</p>
+        <p className="mt-3 max-w-[720px] whitespace-pre-wrap text-[15px] leading-[1.65]">{section.content}</p>
       ) : section.not_disclosed ? (
         <p className="mt-3 max-w-[720px] text-[14px] italic leading-relaxed text-sub">
           Not disclosed — the founder withheld this and no inference was made. This is a
@@ -41,13 +42,13 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
         </p>
       )}
 
-      {section.evidence.length > 0 ? (
+      {(section.evidence?.length ?? 0) > 0 ? (
         <div className="mt-5">
           <div className="mb-2.5 font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
             Backed by {section.evidence.length} source{section.evidence.length > 1 ? "s" : ""}
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {section.evidence.map((ev: EvidenceRef, i: number) => (
+            {(section.evidence ?? []).map((ev: EvidenceRef, i: number) => (
               <EvidenceCard
                 key={`${ev.source_locator}-${i}`}
                 evidence={ev}
@@ -59,7 +60,7 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
         </div>
       ) : (
         section.content && (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-[2px] border border-warn-line bg-warn-bg px-3 py-1.5 font-mono text-[10.5px] text-warn">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-[2px] border border-line bg-raise px-3 py-1.5 font-mono text-[10.5px] text-sub">
             No sources attached — treat as unverified
           </div>
         )
@@ -87,7 +88,8 @@ export default async function MemoDetailPage({
 
   const filled = memo.sections.filter((s) => s.content != null).length;
   const gaps = memo.sections.filter((s) => s.not_disclosed).length;
-  const sourceCount = memo.sections.reduce((n, s) => n + s.evidence.length, 0);
+  const sourceCount = memo.sections.reduce((n, s) => n + (s.evidence?.length ?? 0), 0);
+  const approved = memo.status === "funded" || memo.recommendation === "yes";
 
   return (
     <div className="mx-auto max-w-[1000px] px-10 pb-24 pt-10">
@@ -100,18 +102,21 @@ export default async function MemoDetailPage({
 
       {/* ---------- header ---------- */}
       <div className="mt-6 border-b border-ink pb-7">
-        <SectionLabel className="text-sub">Investment memo</SectionLabel>
         <div className="mt-3.5 flex flex-wrap items-end justify-between gap-4">
           <h1 className="font-serif text-[48px] font-medium leading-[1.05] tracking-[-0.01em]">
             {memo.company_name}
           </h1>
-          <div className="flex items-center gap-2.5 pb-2">
+          <div className="flex flex-wrap items-center gap-2.5 pb-2">
             {memo.source && <DiscoveryChannelBadge channel={memo.source} />}
             {memo.has_contradiction && (
-              <span className="rounded-[2px] bg-bad-bg px-2 py-1 font-mono text-[10px] uppercase tracking-[0.06em] text-bad">
+              <span className="rounded-[2px] border border-brand/30 bg-accent px-2 py-1 font-mono text-[10px] uppercase tracking-[0.06em] text-brand-ink">
                 Contradiction
               </span>
             )}
+            <InvestButton
+              opportunityId={memo.opportunity_id}
+              alreadyApproved={approved}
+            />
           </div>
         </div>
         <div className="mt-2 font-mono text-[12px] text-sub">{memo.founder_name}</div>
@@ -125,7 +130,7 @@ export default async function MemoDetailPage({
         <span>
           {filled}/{memo.sections.length} sections filled
         </span>
-        <span className={gaps > 0 ? "text-warn" : undefined}>{gaps} gap{gaps === 1 ? "" : "s"} flagged</span>
+        <span className={gaps > 0 ? "text-brand-ink" : undefined}>{gaps} gap{gaps === 1 ? "" : "s"} flagged</span>
         <span>{sourceCount} source{sourceCount === 1 ? "" : "s"} cited</span>
         {memo.updated_at && <span className="text-faint">Updated {new Date(memo.updated_at).toLocaleString()}</span>}
         <Link
@@ -138,8 +143,8 @@ export default async function MemoDetailPage({
 
       {/* ---------- contradiction banner ---------- */}
       {memo.has_contradiction && (
-        <div className="mt-6 rounded-[2px] border border-bad-line bg-bad-bg px-4 py-3 text-[13px] leading-relaxed text-bad">
-          <span className="font-semibold">Validator caught a contradiction.</span> At least one
+        <div className="mt-6 rounded-[2px] border border-brand/30 bg-accent px-4 py-3 text-[13px] leading-relaxed text-ink">
+          <span className="font-semibold text-brand-ink">Validator caught a contradiction.</span> At least one
           claim in this memo conflicts with independently corroborated evidence. The conflicting
           sources are shown side by side in the affected section below.
         </div>

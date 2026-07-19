@@ -117,9 +117,9 @@ export function ConfidenceBadge({
 export type TrustLevel = "trusted" | "partial" | "disputed";
 
 export const TRUST_COLOR: Record<TrustLevel, string> = {
-  trusted: "#7FA989",
-  partial: "#DDBB66",
-  disputed: "#CE6D5F",
+  trusted: "#2c3630",
+  partial: "#8a928c",
+  disputed: "#0a0a0b",
 };
 
 export function trustLevelFromStatus(status: ValidationStatus): TrustLevel {
@@ -183,7 +183,7 @@ export function DisclosureBadge({ kind }: { kind: "not_disclosed" | "unknown" })
     );
   }
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-warn-line bg-warn-bg px-2.5 py-1 font-mono text-[11px] text-warn">
+    <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-brand/25 bg-accent px-2.5 py-1 font-mono text-[11px] text-brand-ink">
       <span className="font-semibold">?</span>Unknown — low confidence
     </span>
   );

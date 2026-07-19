@@ -102,11 +102,14 @@ export interface SlaTimestamps {
 export interface OpportunitySummary {
   id: string;
   company_name: string;
+  company_domain?: string | null;
   founder_name: string;
   founder_id: string;
   source: OpportunitySource;
   discovery_channel?: string | null;
   triggering_signal?: string | null;
+  /** Connector channels used to discover/enrich this lead (outbound cards). */
+  source_channels?: string[];
   screen_verdict?: ScreenVerdict | null;
   thesis_fit_score?: number | null;
   status: string;
@@ -119,6 +122,8 @@ export interface MemoSection {
   title: string;
   content?: string | null;
   not_disclosed: boolean;
+  /** Challenge brief required section (vs optional). */
+  required?: boolean;
 }
 
 export interface Memo {
@@ -131,10 +136,13 @@ export interface OpportunityDetail {
   founder_name: string;
   founder_id: string;
   source: OpportunitySource;
+  status?: string | null;
+  recommendation?: string | null;
   screen_verdict?: ScreenVerdict | null;
   has_contradiction: boolean;
   axis_scores: AxisScore[];
   claims: ClaimTrust[];
   memo?: Memo | null;
   trace_id?: string | null;
+  sla?: SlaTimestamps;
 }

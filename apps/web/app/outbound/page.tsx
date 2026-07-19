@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 export default async function OutboundSourcesPage() {
   const dashboard = await getPipelineDashboard();
   const open = dashboard.opportunities.filter(
-    (o) => !["funded", "rejected"].includes(o.status)
+    (o) => o.source === "outbound" && !["funded", "rejected"].includes(o.status)
   );
 
   return (
