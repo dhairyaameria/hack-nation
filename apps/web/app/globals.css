@@ -134,38 +134,37 @@
 }
 
 /*
- * Dark theme. The accent is blue here rather than the light theme's orange,
- * so the neutrals are cooled to match — a blue accent over the warm paper
- * greys reads muddy. Semantic good/warn/bad keep their hues, lightened to
- * stay legible on a dark surface.
+ * Dark theme. Same warm paper palette as light, inverted — the accent stays
+ * the brand orange, lifted for legibility on a dark surface. Semantic
+ * good/warn/bad keep their hues, likewise lightened.
  */
 .dark {
-  --surface: #161a1d;
-  --raise: #1c2124;
-  --ink: #e6eaed;
-  --sub: #94a0a8;
-  --faint: #626d75;
-  --line: #262c31;
-  --line2: #1f2429;
-  --line3: #333b41;
-  --dotline: #4a555c;
-  --dotline-a: #3e6c9e;
-  --brand: #4c8dff;
-  --brand-ink: #7fb0ff;
-  --brand-ink-h: #a5c8ff;
-  --good-ink: #6fcf8e;
-  --good-bg: #16281c;
-  --warn-ink: #e0b457;
+  --surface: #1d1a16;
+  --raise: #242019;
+  --ink: #f0ebe2;
+  --sub: #a39b8f;
+  --faint: #6e675e;
+  --line: #35312a;
+  --line2: #2b2822;
+  --line3: #443f35;
+  --dotline: #5a5344;
+  --dotline-a: #8a5a3c;
+  --brand: #e86a3c;
+  --brand-ink: #e8895f;
+  --brand-ink-h: #f2a377;
+  --good-ink: #8cc79a;
+  --good-bg: #22301f;
+  --warn-ink: #d9b15e;
   --warn-dot: #d9a93f;
-  --warn-bg: #2a2314;
-  --warn-line: #443818;
-  --bad-ink: #f08375;
-  --bad-bg: #2e1a18;
-  --bad-line: #4d2b27;
+  --warn-bg: #332a15;
+  --warn-line: #4d3f1e;
+  --bad-ink: #e08273;
+  --bad-bg: #38201c;
+  --bad-line: #55302a;
 
-  --background: #0f1214;
-  --primary-foreground: #0f1214;
-  --sidebar-primary-foreground: #0f1214;
+  --background: #141210;
+  --primary-foreground: #141210;
+  --sidebar-primary-foreground: #141210;
 }
 
 @layer base {
