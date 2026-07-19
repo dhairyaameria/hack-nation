@@ -12,11 +12,34 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load root .env (repo root, four levels up from apps/api/api/core/)
-REPO_ROOT = Path(__file__).resolve().parents[4]
-load_dotenv(REPO_ROOT / ".env")
+def _find_repo_root() -> Path:
+    """Works in local monorepo and in Docker (`/app` + `/shared`)."""
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        if (parent / "shared" / "fixtures").is_dir():
+            return parent
+        if (parent / ".env").is_file() and (parent / "apps").is_dir():
+            return parent
+    return here.parents[min(4, len(here.parents) - 1)]
 
-FIXTURES_DIR = REPO_ROOT / "shared" / "fixtures"
+
+REPO_ROOT = _find_repo_root()
+load_dotenv(REPO_ROOT / ".env")
+load_dotenv(Path.cwd() / ".env", override=False)
+
+_shared = REPO_ROOT / "shared" / "fixtures"
+FIXTURES_DIR = _shared if _shared.is_dir() else Path("/shared/fixtures")
+
+
+def _cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ORIGINS", "")
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    web = os.getenv("NEXT_PUBLIC_WEB_URL", "").strip()
+    if web and web not in origins:
+        origins.append(web)
+    if "http://localhost:3000" not in origins:
+        origins.append("http://localhost:3000")
+    return origins
 
 
 class Settings:
@@ -28,9 +51,12 @@ class Settings:
     perplexity_api_key: str = os.getenv("PERPLEXITY_API_KEY", "")
     tavily_api_key: str = os.getenv("TAVILY_API_KEY", "")
 
-    cors_origins: list[str] = [
-        os.getenv("NEXT_PUBLIC_WEB_URL", "http://localhost:3000"),
-    ]
+    cors_origins: list[str] = _cors_origins()
+    # Preview + production Vercel deployments
+    cors_origin_regex: str = os.getenv(
+        "CORS_ORIGIN_REGEX",
+        r"https://.*\.vercel\.app",
+    )
 
     @property
     def has_supabase(self) -> bool:

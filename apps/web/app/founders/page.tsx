@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getPipelineDashboard } from "@/lib/api/client";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export const dynamic = "force-dynamic";
@@ -18,23 +17,21 @@ export default async function FoundersPage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Founders</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Founder Book</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {founders.map((f) => (
-          <Link key={f.id} href={`/founders/${f.id}`}>
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold">{f.name}</h3>
-                  <Badge variant={f.source === "outbound" ? "secondary" : "outline"}>
-                    {f.source}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">{f.company}</p>
-              </CardContent>
-            </Card>
+          <Link
+            key={f.id}
+            href={`/founders/${f.id}`}
+            className="block rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10 hover:shadow-md transition-shadow px-4"
+          >
+            <div className="flex items-center gap-2 pb-2">
+              <h3 className="font-semibold">{f.name}</h3>
+              <Badge variant={f.source === "outbound" ? "secondary" : "outline"}>
+                {f.source}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">{f.company}</p>
           </Link>
         ))}
       </div>

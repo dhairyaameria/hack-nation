@@ -3,7 +3,15 @@
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts";
 import type { FounderScorePoint } from "@/lib/types";
 
-export function ScoreTrendChart({ history }: { history: FounderScorePoint[] }) {
+export function ScoreTrendChart({ history }: { history: FounderScorePoint[] | null | undefined }) {
+  if (!history || history.length === 0) {
+    return (
+      <div className="h-32 w-full rounded-lg border bg-muted/30 flex items-center justify-center text-sm text-muted-foreground">
+        No Founder Score history yet.
+      </div>
+    );
+  }
+
   const data = history.map((p) => ({
     date: new Date(p.recorded_at).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
     score: Math.round(p.score * 100),

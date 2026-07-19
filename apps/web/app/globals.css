@@ -7,9 +7,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+  --font-heading: var(--font-serif);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -39,82 +40,131 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+
+  /* VC Brain DS tokens */
+  --color-surface: var(--surface);
+  --color-raise: var(--raise);
+  --color-ink: var(--ink);
+  --color-sub: var(--sub);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-line3: var(--line3);
+  --color-dotline: var(--dotline);
+  --color-dotline-a: var(--dotline-a);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-ink-h: var(--brand-ink-h);
+  --color-good: var(--good-ink);
+  --color-good-bg: var(--good-bg);
+  --color-warn: var(--warn-ink);
+  --color-warn-dot: var(--warn-dot);
+  --color-warn-bg: var(--warn-bg);
+  --color-warn-line: var(--warn-line);
+  --color-bad: var(--bad-ink);
+  --color-bad-bg: var(--bad-bg);
+  --color-bad-line: var(--bad-line);
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* VC Brain DS — light */
+  --surface: #ffffff;
+  --raise: #fbf9f5;
+  --ink: #191713;
+  --sub: #6e675e;
+  --faint: #b9b2a6;
+  --line: #e4dfd7;
+  --line2: #efebe3;
+  --line3: #ddd6ca;
+  --dotline: #c9c2b6;
+  --dotline-a: #c9997e;
+  --brand: #e25a2b;
+  --brand-ink: #b8430f;
+  --brand-ink-h: #8f3106;
+  --good-ink: #3e7c4f;
+  --good-bg: #e8f0e6;
+  --warn-ink: #8a6114;
+  --warn-dot: #b07c1f;
+  --warn-bg: #f6edd8;
+  --warn-line: #e3ce9c;
+  --bad-ink: #b23a2e;
+  --bad-bg: #f6e2dd;
+  --bad-line: #e0b4ac;
+
+  /* shadcn mapping */
+  --background: #f5f2ec;
+  --foreground: var(--ink);
+  --card: var(--surface);
+  --card-foreground: var(--ink);
+  --popover: var(--surface);
+  --popover-foreground: var(--ink);
+  --primary: var(--ink);
+  --primary-foreground: #f5f2ec;
+  --secondary: var(--line2);
+  --secondary-foreground: var(--ink);
+  --muted: var(--line2);
+  --muted-foreground: var(--sub);
+  --accent: var(--raise);
+  --accent-foreground: var(--ink);
+  --destructive: var(--bad-ink);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
+  --chart-1: var(--good-ink);
+  --chart-2: var(--warn-dot);
+  --chart-3: var(--bad-ink);
+  --chart-4: var(--sub);
+  --chart-5: var(--brand);
+  --radius: 2px;
+  --sidebar: var(--raise);
+  --sidebar-foreground: var(--ink);
+  --sidebar-primary: var(--ink);
+  --sidebar-primary-foreground: #f5f2ec;
+  --sidebar-accent: var(--line2);
+  --sidebar-accent-foreground: var(--ink);
+  --sidebar-border: var(--line);
+  --sidebar-ring: var(--brand);
 }
 
+/*
+ * Dark theme. Same warm paper palette as light, inverted — the accent stays
+ * the brand orange, lifted for legibility on a dark surface. Semantic
+ * good/warn/bad keep their hues, likewise lightened.
+ */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --surface: #1d1a16;
+  --raise: #242019;
+  --ink: #f0ebe2;
+  --sub: #a39b8f;
+  --faint: #6e675e;
+  --line: #35312a;
+  --line2: #2b2822;
+  --line3: #443f35;
+  --dotline: #5a5344;
+  --dotline-a: #8a5a3c;
+  --brand: #e86a3c;
+  --brand-ink: #e8895f;
+  --brand-ink-h: #f2a377;
+  --good-ink: #8cc79a;
+  --good-bg: #22301f;
+  --warn-ink: #d9b15e;
+  --warn-dot: #d9a93f;
+  --warn-bg: #332a15;
+  --warn-line: #4d3f1e;
+  --bad-ink: #e08273;
+  --bad-bg: #38201c;
+  --bad-line: #55302a;
+
+  --background: #141210;
+  --primary-foreground: #141210;
+  --sidebar-primary-foreground: #141210;
 }
 
 @layer base {
@@ -125,6 +175,87 @@
     @apply bg-background text-foreground;
   }
   html {
-    @apply font-sans;
+    @apply font-sans antialiased;
   }
+  h1,
+  h2,
+  h3 {
+    @apply font-serif font-medium tracking-tight;
+  }
+  a {
+    color: var(--brand-ink);
+  }
+  a:hover {
+    color: var(--brand-ink-h);
+  }
+}
+
+/* Landing page motion + atmosphere */
+.landing-grid {
+  background-image:
+    linear-gradient(to right, rgba(240, 235, 226, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(240, 235, 226, 0.06) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 75%);
+}
+
+@keyframes landing-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes landing-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes landing-glow-pulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes landing-draw {
+  from { stroke-dashoffset: 1600; }
+  to { stroke-dashoffset: 0; }
+}
+
+.landing-fade {
+  animation: landing-fade-in 0.9s ease-out both;
+}
+.landing-fade-delay {
+  animation: landing-fade-in 0.9s ease-out 0.15s both;
+}
+.landing-rise {
+  animation: landing-rise 1s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+.landing-rise-delay {
+  animation: landing-rise 1s cubic-bezier(0.22, 1, 0.36, 1) 0.28s both;
+}
+.landing-rise-delay-2 {
+  animation: landing-rise 1s cubic-bezier(0.22, 1, 0.36, 1) 0.42s both;
+}
+.landing-glow {
+  animation: landing-glow-pulse 10s ease-in-out infinite;
+}
+.landing-glow-delay {
+  animation: landing-glow-pulse 14s ease-in-out 2s infinite;
+}
+.landing-path {
+  stroke-dasharray: 1600;
+  animation: landing-draw 2.4s ease-out 0.5s both;
+}
+.landing-path-delay {
+  stroke-dasharray: 1600;
+  animation: landing-draw 2.8s ease-out 0.9s both;
+}
+
+.landing a {
+  color: inherit;
+}
+.landing a:hover {
+  color: inherit;
+}
+
+.landing-integ {
+  animation: landing-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

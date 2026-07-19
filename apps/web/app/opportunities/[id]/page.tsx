@@ -23,8 +23,8 @@ export default async function OpportunityDetailPage({
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6">
-      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to pipeline
+      <Link href="/outbound" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to outbound sources
       </Link>
 
       <header className="space-y-1">
@@ -60,9 +60,14 @@ export default async function OpportunityDetailPage({
       <Separator />
 
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-          Claims &amp; Trust
-        </h2>
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            Evidence &amp; Trust
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Narrative analysis with inline citations — expand Sources for the full trace.
+          </p>
+        </div>
         <ClaimTrustList claims={opp.claims ?? []} />
       </section>
 

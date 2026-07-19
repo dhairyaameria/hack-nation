@@ -1,21 +1,20 @@
 """Agent B — inbound application + outbound ingestion entry points.
 
-Wave 1: real deck parsing + fast screen, backed by the in-memory
-`opportunity_store` (Wave 2 swaps that for Supabase — see
-`docs/03-SOURCING.md`).
-
-Inbound Perplexity rerank: `POST /inbound/rerank` — same function as the
-cron job (`docs/19-INBOUND-RERANK.md`).
+Real deck parsing + fast screen for inbound, backed by `opportunity_store`
+(Supabase-backed, see `docs/03-SOURCING.md` §1). Outbound sourcing (§2-4:
+GitHub/HN connectors, watchlist state machine, convergence into the same
+application code path) lives in `api.ingestion.watchlist`.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Body, Form, UploadFile
+from fastapi import APIRouter, Body, Form, HTTPException, UploadFile
+from pydantic import BaseModel
 
 from api.core import opportunity_store
-from api.ingestion import deck_parser, deck_storage, fast_screen, inbound_rerank
+from api.ingestion import deck_parser, deck_storage, fast_screen, inbound_rerank, watchlist
 
 router = APIRouter(tags=["ingestion"])
 
@@ -119,3 +118,62 @@ def list_ranked_inbound():
 @router.post("/ingest/founder")
 async def ingest_founder(payload: dict):
     return {"status": "accepted", "note": "Entity resolution stub — see Wave 1 task 1.A."}
+
+
+# ---------------------------------------------------------------------------
+# Outbound sourcing + watchlist (docs/03-SOURCING.md §2-4)
+# ---------------------------------------------------------------------------
+
+
+class DiscoverPayload(BaseModel):
+    founder_name: str
+    company_name: str | None = None
+    github_username: str | None = None
+    hn_query: str | None = None
+    linkedin_url: str | None = None
+
+
+@router.get("/sourcing/watchlist")
+def get_watchlist():
+    return {"entries": watchlist.list_watchlist()}
+
+
+@router.post("/sourcing/discover")
+def discover(payload: DiscoverPayload):
+    """Runs outbound connectors (GitHub, HN, arXiv, LinkedIn, Perplexity,
+    Tavily) for a candidate founder and creates a scored watchlist entry."""
+    if not payload.founder_name.strip():
+        raise HTTPException(400, "founder_name is required")
+    return watchlist.discover(
+        payload.founder_name,
+        company_name=payload.company_name,
+        github_username=payload.github_username,
+        hn_query=payload.hn_query,
+        linkedin_url=payload.linkedin_url,
+    )
+
+
+@router.post("/sourcing/watchlist/{entry_id}/promote")
+def promote_entry(entry_id: str):
+    try:
+        return watchlist.promote(entry_id)
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
+@router.post("/sourcing/watchlist/{entry_id}/outreach")
+def outreach_entry(entry_id: str):
+    try:
+        return watchlist.generate_outreach(entry_id)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
+@router.post("/sourcing/watchlist/{entry_id}/activate")
+def activate_entry(entry_id: str):
+    """Convergence: creates a real opportunity through the same code path
+    as `/application/submit`, then advances applied -> screening."""
+    try:
+        return watchlist.activate(entry_id)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc

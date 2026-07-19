@@ -1,64 +1,107 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Sparkline, TREND, ConfidenceBadge } from "@/components/ui/ds";
 import { cn } from "@/lib/utils";
 import type { AxisScore } from "@/lib/types";
 
 const AXIS_LABELS: Record<AxisScore["axis"], string> = {
-  founder: "Founder",
-  market: "Market",
-  idea_vs_market: "Idea vs. Market",
+  founder: "FOUNDER",
+  market: "MARKET",
+  idea_vs_market: "IDEA ⇄ MARKET",
 };
 
-const TREND_ICON = {
-  improving: TrendingUp,
-  declining: TrendingDown,
-  stable: Minus,
+const AXIS_ICON: Record<AxisScore["axis"], React.ReactNode> = {
+  founder: (
+    <svg width="12" height="12" viewBox="0 0 12 12">
+      <circle cx="6" cy="6" r="4.5" fill="none" stroke="var(--ink)" strokeWidth="1.4" />
+    </svg>
+  ),
+  market: (
+    <svg width="12" height="12" viewBox="0 0 12 12">
+      <rect x="2" y="2" width="8" height="8" fill="none" stroke="var(--ink)" strokeWidth="1.4" transform="rotate(45 6 6)" />
+    </svg>
+  ),
+  idea_vs_market: (
+    <svg width="14" height="12" viewBox="0 0 14 12">
+      <line x1="1" y1="6" x2="13" y2="6" stroke="var(--ink)" strokeWidth="1.4" />
+      <circle cx="3" cy="6" r="2" fill="var(--ink)" />
+      <circle cx="11" cy="6" r="2" fill="none" stroke="var(--ink)" strokeWidth="1.4" />
+    </svg>
+  ),
 };
 
-const TREND_COLOR = {
-  improving: "text-emerald-600",
-  declining: "text-red-600",
-  stable: "text-muted-foreground",
-};
+export function formatAxisValue(value: number | string): string {
+  return typeof value === "number" ? String(Math.round(value * 100)) : String(value);
+}
 
 /**
  * Renders ONE axis. Never combine axis cards into a composite score —
  * this is a binding rule (docs/00-OVERVIEW.md §4 rule 1).
  */
-export function AxisScoreCard({ score }: { score: AxisScore }) {
-  const TrendIcon = TREND_ICON[score.trend];
+export function AxisScoreCard({
+  score,
+  history,
+}: {
+  score: AxisScore;
+  history?: number[]; // 0..1, oldest first — 30d trend sparkline
+}) {
+  const trend = TREND[score.trend];
   const isNumeric = typeof score.value === "number";
 
   return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+    <div className="rounded-[2px] border border-line bg-surface p-5 transition-colors hover:border-ink">
+      <div className="flex items-center justify-between">
+        <div className="font-mono text-[11px] tracking-[0.12em] text-sub">
           {AXIS_LABELS[score.axis]}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-baseline justify-between">
-          <span className="text-2xl font-semibold tabular-nums">
-            {isNumeric ? `${Math.round((score.value as number) * 100)}` : String(score.value)}
-            {isNumeric && <span className="text-sm text-muted-foreground">/100</span>}
-          </span>
-          <span className={cn("flex items-center gap-1 text-xs font-medium", TREND_COLOR[score.trend])}>
-            <TrendIcon className="h-3.5 w-3.5" />
-            {score.trend}
-          </span>
         </div>
-        <div className="mt-1 text-xs text-muted-foreground">
-          confidence {Math.round(score.confidence * 100)}%
+        {AXIS_ICON[score.axis]}
+      </div>
+      <div className="mt-3.5 flex items-end justify-between">
+        <div className="font-serif text-[46px] font-medium leading-none capitalize">
+          {formatAxisValue(score.value)}
+          {isNumeric && (
+            <span className="ml-1 font-mono text-xs normal-case text-faint">/100</span>
+          )}
         </div>
-      </CardContent>
-    </Card>
+        {history && <Sparkline points={history} stroke={trend.color} />}
+      </div>
+      <div
+        className="mt-2 flex items-center gap-1.5 text-[12.5px] font-medium"
+        style={{ color: trend.color }}
+      >
+        <span className="text-sm">{trend.arrow}</span>
+        <span>{trend.label}</span>
+        <span className="font-mono font-normal text-faint">· 30d</span>
+      </div>
+      <div className="mt-4 border-t border-line pt-3">
+        <ConfidenceBadge confidence={score.confidence} evidenceCount={score.evidence.length} />
+        {score.evidence.length > 0 && (
+          <div className="mt-3 flex flex-col gap-[7px] text-[12.5px] leading-snug">
+            {/* every item rendered — a network_proximity item must never be
+                truncated away, its disclosure is mandatory */}
+            {score.evidence.map((ev, i) => (
+              <a
+                key={i}
+                href="#"
+                className={cn(
+                  "w-fit border-b border-dotted pb-px no-underline",
+                  ev.source_type === "network_proximity"
+                    ? "border-warn-line !text-warn"
+                    : "border-dotline"
+                )}
+              >
+                {ev.evidence_snippet} ↗
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
 export function AxisScoreRow({ scores }: { scores: AxisScore[] }) {
   if (scores.length === 0) {
     return (
-      <div className="text-sm text-muted-foreground italic">
+      <div className="text-sm text-sub italic">
         Not yet analyzed — run 3-axis scoring to populate.
       </div>
     );

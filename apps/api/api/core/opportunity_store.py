@@ -20,6 +20,7 @@ from typing import Any
 from api.agent import thesis_store
 from api.core import fixtures
 from api.core.db import get_client
+from api.ingestion import memory
 
 # ---------------------------------------------------------------------------
 # In-memory fallback (no Supabase credentials configured)
@@ -73,12 +74,12 @@ def _axis_score_out(row: dict[str, Any]) -> dict[str, Any]:
         "value": row["value_numeric"] if row["value_numeric"] is not None else row["value_label"],
         "trend": row["trend"],
         "confidence": row.get("confidence"),
-        "evidence": [],
+        "evidence": row.get("evidence") or [],
     }
 
 
 def _db_list_opportunities(client) -> list[dict[str, Any]]:
-    opps_res = client.table("opportunities").select("*, founders(display_name), companies(name)").execute()
+    opps_res = client.table("opportunities").select("*, founders(display_name), companies(name, sector)").execute()
     opps = opps_res.data
     if not opps:
         return []
@@ -97,6 +98,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
         out.append({
             "id": o["id"],
             "company_name": (o.get("companies") or {}).get("name", "Unknown"),
+            "company_sector": (o.get("companies") or {}).get("sector"),
             "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
             "founder_id": o["founder_id"],
             "source": o["source"],
@@ -121,7 +123,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
 def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
     opp_res = (
         client.table("opportunities")
-        .select("*, founders(display_name), companies(name)")
+        .select("*, founders(display_name, domain_affinity), companies(name, sector)")
         .eq("id", opportunity_id)
         .limit(1)
         .execute()
@@ -167,6 +169,8 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
         claims_out.append({
             "claim_id": c["id"],
             "text": c["text"],
+            "slide_locator": c.get("slide_locator"),
+            "source": c.get("source"),
             "trust_score": validation.get("trust_score"),
             "validation_status": validation.get("status", "unknown"),
             "evidence": evidence_by_claim.get(c["id"], []),
@@ -178,9 +182,13 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
     return {
         "id": o["id"],
         "company_name": (o.get("companies") or {}).get("name", "Unknown"),
+        "company_sector": (o.get("companies") or {}).get("sector"),
         "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
         "founder_id": o["founder_id"],
+        "founder_domain_affinity": (o.get("founders") or {}).get("domain_affinity") or [],
         "source": o["source"],
+        "discovery_channel": o.get("discovery_channel"),
+        "triggering_signal": o.get("triggering_signal"),
         "screen_verdict": o.get("screen_verdict"),
         "thesis_fit_score": o.get("thesis_fit_score"),
         "has_contradiction": o["has_contradiction"],
@@ -204,6 +212,155 @@ def list_opportunities() -> list[dict[str, Any]]:
     if client is None:
         return list(_memory().values())
     return _db_list_opportunities(client)
+
+
+def list_portfolio() -> list[dict[str, Any]]:
+    """Companies the fund has already funded (`status=funded` or yes decision)."""
+    client = get_client()
+    if client is None:
+        out = []
+        for opp in _memory().values():
+            if opp.get("status") != "funded":
+                continue
+            sla = opp.get("sla") or {}
+            out.append({
+                "opportunity_id": opp["id"],
+                "company_name": opp.get("company_name"),
+                "company_sector": opp.get("company_sector"),
+                "company_domain": opp.get("company_domain"),
+                "founder_name": opp.get("founder_name"),
+                "founder_id": opp.get("founder_id"),
+                "source": opp.get("source"),
+                "discovery_channel": opp.get("discovery_channel"),
+                "thesis_fit_score": opp.get("thesis_fit_score"),
+                "check_size_usd": opp.get("check_size_usd") or 100_000,
+                "recommendation": opp.get("recommendation") or "yes",
+                "funded_at": sla.get("decision_at"),
+                "status": "funded",
+            })
+        out.sort(key=lambda r: r.get("funded_at") or "", reverse=True)
+        return out
+
+    funded_res = (
+        client.table("opportunities")
+        .select("*, founders(display_name), companies(name, sector, domain)")
+        .eq("status", "funded")
+        .execute()
+    )
+    opps = list(funded_res.data or [])
+    seen = {o["id"] for o in opps}
+
+    yes_res = (
+        client.table("decision_log")
+        .select("opportunity_id, recommendation, decision_at, confidence")
+        .eq("recommendation", "yes")
+        .execute()
+    )
+    yes_by_opp = {r["opportunity_id"]: r for r in (yes_res.data or []) if r.get("opportunity_id")}
+    missing_ids = [oid for oid in yes_by_opp if oid not in seen]
+    if missing_ids:
+        extra = (
+            client.table("opportunities")
+            .select("*, founders(display_name), companies(name, sector, domain)")
+            .in_("id", missing_ids)
+            .execute()
+        )
+        opps.extend(extra.data or [])
+
+    ids = [o["id"] for o in opps]
+    decision_by_opp: dict[str, dict[str, Any]] = dict(yes_by_opp)
+    if ids:
+        dres = client.table("decision_log").select("*").in_("opportunity_id", ids).execute()
+        for row in dres.data or []:
+            decision_by_opp[row["opportunity_id"]] = row
+
+    active = thesis_store.get_active_thesis()
+    default_check = (active or {}).get("check_size_usd") or 100_000
+
+    out = []
+    for o in opps:
+        d = decision_by_opp.get(o["id"]) or {}
+        company = o.get("companies") or {}
+        out.append({
+            "opportunity_id": o["id"],
+            "company_name": company.get("name", "Unknown"),
+            "company_sector": company.get("sector"),
+            "company_domain": company.get("domain"),
+            "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
+            "founder_id": o["founder_id"],
+            "source": o["source"],
+            "discovery_channel": o.get("discovery_channel"),
+            "thesis_fit_score": o.get("thesis_fit_score"),
+            "check_size_usd": default_check,
+            "recommendation": d.get("recommendation") or "yes",
+            "funded_at": d.get("decision_at"),
+            "status": "funded",
+        })
+    out.sort(key=lambda r: r.get("funded_at") or "", reverse=True)
+    return out
+
+
+def list_memos() -> list[dict[str, Any]]:
+    """All generated investment memos with company/founder context for the
+    Investment Memos index page."""
+    client = get_client()
+    if client is None:
+        out = []
+        for opp in _memory().values():
+            memo = opp.get("memo")
+            if not memo or not memo.get("sections"):
+                continue
+            sections = memo["sections"]
+            filled = sum(1 for s in sections if s.get("content") and not s.get("not_disclosed"))
+            gaps = sum(1 for s in sections if s.get("not_disclosed") or not s.get("content"))
+            snapshot = next((s.get("content") for s in sections if s.get("title") == "Company snapshot" and s.get("content")), None)
+            out.append({
+                "id": f"memo-{opp['id']}",
+                "opportunity_id": opp["id"],
+                "company_name": opp.get("company_name"),
+                "founder_name": opp.get("founder_name"),
+                "source": opp.get("source"),
+                "has_contradiction": opp.get("has_contradiction", False),
+                "section_count": len(sections),
+                "sections_filled": filled,
+                "gaps_flagged": gaps,
+                "snapshot": (snapshot or "")[:240] or None,
+                "updated_at": None,
+                "created_at": None,
+            })
+        return out
+
+    res = (
+        client.table("memos")
+        .select("id, opportunity_id, sections, created_at, updated_at, opportunities(id, source, has_contradiction, founders(display_name), companies(name))")
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    out = []
+    for row in res.data or []:
+        opp = row.get("opportunities") or {}
+        sections = row.get("sections") or []
+        filled = sum(1 for s in sections if isinstance(s, dict) and s.get("content") and not s.get("not_disclosed"))
+        gaps = sum(1 for s in sections if isinstance(s, dict) and (s.get("not_disclosed") or not s.get("content")))
+        snapshot = next(
+            (s.get("content") for s in sections if isinstance(s, dict) and s.get("title") == "Company snapshot" and s.get("content")),
+            None,
+        )
+        out.append({
+            "id": row["id"],
+            "opportunity_id": row["opportunity_id"],
+            "company_name": (opp.get("companies") or {}).get("name", "Unknown"),
+            "founder_name": (opp.get("founders") or {}).get("display_name", "Unknown"),
+            "source": opp.get("source"),
+            "has_contradiction": opp.get("has_contradiction", False),
+            "section_count": len(sections),
+            "sections_filled": filled,
+            "gaps_flagged": gaps,
+            "snapshot": (snapshot or "")[:240] or None,
+            "updated_at": row.get("updated_at"),
+            "created_at": row.get("created_at"),
+        })
+    return out
 
 
 def get_opportunity(opportunity_id: str) -> dict[str, Any] | None:
@@ -256,8 +413,12 @@ def create_opportunity(
         _memory()[opp_id] = row
         return row
 
-    founder = client.table("founders").insert({"display_name": founder_name, "domain_affinity": []}).execute().data[0]
-    company = client.table("companies").insert({"name": company_name, "status": "active"}).execute().data[0]
+    # Resolve rather than blind-insert so the SAME real-world founder/company
+    # (e.g. one already known from a prior outbound signal) isn't duplicated
+    # when they later flow through this path — required for convergence
+    # (docs/03-SOURCING.md §3) to actually unify identity, not just code path.
+    founder = memory.resolve_founder(founder_name)
+    company = memory.resolve_company(company_name)
     active_thesis = thesis_store.get_active_thesis()
 
     opp_row = {
@@ -310,7 +471,15 @@ def _db_apply_claims(client, opportunity_id: str, claims: list[dict[str, Any]]) 
     if not is_analysis_output:
         # Fresh deck-parsed claims — insert rows, ignore the router's
         # placeholder claim_id (DB assigns the real one).
-        rows = [{"opportunity_id": opportunity_id, "text": c["text"], "slide_locator": c.get("slide_locator"), "source": "deck"} for c in claims]
+        rows = [
+            {
+                "opportunity_id": opportunity_id,
+                "text": c["text"],
+                "slide_locator": c.get("slide_locator"),
+                "source": c.get("source") or "deck",
+            }
+            for c in claims
+        ]
         client.table("claims").insert(rows).execute()
         return
 
@@ -380,6 +549,7 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
                 "value_label": s["value"] if isinstance(s["value"], str) else None,
                 "trend": s.get("trend", "stable"),
                 "confidence": s.get("confidence"),
+                "evidence": s.get("evidence", []),
             }
             for s in axis_scores
         ]
