@@ -172,7 +172,7 @@ export default async function FounderProfilePage({
             </h2>
             <ScoreTrendChart history={founder.founder_score_history} />
           </div>
-          <NetworkBadge proximity={founder.network_proximity} />
+          <NetworkBadge proximity={founder.network_proximity ?? null} />
         </div>
       </section>
 
