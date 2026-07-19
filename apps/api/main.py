@@ -12,6 +12,7 @@ from api.agent.routes import router as agent_router
 from api.core.config import settings
 from api.ingestion.routes import router as ingestion_router
 from api.intelligence.routes import router as intelligence_router
+from api.memory.routes import router as memory_router
 
 app = FastAPI(title="VC Brain API", version="0.1.0")
 
@@ -27,6 +28,7 @@ API_PREFIX = "/api/v1"
 app.include_router(ingestion_router, prefix=API_PREFIX)
 app.include_router(intelligence_router, prefix=API_PREFIX)
 app.include_router(agent_router, prefix=API_PREFIX)
+app.include_router(memory_router, prefix=API_PREFIX)
 
 
 @app.get("/")

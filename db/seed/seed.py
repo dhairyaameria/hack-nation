@@ -15,6 +15,7 @@ environment). Safe to re-run — every insert is an upsert on a stable id.
 from __future__ import annotations
 
 import os
+import random
 import sys
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -267,6 +268,123 @@ DISCLOSURE_TEXT = (
     "not their own demonstrated capability. Shown for transparency, weighted conservatively."
 )
 
+# ---------------------------------------------------------------------------
+# 8. Memory layer: documents, chunks, facts, aliases (migration 009)
+# ---------------------------------------------------------------------------
+
+
+def fake_embedding(slug: str, dim: int = 1536) -> list[float]:
+    """Deterministic stand-in for text-embedding-3-small so the seed works
+    offline (no OPENAI_API_KEY) and re-runs upsert identical rows. Real
+    ingestion via /api/v1/memory/ingest writes real embeddings.
+    """
+    rng = random.Random(slug)
+    return [round(rng.uniform(-1, 1), 6) for _ in range(dim)]
+
+
+MEMORY_DOCUMENTS = [
+    {
+        "slug": "doc-rivera-deck-notes",
+        "title": "Rivera Labs seed deck notes",
+        "doc_type": "deck",
+        "founder": "founder-a-cold-start-strong",
+        "company": "company-a",
+        "source_type": "deck",
+        "source_locator": "rivera-labs-deck.pdf",
+        "source_timestamp": "2026-07-08T10:00:00+00:00",
+        "chunks": [
+            "Rivera Labs builds GPU scheduling infrastructure for AI training workloads. "
+            "The team claims 3 design partners running production jobs and a 40% cost "
+            "reduction versus naive scheduling in internal benchmarks.",
+            "Founding team: Alex Rivera (CEO, ex-infra at a large cloud provider) plus two "
+            "founding engineers. Raising to expand the scheduler to multi-cloud and hire a "
+            "developer relations lead.",
+        ],
+    },
+    {
+        "slug": "doc-alex-intro-call",
+        "title": "Intro call notes: Alex Rivera",
+        "doc_type": "note",
+        "founder": "founder-a-cold-start-strong",
+        "company": "company-a",
+        "source_type": "note",
+        "source_locator": "calls/2026-07-10-alex-rivera.md",
+        "source_timestamp": "2026-07-10T16:30:00+00:00",
+        "chunks": [
+            "30-minute intro call with Alex Rivera. Alex confirmed the round size changed: "
+            "originally planned as a $500K pre-seed, now raising a $1.5M seed after "
+            "inbound interest. Committed to sending updated pilot metrics by end of July. "
+            "We agreed to move Rivera Labs into screening.",
+        ],
+    },
+]
+
+# One invalidated fact (valid_until set) demonstrates bi-temporality: the
+# round-size claim from the deck was superseded on the intro call.
+MEMORY_FACTS = [
+    {
+        "slug": "fact-alex-actor",
+        "fact_type": "actor",
+        "subject": "Alex Rivera",
+        "body": "Alex Rivera is the founder and CEO of Rivera Labs.",
+        "payload": {"role": "CEO", "company": "Rivera Labs"},
+        "document": "doc-rivera-deck-notes",
+        "confidence": 0.9,
+        "valid_from": "2026-07-08T10:00:00+00:00",
+        "valid_until": None,
+    },
+    {
+        "slug": "fact-raise-500k",
+        "fact_type": "claim",
+        "subject": "Rivera Labs",
+        "body": "Rivera Labs is raising a $500K pre-seed round.",
+        "payload": {"amount_usd": 500000, "round": "pre_seed"},
+        "document": "doc-rivera-deck-notes",
+        "confidence": 0.85,
+        "valid_from": "2026-07-08T10:00:00+00:00",
+        "valid_until": "2026-07-10T16:30:00+00:00",  # superseded on the intro call
+    },
+    {
+        "slug": "fact-raise-1500k",
+        "fact_type": "claim",
+        "subject": "Rivera Labs",
+        "body": "Rivera Labs is raising a $1.5M seed round.",
+        "payload": {"amount_usd": 1500000, "round": "seed"},
+        "document": "doc-alex-intro-call",
+        "confidence": 0.9,
+        "valid_from": "2026-07-10T16:30:00+00:00",
+        "valid_until": None,
+    },
+    {
+        "slug": "fact-alex-metrics-commitment",
+        "fact_type": "commitment",
+        "subject": "Alex Rivera",
+        "body": "Alex Rivera committed to sending updated pilot metrics by end of July 2026.",
+        "payload": {"due": "2026-07-31"},
+        "document": "doc-alex-intro-call",
+        "confidence": 0.8,
+        "valid_from": "2026-07-10T16:30:00+00:00",
+        "valid_until": None,
+    },
+    {
+        "slug": "fact-screening-decision",
+        "fact_type": "decision",
+        "subject": "Rivera Labs",
+        "body": "Team decided to move Rivera Labs into screening after the intro call.",
+        "payload": {"stage": "screening"},
+        "document": "doc-alex-intro-call",
+        "confidence": 0.85,
+        "valid_from": "2026-07-10T16:30:00+00:00",
+        "valid_until": None,
+    },
+]
+
+ACTOR_ALIASES = [
+    {"slug": "alias-alex-email", "founder": "founder-a-cold-start-strong", "alias": "alex@riveralabs.dev", "alias_type": "email"},
+    {"slug": "alias-alex-handle", "founder": "founder-a-cold-start-strong", "alias": "arivera-dev", "alias_type": "handle"},
+    {"slug": "alias-alex-name", "founder": "founder-a-cold-start-strong", "alias": "Alex Rivera", "alias_type": "name"},
+]
+
 
 def get_client():
     if not SUPABASE_URL or not SUPABASE_SERVICE_KEY:
@@ -482,9 +600,74 @@ def main():
     ]
     upsert(client, "network_proximity_scores", proximity_rows, on_conflict="founder_id")
 
+    print("9. Memory layer (documents, chunks, facts, aliases)")
+    for doc in MEMORY_DOCUMENTS:
+        doc_id = sid(doc["slug"])
+        upsert(client, "documents", [{
+            "id": doc_id,
+            "title": doc["title"],
+            "doc_type": doc["doc_type"],
+            "raw_text": "\n\n".join(doc["chunks"]),
+            "founder_id": sid(doc["founder"]),
+            "company_id": sid(doc["company"]),
+            "source_type": doc["source_type"],
+            "source_locator": doc["source_locator"],
+            "source_timestamp": doc["source_timestamp"],
+        }])
+        chunk_rows = [
+            {
+                "id": sid(f"{doc['slug']}-chunk-{i}"),
+                "document_id": doc_id,
+                "chunk_index": i,
+                "content": content,
+                "embedding": fake_embedding(f"{doc['slug']}-chunk-{i}"),
+                "founder_id": sid(doc["founder"]),
+                "company_id": sid(doc["company"]),
+                "source_type": doc["source_type"],
+                "source_locator": f"{doc['source_locator']}#chunk-{i}",
+                "source_timestamp": doc["source_timestamp"],
+            }
+            for i, content in enumerate(doc["chunks"])
+        ]
+        upsert(client, "document_chunks", chunk_rows)
+
+    doc_by_slug = {d["slug"]: d for d in MEMORY_DOCUMENTS}
+    fact_rows = []
+    for f in MEMORY_FACTS:
+        doc = doc_by_slug[f["document"]]
+        fact_rows.append({
+            "id": sid(f["slug"]),
+            "fact_type": f["fact_type"],
+            "subject": f["subject"],
+            "body": f["body"],
+            "payload": f["payload"],
+            "founder_id": sid(doc["founder"]),
+            "company_id": sid(doc["company"]),
+            "document_id": sid(doc["slug"]),
+            "confidence": f["confidence"],
+            "valid_from": f["valid_from"],
+            "valid_until": f["valid_until"],
+            "source_type": doc["source_type"],
+            "source_locator": doc["source_locator"],
+            "source_timestamp": doc["source_timestamp"],
+        })
+    upsert(client, "memory_facts", fact_rows)
+
+    alias_rows = [
+        {
+            "id": sid(a["slug"]),
+            "founder_id": sid(a["founder"]),
+            "alias": a["alias"],
+            "alias_type": a["alias_type"],
+        }
+        for a in ACTOR_ALIASES
+    ]
+    upsert(client, "actor_aliases", alias_rows)
+
     print("\nSeed complete. Verify with:")
     print("  GET /api/v1/thesis/active  -> Pre-seed AI Infra EU")
     print("  GET /api/v1/opportunities  -> 6 seeded opportunities")
+    print("  GET /api/v1/memory/facts?subject=Rivera  -> current facts (invalidated $500K claim hidden)")
 
 
 if __name__ == "__main__":

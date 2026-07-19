@@ -36,6 +36,7 @@ Apply in numeric order. **Do not reorder** — later files assume earlier tables
 | `006_memos_decisions.sql` | `memos`, `decision_log` | C, E |
 | `007_agent_skills.sql` | `skill_definitions`, `skill_runs`, `chat_sessions`, `chat_messages` | D |
 | `008_optional_federated.sql` | `federated_*`, `provenance_ledger` | optional — skip if behind |
+| `009_memory_layer.sql` | `documents`, `document_chunks`, `memory_facts`, `actor_aliases`, `match_document_chunks()` | memory REST/MCP (see `18-MEMORY-LAYER.md`) |
 
 ---
 
