@@ -1,4 +1,5 @@
 import { Sparkline, TREND, ConfidenceBadge } from "@/components/ui/ds";
+import { cn } from "@/lib/utils";
 import type { AxisScore } from "@/lib/types";
 
 const AXIS_LABELS: Record<AxisScore["axis"], string> = {
@@ -74,11 +75,18 @@ export function AxisScoreCard({
         <ConfidenceBadge confidence={score.confidence} evidenceCount={score.evidence.length} />
         {score.evidence.length > 0 && (
           <div className="mt-3 flex flex-col gap-[7px] text-[12.5px] leading-snug">
-            {score.evidence.slice(0, 3).map((ev, i) => (
+            {/* every item rendered — a network_proximity item must never be
+                truncated away, its disclosure is mandatory */}
+            {score.evidence.map((ev, i) => (
               <a
                 key={i}
                 href="#"
-                className="w-fit border-b border-dotted border-dotline pb-px no-underline"
+                className={cn(
+                  "w-fit border-b border-dotted pb-px no-underline",
+                  ev.source_type === "network_proximity"
+                    ? "border-warn-line !text-warn"
+                    : "border-dotline"
+                )}
               >
                 {ev.evidence_snippet} ↗
               </a>

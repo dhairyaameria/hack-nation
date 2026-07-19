@@ -6,8 +6,9 @@ Full spec: `docs/12-THESIS-SETTINGS-UI.md`, `docs/05-CURSOR-SKILLS.md`.
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
-from api.agent import thesis_store
+from api.agent import nl_query, sourcing_sweep, thesis_store
 
 router = APIRouter(tags=["thesis", "agent"])
 
@@ -62,6 +63,30 @@ def agent_message(payload: dict):
         "skills_used": [],
         "citations": [],
     }
+
+
+class SourcingSweepPayload(BaseModel):
+    thesis_id: str | None = None
+
+
+@router.post("/skills/thesis-sourcing-sweep/run")
+def run_sourcing_sweep(payload: SourcingSweepPayload = SourcingSweepPayload()):
+    """Cursor skill `.cursor/skills/thesis-sourcing-sweep/SKILL.md`: active
+    thesis -> structured Perplexity queries -> leads landed in Bronze."""
+    return sourcing_sweep.run(payload.thesis_id)
+
+
+class NaturalLanguageQueryPayload(BaseModel):
+    query: str
+
+
+@router.post("/query/natural-language")
+def natural_language_query(payload: NaturalLanguageQueryPayload):
+    """Compound query -> structured constraints -> ranked opportunities
+    with a per-clause match explanation for every result."""
+    if not payload.query.strip():
+        raise HTTPException(400, "query must not be empty")
+    return nl_query.run(payload.query)
 
 
 @router.get("/skills")

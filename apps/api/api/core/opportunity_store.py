@@ -20,6 +20,7 @@ from typing import Any
 from api.agent import thesis_store
 from api.core import fixtures
 from api.core.db import get_client
+from api.ingestion import memory
 
 # ---------------------------------------------------------------------------
 # In-memory fallback (no Supabase credentials configured)
@@ -73,12 +74,12 @@ def _axis_score_out(row: dict[str, Any]) -> dict[str, Any]:
         "value": row["value_numeric"] if row["value_numeric"] is not None else row["value_label"],
         "trend": row["trend"],
         "confidence": row.get("confidence"),
-        "evidence": [],
+        "evidence": row.get("evidence") or [],
     }
 
 
 def _db_list_opportunities(client) -> list[dict[str, Any]]:
-    opps_res = client.table("opportunities").select("*, founders(display_name), companies(name)").execute()
+    opps_res = client.table("opportunities").select("*, founders(display_name), companies(name, sector)").execute()
     opps = opps_res.data
     if not opps:
         return []
@@ -97,6 +98,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
         out.append({
             "id": o["id"],
             "company_name": (o.get("companies") or {}).get("name", "Unknown"),
+            "company_sector": (o.get("companies") or {}).get("sector"),
             "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
             "founder_id": o["founder_id"],
             "source": o["source"],
@@ -115,7 +117,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
 def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
     opp_res = (
         client.table("opportunities")
-        .select("*, founders(display_name), companies(name)")
+        .select("*, founders(display_name, domain_affinity), companies(name, sector)")
         .eq("id", opportunity_id)
         .limit(1)
         .execute()
@@ -172,9 +174,13 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
     return {
         "id": o["id"],
         "company_name": (o.get("companies") or {}).get("name", "Unknown"),
+        "company_sector": (o.get("companies") or {}).get("sector"),
         "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
         "founder_id": o["founder_id"],
+        "founder_domain_affinity": (o.get("founders") or {}).get("domain_affinity") or [],
         "source": o["source"],
+        "discovery_channel": o.get("discovery_channel"),
+        "triggering_signal": o.get("triggering_signal"),
         "screen_verdict": o.get("screen_verdict"),
         "has_contradiction": o["has_contradiction"],
         "axis_scores": axis_scores,
@@ -232,8 +238,12 @@ def create_opportunity(
         _memory()[opp_id] = row
         return row
 
-    founder = client.table("founders").insert({"display_name": founder_name, "domain_affinity": []}).execute().data[0]
-    company = client.table("companies").insert({"name": company_name, "status": "active"}).execute().data[0]
+    # Resolve rather than blind-insert so the SAME real-world founder/company
+    # (e.g. one already known from a prior outbound signal) isn't duplicated
+    # when they later flow through this path — required for convergence
+    # (docs/03-SOURCING.md §3) to actually unify identity, not just code path.
+    founder = memory.resolve_founder(founder_name)
+    company = memory.resolve_company(company_name)
     active_thesis = thesis_store.get_active_thesis()
 
     opp_row = {
@@ -276,7 +286,15 @@ def _db_apply_claims(client, opportunity_id: str, claims: list[dict[str, Any]]) 
     if not is_analysis_output:
         # Fresh deck-parsed claims — insert rows, ignore the router's
         # placeholder claim_id (DB assigns the real one).
-        rows = [{"opportunity_id": opportunity_id, "text": c["text"], "slide_locator": c.get("slide_locator"), "source": "deck"} for c in claims]
+        rows = [
+            {
+                "opportunity_id": opportunity_id,
+                "text": c["text"],
+                "slide_locator": c.get("slide_locator"),
+                "source": c.get("source") or "deck",
+            }
+            for c in claims
+        ]
         client.table("claims").insert(rows).execute()
         return
 
@@ -346,6 +364,7 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
                 "value_label": s["value"] if isinstance(s["value"], str) else None,
                 "trend": s.get("trend", "stable"),
                 "confidence": s.get("confidence"),
+                "evidence": s.get("evidence", []),
             }
             for s in axis_scores
         ]

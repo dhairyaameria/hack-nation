@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import uuid
 
+from api.core import gold_features
 from api.intelligence import llm, retrieval
 
 VALID_STATUSES = {"verified", "contradicted", "weakly_supported", "unknown"}
@@ -72,7 +73,12 @@ def _normalize_axis_scores(raw: list[dict]) -> list[dict] | None:
     return out if len(out) == 3 else None
 
 
-def run_analyst(company_name: str, claims: list[dict]) -> dict:
+def run_analyst(company_name: str, claims: list[dict], founder_axis_override: dict | None = None) -> dict:
+    """`founder_axis_override` (from `api.core.gold_features`) replaces the
+    claims-derived Founder axis with one computed from real Gold features +
+    the persistent Founder Score whenever the founder has connector/Genome
+    data — claims are a weak proxy for founder quality; Gold features are
+    the real thing (`docs/04-INTELLIGENCE-TRUST.md` §2 item 1)."""
     if llm.is_available():
         claim_text = "\n".join(f"- {c.get('text', '')}" for c in claims) or "(no claims extracted from deck)"
         system = (
@@ -92,8 +98,17 @@ def run_analyst(company_name: str, claims: list[dict]) -> dict:
         data = llm.chat_json(system, user)
         normalized = _normalize_axis_scores(data.get("axis_scores", [])) if data else None
         if normalized:
-            return {"axis_scores": normalized, "prompt_version": f"openai:{llm.MODEL}:analyst-v1"}
-    return _heuristic_analyst(claims)
+            result = {"axis_scores": normalized, "prompt_version": f"openai:{llm.MODEL}:analyst-v1"}
+            return _apply_founder_override(result, founder_axis_override)
+    return _apply_founder_override(_heuristic_analyst(claims), founder_axis_override)
+
+
+def _apply_founder_override(result: dict, founder_axis_override: dict | None) -> dict:
+    if founder_axis_override is None:
+        return result
+    result["axis_scores"] = [founder_axis_override if a["axis"] == "founder" else a for a in result["axis_scores"]]
+    result["prompt_version"] += "+gold_features_v1"
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -261,11 +276,31 @@ def run_referee(company_name: str, claims: list[dict], analyst_out: dict, valida
 # ---------------------------------------------------------------------------
 
 
-def run_pipeline(opportunity_id: str, company_name: str, claims: list[dict]) -> dict:
+def _build_founder_axis_override(founder_id: str | None) -> dict | None:
+    """Gold features -> Founder axis, per `docs/04-INTELLIGENCE-TRUST.md`
+    §2 item 1. Also appends the freshly-computed Founder Score to the
+    founder's persistent history (`docs/02-DATA-FOUNDATION.md` §4) — a
+    real score update, not just a display value. Returns `None` for a
+    true cold-start founder (no Genome, no Bronze signals), so the caller
+    falls back to the claims-only heuristic instead.
+    """
+    if not founder_id:
+        return None
+    gold = gold_features.get_gold_features(founder_id)
+    if gold is None:
+        return None
+    score = gold_features.compute_founder_score(gold)
+    gold_features.append_score_history(founder_id, score, gold.get("confidence", 0.5))
+    trend = gold_features.get_score_trend(founder_id)
+    return gold_features.founder_axis_from_gold(gold, score, trend)
+
+
+def run_pipeline(opportunity_id: str, company_name: str, claims: list[dict], founder_id: str | None = None) -> dict:
     trace_id = f"trace-{uuid.uuid4().hex[:8]}"
     claim_ids = [c.get("claim_id") for c in claims]
 
-    analyst_out = run_analyst(company_name, claims)
+    founder_axis_override = _build_founder_axis_override(founder_id)
+    analyst_out = run_analyst(company_name, claims, founder_axis_override)
     validations = run_validator(claims, company_name)
     referee_out = run_referee(company_name, claims, analyst_out, validations)
 

@@ -1,89 +1,149 @@
-# 17 — Parallel Workflow (Multi-Agent Build)
+# 17: Parallel Workflow (3-Person Team + Coding Agents)
 
-**Audience:** human team + Cursor agents working in parallel  
-**Purpose:** avoid merge conflicts, contract drift, and duplicate work during the hackathon.
+**Audience:** Khaled, Dhairya, Omar, and every coding agent working on this repo
+**Purpose:** one source of truth for who owns what, so humans and agents never collide.
+
+This doc supersedes the earlier Agent A-E model. Older docs (02-06, 13) still reference
+Agents A-E for task detail. Mapping: A (data) and D (skills) fold into Khaled, B (sourcing)
+and C (intelligence) fold into Dhairya, E (frontend) is Omar.
 
 ---
 
 ## 1. Golden rules
 
-1. **Agent A owns schema.** No other agent edits `db/migrations/` without A's review.
-2. **Contract changes require broadcast.** Edit `01-CONTRACTS.md` → notify all agents → update `shared/schemas` + fixtures same commit.
-3. **One demoable main.** `main` must pass the current gate (G0→G4) after every merge.
-4. **Small PRs / commits.** One task ID per commit (e.g. `1.A migrations 002-003`, `1.E dashboard fixtures`).
+1. **Khaled owns schema.** Nobody else edits `db/migrations/` without his review.
+2. **Contract changes require broadcast.** Edit `01-CONTRACTS.md`, notify the group chat,
+   update `shared/schemas` and fixtures in the same commit.
+3. **One demoable main.** `main` must pass the current gate (G0 to G4) after every merge.
+4. **Small PRs / commits.** One task per commit, WHY-first messages.
 5. **Never average axes.** Reviewer checks binding rules from `00-OVERVIEW.md` §4 on every merge.
+6. **Additive-only contracts.** No renames or removals of existing fields, routes, or tables.
 
 ---
 
-## 2. Branch strategy
+## 2. Ownership lanes
 
-```
-main                 ← always demoable at latest gate
-├── agent/a-data     ← migrations, seed, ingestion
-├── agent/b-source   ← application, connectors, watchlist
-├── agent/c-intel    ← scoring, validator, memos
-├── agent/d-skills   ← thesis, agent chat, skills
-└── agent/e-frontend ← Next.js UI
-```
+### Khaled: Product 1, the company brain (memory + MCP)
 
-**Merge order at each gate:**
+| Owns | Notes |
+|---|---|
+| `apps/api/api/memory/` | Single data-access layer for documents, chunks, facts, aliases |
+| `apps/api/api/mcp/` | FastMCP server, the ONE agent connection to the brain |
+| `db/migrations/` | Schema owner for the whole team (009+ and reviews) |
+| `db/seed/` | Seed data, including memory demo rows |
+| `AGENTS.md` (root) | Keeps the agent briefing current |
 
-1. Agent A → main (schema + seed first)
-2. Agents D, B, C in any order (API modules)
-3. Agent E last (UI wired to real endpoints)
+**Deliverable:** live demo of Claude connected over MCP, answering questions like
+"what contradictions did we find in this deck?" with cited provenance.
 
-Integrator (team lead) resolves conflicts in `shared/schemas` and `01-CONTRACTS.md`.
+Note: the memory/MCP modules land via the open `team-k/memory-mcp-scaffold` PR.
+
+### Dhairya: Product 2, the deal pipeline
+
+| Owns | Notes |
+|---|---|
+| `apps/api/api/intelligence/` | Analyst / Validator / Referee, 3-axis scoring, memos |
+| `apps/api/api/ingestion/` | Deck parsing, fast screen, inbound routes |
+| `apps/api/api/agent/` | Thesis store and agent chat routes |
+| `jobs/pipelines/` | Scheduled end-to-end runs (daily_pipeline.py) |
+| `jobs/connectors/` | Outbound sourcing (GitHub, HN, Wayback, Perplexity) |
+
+**Deliverable:** end-to-end inbound and outbound run that writes results into the shared
+memory tables, so Product 1 can answer questions about them.
+
+### Omar: UI
+
+| Owns | Notes |
+|---|---|
+| `apps/web/` | Exclusive. Nobody else edits the frontend |
+| `shared/fixtures/` | Keeps fixture IDs aligned with seed data |
+
+**Deliverable:** dashboard wired to real REST endpoints, not just fixtures. Visual polish
+comes after live data.
+
+### Arman: to be decided (fill in after onboarding)
+
+Arman joins as the fourth teammate. This lane is intentionally empty until he finishes
+onboarding (read `AGENTS.md`, `docs/00-OVERVIEW.md`, `docs/01-CONTRACTS.md`, then this doc)
+and picks his focus with the team. Candidate areas, first to last by current need:
+outbound connectors under `jobs/connectors/`, the network graph (GraphQL resolvers + UI
+handoff with Omar), or demo/QA ownership (seed data, gate checklists, dry runs).
+
+| Owns | Notes |
+|---|---|
+| _TBD_ | Fill in owned paths here once decided |
+
+**Deliverable:** _TBD, agree with the team and update this section in the same PR as your
+first task._
+
+### Shared touchpoints (integrator: Khaled)
+
+| Path | Rule |
+|---|---|
+| `shared/schemas/` (models.py + types.ts) | Propose in group chat, Khaled applies, everyone pulls |
+| `apps/api/main.py` | Router registration only, Khaled applies |
+| `docs/01-CONTRACTS.md` | Propose via PR comment, Khaled updates |
+| `.cursor/skills/` | Anyone may add, do not rename without updating the router skill |
 
 ---
 
-## 3. Module ownership (API)
+## 3. Branch strategy
 
 ```
-apps/api/
-  api/ingestion/      → Agent B only
-  api/intelligence/   → Agent C only
-  api/agent/          → Agent D only
-  api/graphql/        → Agent B (resolvers)
-  main.py             → integrator (route registration only)
+main            <- always demoable at the latest gate
+├── khaled/*    <- memory, MCP, migrations, seed
+├── dhairya/*   <- intelligence, ingestion, pipelines, connectors
+├── omar/*      <- apps/web, fixtures
+└── arman/*     <- TBD after onboarding (see §2)
 ```
 
-Do not create cross-imports between agent modules — communicate via DB + shared schemas only.
+- Branch from fresh `main`, keep branches short-lived (merge every 60 to 90 minutes).
+- Merge order at each gate: schema first (Khaled), then API modules (Dhairya),
+  then UI (Omar, wired to real endpoints).
+- Khaled resolves conflicts in shared files. Never force push.
 
 ---
 
-## 4. Shared touchpoints (high conflict zones)
+## 4. Cross-imports
 
-| Path | Owner | Others |
-|---|---|---|
-| `db/migrations/` | A | read-only |
-| `db/seed/` | A | suggest data in `14-SEED-DATA-SPEC.md` |
-| `shared/schemas/` | integrator | all agents propose changes |
-| `shared/fixtures/` | E | A/C keep IDs aligned with seed |
-| `.cursor/skills/` | D | don't rename without updating router |
-| `01-CONTRACTS.md` | integrator | propose via PR comment |
+Modules communicate via the database and `shared/schemas` only, with two allowed exceptions:
+
+1. Anyone may import `api/intelligence/llm.py` as the shared LLM helper
+   (e.g. `api/memory/extraction.py` uses `chat_json`).
+2. `jobs/pipelines/` is a thin orchestrator and may import any `api/*` module,
+   but must not contain business logic itself.
+
+No other cross-imports between owned modules.
 
 ---
 
-## 5. Cursor agent dispatch (copy-paste)
+## 5. Coding agent dispatch (copy-paste into every agent prompt)
 
-Include in every agent prompt:
+> Read `docs/00-OVERVIEW.md` §4 binding rules and `docs/17-PARALLEL-WORKFLOW.md` §2.
+> You are working in [Khaled's | Dhairya's | Omar's] lane. Only edit files inside that
+> lane's owned paths. If you need a schema or shared-schema change, describe it in your
+> report instead of editing `db/migrations/`, `shared/schemas/`, or `apps/api/main.py`
+> yourself. Never average the three axis scores. Attach provenance to every stored fact.
 
-> Read `00-OVERVIEW.md` §4 binding rules. Do not edit files outside your module ownership in `17-PARALLEL-WORKFLOW.md`. If you need a schema change, describe it in a comment — do not edit migrations yourself (unless you are Agent A).
+Allowed paths per lane:
 
-Full dispatch templates: `13-PRE-BUILD-CHECKLIST.md` §9.
+- **Khaled's agents:** `apps/api/api/memory/**`, `apps/api/api/mcp/**`, `db/**`, `AGENTS.md`
+- **Dhairya's agents:** `apps/api/api/intelligence/**`, `apps/api/api/ingestion/**`,
+  `apps/api/api/agent/**`, `jobs/**`
+- **Omar's agents:** `apps/web/**`, `shared/fixtures/**`
+- **Arman's agents:** _TBD, do not dispatch agents for Arman until his lane in §2 is filled in_
 
 ---
 
 ## 6. Contract change protocol
 
-1. Agent proposes field/endpoint in PR description
-2. Integrator updates `01-CONTRACTS.md`
-3. Agent A migrates if DB impact
-4. Update `shared/schemas/models.py` + `types.ts`
-5. Update `shared/fixtures/*.json` if UI-visible
-6. Merge agent feature PR
+1. Proposer describes the field/endpoint in the group chat or PR description.
+2. Khaled updates `01-CONTRACTS.md` and `shared/schemas/models.py` + `types.ts`.
+3. Khaled migrates if there is DB impact.
+4. Omar updates `shared/fixtures/*.json` if UI-visible.
+5. Feature PR merges after the contract commit lands.
 
-**Additive-only during hackathon** — no renames/removals after Wave 1 starts.
+Additive-only during the hackathon. No renames or removals.
 
 ---
 
@@ -92,27 +152,27 @@ Full dispatch templates: `13-PRE-BUILD-CHECKLIST.md` §9.
 | Gate | Integrator action |
 |---|---|
 | G0 | Verify API + web boot, `.env` complete |
-| G1 | Merge A seed → smoke test one founder on dashboard |
-| G2 | Merge B outbound + C validator → run contradiction demo |
-| G3 | Merge D agent chat + E graph → dry run trace + chat |
+| G1 | Merge seed, smoke test one founder on dashboard |
+| G2 | Merge outbound + validator, run contradiction demo |
+| G3 | Merge memory/MCP + agent chat + graph, dry run Claude-over-MCP demo |
 | G4 | Full `07-EXECUTION.md` §8 checklist timed twice |
 
 ---
 
-## 8. When agents conflict
+## 8. When work conflicts
 
 | Symptom | Fix |
 |---|---|
-| Duplicate table definitions | A wins; delete duplicate migration |
-| Different JSON field names | Contracts doc wins; fix caller |
-| UI expects field API doesn't send | Add optional field to API (additive) |
-| Two agents built same endpoint | Keep C's for intelligence, B's for sourcing — split by path prefix |
+| Duplicate table definitions | Khaled's migration wins, delete the duplicate |
+| Different JSON field names | `01-CONTRACTS.md` wins, fix the caller |
+| UI expects a field the API does not send | Add optional field to the API (additive) |
+| Two people built the same endpoint | Split by path prefix, intelligence vs ingestion vs memory |
 
 ---
 
 ## 9. Cut order (team agreement)
 
-When behind schedule, stop work on (first → last):
+When behind schedule, stop work on (first to last):
 
 1. Federated module
 2. ElevenLabs voice
@@ -120,7 +180,8 @@ When behind schedule, stop work on (first → last):
 4. Channel intelligence UI
 5. NL query bar polish
 
-**Never cut:** seed contradiction, bias test pair, 3-axis independence, validator, per-claim trust, thesis switch re-rank, SLA timer.
+**Never cut:** seed contradiction, bias test pair, 3-axis independence, validator,
+per-claim trust, thesis switch re-rank, SLA timer, MCP memory demo.
 
 ---
 
@@ -130,4 +191,5 @@ When behind schedule, stop work on (first → last):
 - [ ] No secrets in diff
 - [ ] Fixtures/schemas updated if contract touched
 - [ ] Migrations apply clean on fresh DB
-- [ ] `main` still runs demo path for current gate
+- [ ] Only files inside the author's lane (plus approved shared changes) touched
+- [ ] `main` still runs the demo path for the current gate

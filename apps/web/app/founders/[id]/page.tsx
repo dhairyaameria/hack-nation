@@ -34,9 +34,11 @@ export default async function FounderProfilePage({
           <p className="text-sm text-muted-foreground mt-1">
             Founder Score{" "}
             <span className="font-medium text-foreground">
-              {Math.round(founder.founder_score * 100)}
+              {founder.founder_score != null ? Math.round(founder.founder_score * 100) : "unknown"}
             </span>{" "}
-            <Badge variant="outline" className="ml-1">{founder.founder_score_trend}</Badge>
+            {founder.founder_score_trend && (
+              <Badge variant="outline" className="ml-1">{founder.founder_score_trend}</Badge>
+            )}
           </p>
         </div>
       </header>
