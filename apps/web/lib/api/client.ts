@@ -101,6 +101,29 @@ export async function analyzeOpportunity(id: string): Promise<unknown> {
   return res.json();
 }
 
+export interface MemoListItem {
+  id: string;
+  opportunity_id: string;
+  company_name: string;
+  founder_name: string;
+  source?: string | null;
+  has_contradiction: boolean;
+  section_count: number;
+  sections_filled: number;
+  gaps_flagged: number;
+  snapshot?: string | null;
+  updated_at?: string | null;
+  created_at?: string | null;
+}
+
+export async function getMemos(): Promise<MemoListItem[]> {
+  if (!USE_FIXTURES) {
+    const live = await tryFetch<{ memos: MemoListItem[] }>("/api/v1/memos");
+    if (live) return live.memos;
+  }
+  return [];
+}
+
 // ---------------------------------------------------------------------------
 // Outbound sourcing + watchlist (docs/03-SOURCING.md §2-4)
 // ---------------------------------------------------------------------------

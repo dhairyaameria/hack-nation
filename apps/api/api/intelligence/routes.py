@@ -26,6 +26,12 @@ def list_opportunities():
     }
 
 
+@router.get("/memos")
+def list_memos():
+    """Index of all generated investment memos (required sections + gap counts)."""
+    return {"memos": opportunity_store.list_memos()}
+
+
 @router.get("/opportunity/{opportunity_id}")
 def get_opportunity(opportunity_id: str):
     detail = opportunity_store.get_opportunity(opportunity_id)

@@ -198,6 +198,69 @@ def list_opportunities() -> list[dict[str, Any]]:
     return _db_list_opportunities(client)
 
 
+def list_memos() -> list[dict[str, Any]]:
+    """All generated investment memos with company/founder context for the
+    Investment Memos index page."""
+    client = get_client()
+    if client is None:
+        out = []
+        for opp in _memory().values():
+            memo = opp.get("memo")
+            if not memo or not memo.get("sections"):
+                continue
+            sections = memo["sections"]
+            filled = sum(1 for s in sections if s.get("content") and not s.get("not_disclosed"))
+            gaps = sum(1 for s in sections if s.get("not_disclosed") or not s.get("content"))
+            snapshot = next((s.get("content") for s in sections if s.get("title") == "Company snapshot" and s.get("content")), None)
+            out.append({
+                "id": f"memo-{opp['id']}",
+                "opportunity_id": opp["id"],
+                "company_name": opp.get("company_name"),
+                "founder_name": opp.get("founder_name"),
+                "source": opp.get("source"),
+                "has_contradiction": opp.get("has_contradiction", False),
+                "section_count": len(sections),
+                "sections_filled": filled,
+                "gaps_flagged": gaps,
+                "snapshot": (snapshot or "")[:240] or None,
+                "updated_at": None,
+                "created_at": None,
+            })
+        return out
+
+    res = (
+        client.table("memos")
+        .select("id, opportunity_id, sections, created_at, updated_at, opportunities(id, source, has_contradiction, founders(display_name), companies(name))")
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    out = []
+    for row in res.data or []:
+        opp = row.get("opportunities") or {}
+        sections = row.get("sections") or []
+        filled = sum(1 for s in sections if isinstance(s, dict) and s.get("content") and not s.get("not_disclosed"))
+        gaps = sum(1 for s in sections if isinstance(s, dict) and (s.get("not_disclosed") or not s.get("content")))
+        snapshot = next(
+            (s.get("content") for s in sections if isinstance(s, dict) and s.get("title") == "Company snapshot" and s.get("content")),
+            None,
+        )
+        out.append({
+            "id": row["id"],
+            "opportunity_id": row["opportunity_id"],
+            "company_name": (opp.get("companies") or {}).get("name", "Unknown"),
+            "founder_name": (opp.get("founders") or {}).get("display_name", "Unknown"),
+            "source": opp.get("source"),
+            "has_contradiction": opp.get("has_contradiction", False),
+            "section_count": len(sections),
+            "sections_filled": filled,
+            "gaps_flagged": gaps,
+            "snapshot": (snapshot or "")[:240] or None,
+            "updated_at": row.get("updated_at"),
+            "created_at": row.get("created_at"),
+        })
+    return out
+
+
 def get_opportunity(opportunity_id: str) -> dict[str, Any] | None:
     client = get_client()
     if client is None:

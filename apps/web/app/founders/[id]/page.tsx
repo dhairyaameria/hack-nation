@@ -25,7 +25,7 @@ export default async function FounderProfilePage({
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6">
       <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to pipeline
+        <ArrowLeft className="h-3.5 w-3.5" /> Back to outbound sources
       </Link>
 
       <header className="flex items-center justify-between">
