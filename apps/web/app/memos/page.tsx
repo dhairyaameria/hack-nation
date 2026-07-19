@@ -43,8 +43,8 @@ export default async function InvestmentMemosPage() {
         <div className="mt-8 rounded-[2px] border border-dashed border-line3 px-6 py-14 text-center">
           <FileText className="mx-auto h-7 w-7 text-faint" />
           <p className="mt-3 text-[13px] text-sub">
-            No memos yet. Run analysis on an inbound or outbound opportunity — the memo appears here
-            when it finishes.
+            No memos yet. Run analysis on an inbound or outbound opportunity, and the memo appears
+            here when it finishes.
           </p>
           <Link href="/" className="mt-1 inline-block font-mono text-[11px] uppercase tracking-[0.06em]">
             Go to pipeline →

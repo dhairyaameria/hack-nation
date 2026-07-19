@@ -14,7 +14,7 @@
         {
           "title": "Company snapshot",
           "not_disclosed": false,
-          "content": "Observability for ML feature pipelines — drift detection, lineage, and replay for teams running training jobs in production. Seed-stage, Berlin, four full-time engineers.",
+          "content": "Observability for ML feature pipelines: drift detection, lineage, and replay for teams running training jobs in production. Seed-stage, Berlin, four full-time engineers.",
           "evidence": [
             { "source_type": "deck", "source_locator": "Slide 2", "evidence_snippet": "Team of 4 FTE, Berlin, incorporated March 2025.", "confidence": 0.92 },
             { "source_type": "filing", "source_locator": "Handelsregister HRB 241887", "evidence_snippet": "Incorporation date and registered officers corroborate the deck.", "confidence": 0.95 }
@@ -23,7 +23,7 @@
         {
           "title": "Problem & product",
           "not_disclosed": false,
-          "content": "Feature pipelines fail silently — a schema drift upstream degrades a model for weeks before anyone notices. NovaMetrics instruments the pipeline itself rather than the model output, which is what lets them catch drift at the source.",
+          "content": "Feature pipelines fail silently. A schema drift upstream degrades a model for weeks before anyone notices. NovaMetrics instruments the pipeline itself rather than the model output, which is what lets them catch drift at the source.",
           "evidence": [
             { "source_type": "deck", "source_locator": "Slides 4-6", "evidence_snippet": "Architecture diagram: agents instrument Airflow and Dagster operators directly.", "confidence": 0.88 },
             { "source_type": "call", "source_locator": "Call 01 · 08:14", "evidence_snippet": "Two design partners confirmed the silent-failure problem independently.", "confidence": 0.74 }
@@ -83,7 +83,7 @@
         {
           "title": "Traction",
           "not_disclosed": false,
-          "content": "Three design partners, no revenue yet by the founder's own statement. Deliberately pre-revenue — the team is optimising for depth of integration before pricing.",
+          "content": "Three design partners, no revenue yet by the founder's own statement. Deliberately pre-revenue, with the team optimising for depth of integration before pricing.",
           "evidence": [
             { "source_type": "call", "source_locator": "Call 03 · 21:05", "evidence_snippet": "Founder stated no revenue and explained the reasoning without prompting.", "confidence": 0.86 }
           ]
@@ -211,7 +211,7 @@
       "has_contradiction": false,
       "created_at": "2026-07-18T07:05:00Z",
       "updated_at": "2026-07-18T07:05:00Z",
-      "snapshot": "Edge orchestration for low-latency inference. Deck parsed but most sections are still gaps — the founder withheld revenue and headcount.",
+      "snapshot": "Edge orchestration for low-latency inference. Deck parsed but most sections are still gaps: the founder withheld revenue and headcount.",
       "sections": [
         {
           "title": "Company snapshot",

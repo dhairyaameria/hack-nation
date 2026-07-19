@@ -32,12 +32,12 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
         <p className="mt-3 max-w-[720px] whitespace-pre-wrap text-[15px] leading-[1.65]">{section.content}</p>
       ) : section.not_disclosed ? (
         <p className="mt-3 max-w-[720px] text-[14px] italic leading-relaxed text-sub">
-          Not disclosed — the founder withheld this and no inference was made. This is a
+          Not disclosed. The founder withheld this and no inference was made. This is a
           recorded fact about the memo, not a guess about the company.
         </p>
       ) : (
         <p className="mt-3 max-w-[720px] text-[14px] italic leading-relaxed text-sub">
-          Not generated yet — this section has not been written. No claim is made either
+          Not generated yet. This section has not been written, and no claim is made either
           way about the underlying facts.
         </p>
       )}
@@ -61,7 +61,7 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
       ) : (
         section.content && (
           <div className="mt-4 inline-flex items-center gap-2 rounded-[2px] border border-line bg-raise px-3 py-1.5 font-mono text-[10.5px] text-sub">
-            No sources attached — treat as unverified
+            No sources attached, treat as unverified
           </div>
         )
       )}
