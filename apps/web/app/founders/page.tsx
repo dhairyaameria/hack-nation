@@ -17,7 +17,7 @@ export default async function FoundersPage() {
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Founders</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Founder Book</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {founders.map((f) => (
           <Link

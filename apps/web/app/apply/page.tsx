@@ -43,7 +43,7 @@ export default function ApplyPage() {
   return (
     <div className="p-8 max-w-xl mx-auto space-y-6">
       <header className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Apply</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Inbound Sources</h1>
         <p className="text-sm text-muted-foreground">
           Minimal-friction inbound intake — company name + optional deck. No 40-field form.
         </p>
@@ -115,7 +115,7 @@ export default function ApplyPage() {
               onClick={() => router.push("/")}
               className="text-sm font-medium text-muted-foreground hover:underline"
             >
-              Back to pipeline
+              Back to outbound sources
             </button>
           </div>
         </div>

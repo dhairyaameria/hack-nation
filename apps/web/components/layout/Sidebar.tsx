@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud, Radar, Search } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquareText, Settings, UploadCloud, Search, FileText } from "lucide-react";
 
 const NAV_ITEMS = [
-  { href: "/", label: "Pipeline", icon: LayoutDashboard },
-  { href: "/sourcing", label: "Sourcing", icon: Radar },
+  { href: "/apply", label: "Inbound Sources", icon: UploadCloud },
+  { href: "/", label: "Outbound Sources", icon: LayoutDashboard },
+  { href: "/memos", label: "Investment Memos", icon: FileText },
+  { href: "/founders", label: "Founder Book", icon: Users },
   { href: "/query", label: "NL Query", icon: Search },
-  { href: "/apply", label: "Apply", icon: UploadCloud },
-  { href: "/founders", label: "Founders", icon: Users },
   { href: "/agent", label: "Agent", icon: MessageSquareText },
   { href: "/settings/thesis", label: "Settings", icon: Settings },
 ];

@@ -1,47 +1,15 @@
 import { getPipelineDashboard } from "@/lib/api/client";
-import { OpportunityCard } from "@/components/dashboard/OpportunityCard";
-import { SlaTimer } from "@/components/dashboard/SlaTimer";
-import { Badge } from "@/components/ui/badge";
+import { OutboundSourcesView } from "@/components/dashboard/OutboundSourcesView";
 
 export const dynamic = "force-dynamic";
 
-export default async function PipelinePage() {
+export default async function OutboundSourcesPage() {
   const dashboard = await getPipelineDashboard();
-  const opportunities = dashboard.opportunities;
-  const liveSla = opportunities.find((o) => o.sla?.signal_at && !o.sla?.decision_at);
 
   return (
-    <div className="p-8 max-w-6xl mx-auto space-y-6">
-      <header className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Pipeline</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Active thesis:{" "}
-            <Badge variant="outline" className="ml-1">
-              {dashboard.active_thesis.name}
-            </Badge>
-          </p>
-        </div>
-        <div className="text-sm text-muted-foreground text-right">
-          {opportunities.length} opportunities in pipeline
-        </div>
-      </header>
-
-      {liveSla && (
-        <div className="max-w-sm">
-          <SlaTimer sla={liveSla.sla} />
-        </div>
-      )}
-
-      <div className="rounded-[2px] border border-line bg-surface">
-        <div className="flex items-center justify-between border-b border-line px-5 py-3 font-mono text-[10.5px] uppercase tracking-[0.1em] text-sub">
-          <span>Pipeline — needs decision</span>
-          <span>{opportunities.length} open · sorted by SLA</span>
-        </div>
-        {opportunities.map((opp) => (
-          <OpportunityCard key={opp.id} opp={opp} />
-        ))}
-      </div>
-    </div>
+    <OutboundSourcesView
+      thesisName={dashboard.active_thesis.name}
+      opportunities={dashboard.opportunities}
+    />
   );
 }
