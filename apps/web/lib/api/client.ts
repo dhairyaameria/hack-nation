@@ -78,6 +78,14 @@ export async function getNetworkGraphSeed(founderId: string) {
   return (networkGraphFixture as Record<string, unknown>)[founderId] ?? null;
 }
 
+export interface DedupeInfo {
+  action: "attached" | "created";
+  reason?: string;
+  prior_status?: string | null;
+  prior_source?: string | null;
+  deferred?: string[];
+}
+
 export interface SubmitApplicationResult {
   opportunity_id: string;
   company_id?: string | null;
@@ -88,6 +96,7 @@ export interface SubmitApplicationResult {
   claims_extracted: number;
   screen_verdict: "pass" | "reject" | "needs-more-info";
   screen_reason: string;
+  dedupe?: DedupeInfo;
 }
 
 export interface InboundApplication {
@@ -408,7 +417,10 @@ export async function discoverFounder(payload: {
   return res.json();
 }
 
-async function postWatchlistAction(entryId: string, action: string): Promise<WatchlistEntry> {
+async function postWatchlistAction(
+  entryId: string,
+  action: string
+): Promise<WatchlistEntry & { dedupe?: DedupeInfo; screen_reason?: string; opportunity_id?: string }> {
   const res = await fetch(`${API_URL}/api/v1/sourcing/watchlist/${entryId}/${action}`, { method: "POST" });
   if (!res.ok) throw new Error(`${action} failed (${res.status})`);
   return res.json();

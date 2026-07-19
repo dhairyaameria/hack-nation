@@ -180,6 +180,7 @@ def _seed(client, items: list[dict]) -> None:
             triggering_signal=(
                 f"a16z portfolio company · {item.get('website')} · {item.get('linkedin_url')}"
             ),
+            force_new=True,
         )
         opportunity_store.update_opportunity(
             opp["id"],

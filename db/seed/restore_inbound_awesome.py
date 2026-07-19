@@ -80,6 +80,7 @@ def restore_one(company: str, founder: str, pdf: bytes, filename: str) -> dict:
         founder_name=founder,
         source="inbound",
         discovery_channel="direct_apply",
+        force_new=True,
     )
     deck_meta = deck_storage.upload_deck(opp["id"], pdf, filename)
     local_meta = deck_store.save_deck(opp["id"], pdf, filename)

@@ -38,6 +38,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
   const [discovering, setDiscovering] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [outreachDraft, setOutreachDraft] = useState<{ id: string; draft: string } | null>(null);
   const [sweep, setSweep] = useState<SourcingSweepResult | null>(null);
   const [sweeping, setSweeping] = useState(false);
@@ -99,6 +100,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
   async function handleAction(id: string, action: "promote" | "outreach" | "activate") {
     setBusyId(id);
     setError(null);
+    setNotice(null);
     try {
       const fn =
         action === "promote" ? promoteWatchlistEntry : action === "outreach" ? generateOutreach : activateWatchlistEntry;
@@ -108,6 +110,14 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
       }
       if (action === "outreach" && result.draft) {
         setOutreachDraft({ id, draft: result.draft });
+      }
+      if (action === "activate" && result.dedupe?.action === "attached") {
+        const oppId = result.opportunity_id;
+        setNotice(
+          oppId
+            ? `Already in pipeline (${result.dedupe.prior_status ?? "open"}) — linked to existing opportunity. Run Analyze to refresh.`
+            : `Already in pipeline (${result.dedupe.prior_status ?? "open"}).`
+        );
       }
       await refresh();
     } catch (err) {
@@ -188,12 +198,12 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
             />
           </div>
           <div className="space-y-1.5">
-            <label className="text-sm font-medium">HN search query (optional)</label>
+            <label className="text-sm font-medium">Hacker News query (optional)</label>
             <input
               value={hnQuery}
               onChange={(e) => setHnQuery(e.target.value)}
               className="w-full rounded-md border px-3 py-2 text-sm bg-background"
-              placeholder="defaults to company/founder name"
+              placeholder="Show HN … (defaults to company/founder)"
             />
           </div>
           <div className="space-y-1.5">
@@ -216,6 +226,7 @@ export function FindLeadPanel({ open, onClose }: { open: boolean; onClose: () =>
       </form>
 
       {error && <p className="text-sm text-bad">{error}</p>}
+      {notice && <p className="text-sm text-brand-ink">{notice}</p>}
 
       <section className="rounded-lg border p-4 space-y-4">
         <div className="flex items-center justify-between gap-4">

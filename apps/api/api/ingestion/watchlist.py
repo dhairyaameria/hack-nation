@@ -379,7 +379,11 @@ def generate_outreach(entry_id: str) -> dict[str, Any]:
 def _submit_outbound_application(entry: dict[str, Any]) -> dict[str, Any]:
     """Same shape as `POST /application/submit`: extract claims → create
     opportunity → fast screen → persist claims. Research becomes provisional
-    claims (source=outbound_research), never fabricated beyond the text."""
+    claims (source=outbound_research), never fabricated beyond the text.
+
+    If the company already has an open opportunity, attach (reuse id) and skip
+    re-research / re-screen — diligence refresh stays on Analyze.
+    """
     signals = entry.get("signals") or []
     company_name = entry["company_name"] or f"{entry['founder_name']}'s company"
     founder_name = entry["founder_name"]
@@ -391,6 +395,30 @@ def _submit_outbound_application(entry: dict[str, Any]) -> dict[str, Any]:
         if ch and ch not in channels:
             channels.append(ch)
     primary_channel = ",".join(channels) if channels else "outbound"
+
+    # Resolve early so we can short-circuit before expensive claim extraction.
+    company = memory.resolve_company(company_name, source="outbound")
+    open_opp = opportunity_store.find_open_opportunity(company["id"])
+    if open_opp is not None:
+        dedupe = {
+            "action": "attached",
+            "reason": "open_opportunity_exists",
+            "prior_status": open_opp.get("status"),
+            "prior_source": open_opp.get("source"),
+            "deferred": ["outbound_research", "fast_screen", "analyze"],
+        }
+        return {
+            "opportunity_id": open_opp["id"],
+            "company_id": company["id"],
+            "claims_extracted": 0,
+            "screen_verdict": open_opp.get("screen_verdict") or "needs-more-info",
+            "screen_reason": (
+                "Company already has an open opportunity — skipped re-research; "
+                "run Analyze to refresh."
+            ),
+            "sector": company.get("sector"),
+            "dedupe": dedupe,
+        }
 
     claims = outbound_enrich.claims_from_signals(
         signals, founder_name=founder_name, company_name=company_name
@@ -430,10 +458,12 @@ def _submit_outbound_application(entry: dict[str, Any]) -> dict[str, Any]:
     opportunity_store.set_sla_stage(opp["id"], "screening_at")
     return {
         "opportunity_id": opp["id"],
+        "company_id": opp.get("company_id") or company["id"],
         "claims_extracted": len(claims),
         "screen_verdict": verdict,
         "screen_reason": reason,
         "sector": sector,
+        "dedupe": opp.get("dedupe") or {"action": "created"},
     }
 
 

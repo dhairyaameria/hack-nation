@@ -23,6 +23,16 @@ from api.core import fixtures
 from api.core.db import get_client
 from api.ingestion import memory
 
+# Open deal statuses — attach new inbound/outbound signals here instead of
+# inserting a second opportunity for the same company (PRD convergence).
+OPEN_OPPORTUNITY_STATUSES = frozenset({
+    "discovered",
+    "screening",
+    "needs-more-info",
+    "diligence",
+})
+TERMINAL_OPPORTUNITY_STATUSES = frozenset({"funded", "rejected", "passed"})
+
 # ---------------------------------------------------------------------------
 # In-memory fallback (no Supabase credentials configured)
 # ---------------------------------------------------------------------------
@@ -609,6 +619,76 @@ def get_opportunity(opportunity_id: str) -> dict[str, Any] | None:
     return _db_get_opportunity(client, opportunity_id)
 
 
+def find_open_opportunity(company_id: str) -> dict[str, Any] | None:
+    """Newest non-terminal opportunity for this company, if any."""
+    if not company_id:
+        return None
+    client = get_client()
+    if client is None:
+        open_rows = [
+            o
+            for o in _memory().values()
+            if o.get("company_id") == company_id
+            and (o.get("status") or "discovered") in OPEN_OPPORTUNITY_STATUSES
+        ]
+        if not open_rows:
+            return None
+        open_rows.sort(key=lambda o: o.get("sla", {}).get("signal_at") or "", reverse=True)
+        return open_rows[0]
+
+    res = (
+        client.table("opportunities")
+        .select("id, status, source, company_id, created_at")
+        .eq("company_id", company_id)
+        .in_("status", list(OPEN_OPPORTUNITY_STATUSES))
+        .order("created_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+    if not res.data:
+        return None
+    return get_opportunity(res.data[0]["id"])
+
+
+def _claim_dedupe_key(text: str) -> str:
+    return (text or "").strip().lower()[:80]
+
+
+def merge_provisional_claims(
+    opportunity_id: str,
+    new_claims: list[dict[str, Any]],
+) -> int:
+    """Insert provisional claims that aren't near-duplicates of existing ones.
+
+    Does not change status / screen — attach path defers re-screen to Analyze.
+    Returns how many claims were newly inserted.
+    """
+    if not new_claims:
+        return 0
+    existing = get_opportunity(opportunity_id) or {}
+    seen = {
+        _claim_dedupe_key(c.get("text") or "")
+        for c in (existing.get("claims") or [])
+        if isinstance(c, dict)
+    }
+    fresh: list[dict[str, Any]] = []
+    for i, c in enumerate(new_claims):
+        if not isinstance(c, dict):
+            continue
+        text = (c.get("text") or "").strip()
+        if not text:
+            continue
+        key = _claim_dedupe_key(text)
+        if key in seen:
+            continue
+        seen.add(key)
+        fresh.append({**c, "claim_id": c.get("claim_id") or f"claim-attach-{i}", "text": text})
+    if not fresh:
+        return 0
+    update_opportunity(opportunity_id, claims=fresh)
+    return len(fresh)
+
+
 def create_opportunity(
     *,
     company_name: str,
@@ -619,9 +699,33 @@ def create_opportunity(
     deck_url: str | None = None,
     deck_storage_path: str | None = None,
     deck_filename: str | None = None,
+    force_new: bool = False,
 ) -> dict[str, Any]:
+    """Create an opportunity, or attach to an existing open one for the company.
+
+    When ``force_new`` is False (default) and the resolved company already has
+    an open opportunity, returns that row with ``dedupe.action = "attached"``
+    instead of inserting. Seed loaders should pass ``force_new=True``.
+    """
     client = get_client()
     if client is None:
+        # Fixture mode: still honor attach by company_name when possible.
+        if not force_new:
+            for o in _memory().values():
+                if (
+                    (o.get("company_name") or "").lower() == company_name.lower()
+                    and (o.get("status") or "discovered") in OPEN_OPPORTUNITY_STATUSES
+                ):
+                    return {
+                        **o,
+                        "dedupe": {
+                            "action": "attached",
+                            "reason": "open_opportunity_exists",
+                            "prior_status": o.get("status"),
+                            "prior_source": o.get("source"),
+                            "deferred": ["fast_screen", "analyze"],
+                        },
+                    }
         opp_id = f"opp-{uuid.uuid4().hex[:8]}"
         founder_id = f"founder-{uuid.uuid4().hex[:8]}"
         company_id = f"company-{uuid.uuid4().hex[:8]}"
@@ -649,12 +753,10 @@ def create_opportunity(
             "claims": [],
             "memo": None,
             "trace": None,
-            "deck_filename": None,
-            "deck_storage_path": None,
-            "has_deck": False,
-            "deck_url": None,
+            "has_deck": bool(deck_storage_path or deck_filename),
             "company_enrichment": {},
             "sla": {"signal_at": _now_iso(), "screening_at": None, "diligence_at": None, "decision_at": None},
+            "dedupe": {"action": "created"},
         }
         _memory()[opp_id] = row
         return row
@@ -665,6 +767,23 @@ def create_opportunity(
     # (docs/03-SOURCING.md §3) to actually unify identity, not just code path.
     founder = memory.resolve_founder(founder_name)
     company = memory.resolve_company(company_name)
+
+    if not force_new:
+        open_opp = find_open_opportunity(company["id"])
+        if open_opp is not None:
+            return {
+                **open_opp,
+                "company_name": open_opp.get("company_name") or company_name,
+                "founder_name": open_opp.get("founder_name") or founder_name,
+                "dedupe": {
+                    "action": "attached",
+                    "reason": "open_opportunity_exists",
+                    "prior_status": open_opp.get("status"),
+                    "prior_source": open_opp.get("source"),
+                    "deferred": ["fast_screen", "analyze"],
+                },
+            }
+
     active_thesis = thesis_store.get_active_thesis()
 
     opp_row = {
@@ -706,11 +825,9 @@ def create_opportunity(
         "claims": [],
         "memo": None,
         "trace": None,
-        "deck_filename": None,
-        "deck_storage_path": None,
-        "has_deck": False,
-        "deck_url": None,
+        "has_deck": bool(deck_storage_path or deck_filename),
         "sla": {"signal_at": _now_iso(), "screening_at": None, "diligence_at": None, "decision_at": None},
+        "dedupe": {"action": "created"},
     }
 
 
