@@ -1,5 +1,6 @@
 import { DisclosureBadge } from "@/components/ui/ds";
 import type { Memo, MemoSection, EvidenceRef } from "@/lib/types";
+import { memoGapCopy, memoGapKind } from "@/lib/utils";
 
 /**
  * Missing sections are always a visible badge — never hidden
@@ -35,6 +36,10 @@ export function MemoView({
     <div className={document ? "divide-y divide-line2 space-y-0" : "divide-y divide-line2"}>
       {(memo.sections as SectionWithEvidence[]).map((section, i) => {
         const required = section.required ?? REQUIRED_TITLES.has(section.title);
+        const empty = !section.content;
+        const gap = empty
+          ? memoGapKind(section.title, Boolean(section.not_disclosed))
+          : null;
         return (
           <div key={i} className={document ? "py-6 first:pt-0 last:pb-0" : "py-4 first:pt-0 last:pb-0"}>
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -46,16 +51,19 @@ export function MemoView({
                   </span>
                 )}
               </div>
-              {section.not_disclosed && <DisclosureBadge kind="not_disclosed" />}
+              {gap === "withheld" && <DisclosureBadge kind="not_disclosed" />}
+              {gap === "insufficient_evidence" && (
+                <DisclosureBadge kind="insufficient_evidence" />
+              )}
             </div>
 
-            {/* withheld != not-yet-generated: only claim the founder withheld it
-                when not_disclosed actually says so */}
             {section.content ? (
               <p className="mt-1.5 whitespace-pre-wrap text-[13.5px] leading-relaxed">{section.content}</p>
-            ) : section.not_disclosed ? (
+            ) : gap ? (
               <p className="mt-1.5 text-[13px] italic leading-relaxed text-sub">
-                Not disclosed — withheld by the founder, no inference made.
+                {gap === "withheld"
+                  ? "Not disclosed — withheld by the founder, no inference made."
+                  : memoGapCopy(gap)}
               </p>
             ) : (
               <p className="mt-1.5 text-[13px] italic leading-relaxed text-sub">

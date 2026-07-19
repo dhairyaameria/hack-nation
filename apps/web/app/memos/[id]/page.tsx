@@ -2,9 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
 import { getMemoDetail, type MemoSectionDetail } from "@/lib/api/client";
-import { SectionLabel, DiscoveryChannelBadge, DisclosureBadge } from "@/components/ui/ds";
+import { DiscoveryChannelBadge, DisclosureBadge } from "@/components/ui/ds";
 import { EvidenceCard } from "@/components/opportunity/EvidenceCard";
 import { InvestButton } from "@/components/opportunity/InvestButton";
+import { memoGapCopy, memoGapKind } from "@/lib/utils";
 import type { EvidenceRef, ValidationStatus } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,8 @@ export const dynamic = "force-dynamic";
  */
 function MemoSection({ section, index }: { section: MemoSectionDetail; index: number }) {
   const n = String(index + 1).padStart(2, "0");
+  const empty = !section.content;
+  const gap = empty ? memoGapKind(section.title, Boolean(section.not_disclosed)) : null;
 
   return (
     <section className="border-t border-line py-8 first:border-t-0">
@@ -23,21 +26,21 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
           <span className="font-mono text-[11px] tracking-[0.14em] text-faint">{n}</span>
           <h2 className="font-serif text-[24px] font-medium">{section.title}</h2>
         </div>
-        {section.not_disclosed && <DisclosureBadge kind="not_disclosed" />}
+        {gap === "withheld" && <DisclosureBadge kind="not_disclosed" />}
+        {gap === "insufficient_evidence" && (
+          <DisclosureBadge kind="insufficient_evidence" />
+        )}
       </div>
 
-      {/* withheld != not-yet-generated. Only the not_disclosed flag licenses the
-          claim that the founder withheld something. */}
       {section.content ? (
         <p className="mt-3 max-w-[720px] whitespace-pre-wrap text-[15px] leading-[1.65]">{section.content}</p>
-      ) : section.not_disclosed ? (
+      ) : gap ? (
         <p className="mt-3 max-w-[720px] text-[14px] italic leading-relaxed text-sub">
-          Not disclosed. The founder withheld this and no inference was made. This is a
-          recorded fact about the memo, not a guess about the company.
+          {memoGapCopy(gap)}
         </p>
       ) : (
         <p className="mt-3 max-w-[720px] text-[14px] italic leading-relaxed text-sub">
-          Not generated yet. This section has not been written, and no claim is made either
+          Not generated yet — this section has not been written. No claim is made either
           way about the underlying facts.
         </p>
       )}
@@ -61,7 +64,7 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
       ) : (
         section.content && (
           <div className="mt-4 inline-flex items-center gap-2 rounded-[2px] border border-line bg-raise px-3 py-1.5 font-mono text-[10.5px] text-sub">
-            No sources attached, treat as unverified
+            No sources attached — treat as unverified
           </div>
         )
       )}
@@ -87,7 +90,7 @@ export default async function MemoDetailPage({
   if (!memo) notFound();
 
   const filled = memo.sections.filter((s) => s.content != null).length;
-  const gaps = memo.sections.filter((s) => s.not_disclosed).length;
+  const gaps = memo.sections.filter((s) => !s.content).length;
   const sourceCount = memo.sections.reduce((n, s) => n + (s.evidence?.length ?? 0), 0);
   const approved = memo.status === "funded" || memo.recommendation === "yes";
 

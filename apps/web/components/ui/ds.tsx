@@ -171,14 +171,25 @@ export function DiscoveryChannelBadge({ channel, className }: { channel: string;
   );
 }
 
-/* ---------- DisclosureBadge: NotDisclosed vs Unknown ---------- */
+/* ---------- DisclosureBadge: NotDisclosed vs Unknown vs Insufficient ---------- */
 
-/** Withheld ≠ unverifiable — grey is a fact, amber is a gap. */
-export function DisclosureBadge({ kind }: { kind: "not_disclosed" | "unknown" }) {
+/** Withheld ≠ unverifiable — grey is founder-withheld, amber is evidence gap. */
+export function DisclosureBadge({
+  kind,
+}: {
+  kind: "not_disclosed" | "unknown" | "insufficient_evidence";
+}) {
   if (kind === "not_disclosed") {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-line3 bg-line2 px-2.5 py-1 font-mono text-[11px] text-sub">
         <span className="font-semibold">—</span>Not disclosed
+      </span>
+    );
+  }
+  if (kind === "insufficient_evidence") {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-[2px] border border-line3 bg-line2 px-2.5 py-1 font-mono text-[11px] text-sub">
+        <span className="font-semibold">∅</span>Insufficient evidence
       </span>
     );
   }
