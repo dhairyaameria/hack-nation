@@ -63,3 +63,25 @@ export function tidyIncompleteMarkdown(text: string): string {
   while (lines.length && emptyBullet.test(lines[lines.length - 1]!)) lines.pop()
   return lines.join("\n").trimEnd()
 }
+
+/** Confidential founder-pack sections — empty means withheld, not "analyst didn't write it". */
+const FOUNDER_SENSITIVE_MEMO_SECTIONS = new Set([
+  "Financials & round structure",
+  "Cap table",
+])
+
+export type MemoGapKind = "withheld" | "insufficient_evidence"
+
+/** Classify an empty memo section for badge + copy (works for old memos too). */
+export function memoGapKind(title: string, _notDisclosed = false): MemoGapKind {
+  // Title wins over legacy not_disclosed stamps on SWOT / exit / hypotheses.
+  if (FOUNDER_SENSITIVE_MEMO_SECTIONS.has(title)) return "withheld"
+  return "insufficient_evidence"
+}
+
+export function memoGapCopy(kind: MemoGapKind): string {
+  if (kind === "withheld") {
+    return "Not disclosed — the founder withheld this and no inference was made. This is a recorded fact about the memo, not a guess about the company."
+  }
+  return "Insufficient evidence in the source pack to write this section — no inference was fabricated."
+}
