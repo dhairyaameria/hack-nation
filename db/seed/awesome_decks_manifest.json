@@ -1,0 +1,82 @@
+[
+  {
+    "company_name": "Airbnb",
+    "founder_name": "Brian Chesky",
+    "year": 2008,
+    "round": "Pre-Seed",
+    "drive_file_id": "1zAjdENprfnMIkqIDfOdJeISwnqpRsvUq",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "Dropbox",
+    "founder_name": "Drew Houston",
+    "year": 2007,
+    "round": "Pre-Seed",
+    "drive_file_id": "1T3ooczxmBxkD9mec7vAHoaSzlvH3IIpS",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "Uber",
+    "founder_name": "Travis Kalanick",
+    "year": 2008,
+    "round": "Seed",
+    "drive_file_id": "16vTT5tY0sB0s61iHbsQeDGsUloB1a-kr",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "Figma",
+    "founder_name": "Dylan Field",
+    "year": 2013,
+    "round": "Seed",
+    "drive_file_id": "1BhLHCW64IpVo0REe-dKjcnhFx7sqDII8",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "Canva",
+    "founder_name": "Melanie Perkins",
+    "year": 2015,
+    "round": "Seed",
+    "drive_file_id": "1zBiGqACcEGV_5yAunxy5aKJmo076FrU-",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "Coinbase",
+    "founder_name": "Brian Armstrong",
+    "year": 2012,
+    "round": "Seed",
+    "drive_file_id": "1nPIpJWUTV3ITpCAhJMFXgvskSpRmlEZK",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "GitLab",
+    "founder_name": "Sid Sijbrandij",
+    "year": 2015,
+    "round": "Seed",
+    "drive_file_id": "1XCiV42YIEIVOynDXAiZx0eStDHdhGewR",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "Replit",
+    "founder_name": "Amjad Masad",
+    "year": 2016,
+    "round": "Seed",
+    "drive_file_id": "1_hwRxMFJ-1AEE7VhM-pZ3TCPLxPGfMgn",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "DocSend",
+    "founder_name": "Russel Simmons",
+    "year": 2013,
+    "round": "Seed",
+    "drive_file_id": "1BunnklRqT2XjnOS5_hQLgFCcslomtUBq",
+    "source": "awesome-pitch-decks"
+  },
+  {
+    "company_name": "Loom",
+    "founder_name": "Joe Thomas",
+    "year": 2017,
+    "round": "Seed",
+    "drive_file_id": "1RfxADuXuEXdNTJoBJXCk0b9TEi-lkP88",
+    "source": "awesome-pitch-decks"
+  }
+]

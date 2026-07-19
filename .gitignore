@@ -9,3 +9,5 @@ node_modules/
 .next/
 dist/
 build/
+apps/api/var/
+db/seed/decks/

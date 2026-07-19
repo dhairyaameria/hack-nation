@@ -78,8 +78,21 @@ def _axis_score_out(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _deck_fields(o: dict[str, Any]) -> dict[str, Any]:
+    has_deck = bool(o.get("deck_storage_path") or o.get("deck_filename"))
+    return {
+        "company_id": o.get("company_id"),
+        "deck_filename": o.get("deck_filename"),
+        "deck_storage_path": o.get("deck_storage_path"),
+        "has_deck": has_deck,
+        "deck_url": f"/api/v1/inbound/applications/{o['id']}/deck" if has_deck else None,
+    }
+
+
 def _db_list_opportunities(client) -> list[dict[str, Any]]:
-    opps_res = client.table("opportunities").select("*, founders(display_name), companies(name, sector)").execute()
+    opps_res = client.table("opportunities").select(
+        "*, founders(display_name), companies(name, sector, stage, domain)"
+    ).execute()
     opps = opps_res.data
     if not opps:
         return []
@@ -95,10 +108,13 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
 
     out = []
     for o in opps:
+        company = o.get("companies") or {}
         out.append({
             "id": o["id"],
-            "company_name": (o.get("companies") or {}).get("name", "Unknown"),
-            "company_sector": (o.get("companies") or {}).get("sector"),
+            "company_name": company.get("name", "Unknown"),
+            "company_sector": company.get("sector"),
+            "company_stage": company.get("stage"),
+            "company_domain": company.get("domain"),
             "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
             "founder_id": o["founder_id"],
             "source": o["source"],
@@ -116,6 +132,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
             "inbound_ranked_at": o.get("inbound_ranked_at"),
             "axis_scores": axis_by_opp.get(o["id"], []),
             "sla": _sla_from_decision_log(decision_by_opp.get(o["id"])),
+            **_deck_fields(o),
         })
     return out
 
@@ -179,10 +196,15 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
     memo_res = client.table("memos").select("*").eq("opportunity_id", opportunity_id).limit(1).execute()
     memo = {"sections": memo_res.data[0]["sections"]} if memo_res.data else None
 
+    company = o.get("companies") or {}
     return {
         "id": o["id"],
-        "company_name": (o.get("companies") or {}).get("name", "Unknown"),
-        "company_sector": (o.get("companies") or {}).get("sector"),
+        "company_name": company.get("name", "Unknown"),
+        "company_sector": company.get("sector"),
+        "company_stage": company.get("stage"),
+        "company_domain": company.get("domain"),
+        "company_description": company.get("description"),
+        "company_enrichment": company.get("enrichment") or {},
         "founder_name": (o.get("founders") or {}).get("display_name", "Unknown"),
         "founder_id": o["founder_id"],
         "founder_domain_affinity": (o.get("founders") or {}).get("domain_affinity") or [],
@@ -204,6 +226,8 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
         "memo": memo,
         "trace_id": None,
         "sla": sla,
+        **_deck_fields(o),
+        "company_id": o.get("company_id") or company.get("id"),
     }
 
 
@@ -385,8 +409,10 @@ def create_opportunity(
     if client is None:
         opp_id = f"opp-{uuid.uuid4().hex[:8]}"
         founder_id = f"founder-{uuid.uuid4().hex[:8]}"
+        company_id = f"company-{uuid.uuid4().hex[:8]}"
         row = {
             "id": opp_id,
+            "company_id": company_id,
             "company_name": company_name,
             "founder_name": founder_name,
             "founder_id": founder_id,
@@ -408,6 +434,11 @@ def create_opportunity(
             "claims": [],
             "memo": None,
             "trace": None,
+            "deck_filename": None,
+            "deck_storage_path": None,
+            "has_deck": False,
+            "deck_url": None,
+            "company_enrichment": {},
             "sla": {"signal_at": _now_iso(), "screening_at": None, "diligence_at": None, "decision_at": None},
         }
         _memory()[opp_id] = row
@@ -438,6 +469,7 @@ def create_opportunity(
 
     return {
         "id": opp["id"],
+        "company_id": company["id"],
         "company_name": company_name,
         "founder_name": founder_name,
         "founder_id": founder["id"],
@@ -459,6 +491,10 @@ def create_opportunity(
         "claims": [],
         "memo": None,
         "trace": None,
+        "deck_filename": None,
+        "deck_storage_path": None,
+        "has_deck": False,
+        "deck_url": None,
         "sla": {"signal_at": _now_iso(), "screening_at": None, "diligence_at": None, "decision_at": None},
     }
 
@@ -529,6 +565,9 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
         if row is None:
             return None
         row.update(fields)
+        if row.get("deck_storage_path") or row.get("deck_filename"):
+            row["has_deck"] = True
+            row["deck_url"] = f"/api/v1/inbound/applications/{opportunity_id}/deck"
         return row
 
     claims = fields.pop("claims", None)
@@ -536,6 +575,12 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
     memo = fields.pop("memo", None)
     trace = fields.pop("trace", None)
     fields.pop("trace_id", None)  # reasoning_traces generates its own id
+    # Memory-only / computed fields — never write to opportunities table
+    fields.pop("has_deck", None)
+    fields.pop("deck_url", None)
+    fields.pop("company_enrichment", None)
+    fields.pop("company_name", None)
+    fields.pop("founder_name", None)
 
     if claims is not None:
         _db_apply_claims(client, opportunity_id, claims)
@@ -576,7 +621,17 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
         client.table("reasoning_traces").insert(rows).execute()
 
     if fields:
-        client.table("opportunities").update(fields).eq("id", opportunity_id).execute()
+        try:
+            client.table("opportunities").update(fields).eq("id", opportunity_id).execute()
+        except Exception:
+            # Older DBs may lack 011_deck_assets columns — persist non-deck fields only.
+            safe = {
+                k: v
+                for k, v in fields.items()
+                if k not in ("deck_filename", "deck_storage_path")
+            }
+            if safe:
+                client.table("opportunities").update(safe).eq("id", opportunity_id).execute()
 
     return get_opportunity(opportunity_id)
 
@@ -710,4 +765,88 @@ def get_trace(opportunity_id: str) -> dict[str, Any] | None:
             }
             for r in res.data
         ],
+    }
+
+
+def list_inbound() -> list[dict[str, Any]]:
+    """Inbound applications for the card grid (source=inbound)."""
+    opps = list_opportunities()
+    inbound = [o for o in opps if o.get("source") == "inbound"]
+    inbound.sort(key=lambda o: (o.get("sla") or {}).get("signal_at") or "", reverse=True)
+    return inbound
+
+
+def get_company_profile(company_id: str, *, enrich: bool = True) -> dict[str, Any] | None:
+    """Company profile + linked inbound/outbound opportunities."""
+    from api.ingestion import company_enrich
+
+    client = get_client()
+    linked = [o for o in list_opportunities() if o.get("company_id") == company_id]
+    if not linked and client is None:
+        # Memory: match by company_id on full rows
+        linked = [o for o in _memory().values() if o.get("company_id") == company_id]
+        if not linked:
+            return None
+        primary = linked[0]
+        enrichment = primary.get("company_enrichment") or {}
+        if enrich and not enrichment.get("summary"):
+            enrichment = company_enrich.enrich_company(primary["company_name"])
+            primary["company_enrichment"] = enrichment
+        return {
+            "id": company_id,
+            "name": primary.get("company_name"),
+            "domain": primary.get("company_domain"),
+            "sector": primary.get("company_sector"),
+            "stage": primary.get("company_stage"),
+            "description": enrichment.get("summary") or primary.get("company_description"),
+            "enrichment": enrichment,
+            "opportunities": linked,
+            "primary_opportunity_id": primary.get("id"),
+            "deck_url": primary.get("deck_url"),
+            "has_deck": primary.get("has_deck"),
+            "deck_filename": primary.get("deck_filename"),
+        }
+
+    if client is None:
+        return None
+
+    row = (
+        client.table("companies")
+        .select("id, name, domain, sector, stage, description, enrichment, enrichment_at")
+        .eq("id", company_id)
+        .limit(1)
+        .execute()
+    )
+    if not row.data:
+        return None
+    company = row.data[0]
+    name = company["name"]
+
+    profile = company
+    if enrich:
+        profile = company_enrich.get_or_enrich_company(
+            company_id,
+            name,
+            domain=company.get("domain"),
+        )
+
+    # Refresh linked after enrichment
+    linked = [o for o in list_opportunities() if o.get("company_id") == company_id]
+    primary = next((o for o in linked if o.get("source") == "inbound" and o.get("has_deck")), None)
+    if primary is None and linked:
+        primary = linked[0]
+
+    return {
+        "id": profile["id"],
+        "name": profile["name"],
+        "domain": profile.get("domain"),
+        "sector": profile.get("sector"),
+        "stage": profile.get("stage"),
+        "description": profile.get("description"),
+        "enrichment": profile.get("enrichment") or {},
+        "opportunities": linked,
+        "primary_opportunity_id": primary["id"] if primary else None,
+        "deck_url": primary.get("deck_url") if primary else None,
+        "has_deck": primary.get("has_deck") if primary else False,
+        "deck_filename": primary.get("deck_filename") if primary else None,
     }
