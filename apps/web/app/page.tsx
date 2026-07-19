@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { IntegrationCarousel } from "@/components/landing/IntegrationCarousel";
 import { LandingThemeToggle } from "@/components/landing/LandingThemeToggle";
@@ -45,10 +46,26 @@ const USPS = [
 ] as const;
 
 const TEAM = [
-  { name: "Dhairya Ameria", affiliation: "Affiliation TBD" },
-  { name: "Khaled Hanafi", affiliation: "Affiliation TBD" },
-  { name: "Omaar", affiliation: "Affiliation TBD" },
-  { name: "Armaan Ahmed", affiliation: "Affiliation TBD" },
+  {
+    name: "Dhairya Ameria",
+    linkedin: "https://www.linkedin.com/in/dhairyaameria",
+    photo: "/team/dhairya.jpg",
+  },
+  {
+    name: "Khaled Hanafi",
+    linkedin: "https://www.linkedin.com/in/khaled-hanafi1",
+    photo: "/team/khaled.jpg",
+  },
+  {
+    name: "Omar Toufelaz",
+    linkedin: "https://www.linkedin.com/in/omar-toufelaz",
+    photo: "/team/omar.jpg",
+  },
+  {
+    name: "Armaan Ahmed",
+    linkedin: "https://www.linkedin.com/in/armaanmahmed",
+    photo: "/team/armaan.jpg",
+  },
 ] as const;
 
 /**
@@ -81,12 +98,12 @@ export default function LandingPage() {
           </div>
           <div className="landing-fade-delay flex items-center gap-3 sm:gap-4">
             <LandingThemeToggle />
-            <a
-              href="#contact"
-              className="text-sm font-medium text-[var(--landing-muted)] hover:text-[var(--landing-fg)] transition-colors"
-            >
-              Contact
-            </a>
+              <a
+                href="#team"
+                className="text-sm font-medium text-[var(--landing-muted)] hover:text-[var(--landing-fg)] transition-colors"
+              >
+                Team
+              </a>
           </div>
         </header>
 
@@ -108,10 +125,10 @@ export default function LandingPage() {
                 Dashboard
               </Link>
               <a
-                href="#contact"
+                href="#team"
                 className="inline-flex items-center justify-center rounded-[2px] border-2 border-[var(--landing-green)] px-6 py-3 text-sm font-medium text-[var(--landing-green)] transition-colors hover:bg-[var(--landing-green)]/10"
               >
-                Contact
+                Meet the team
               </a>
             </div>
           </div>
@@ -189,55 +206,50 @@ export default function LandingPage() {
       </section>
 
       {/* —— Team —— */}
-      <section className="relative border-t border-[var(--landing-line)] px-6 sm:px-10 py-16 sm:py-24">
+      <section
+        id="team"
+        className="relative border-t border-[var(--landing-line)] px-6 sm:px-10 py-16 sm:py-24"
+      >
         <div className="mx-auto max-w-5xl">
           <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--landing-green)] mb-3">
             Team
           </p>
-          <h2 className="font-serif text-3xl sm:text-4xl tracking-tight text-[var(--landing-fg)] mb-10">
+          <h2 className="font-serif text-3xl sm:text-4xl tracking-tight text-[var(--landing-fg)] mb-3">
             Building Brain Venture
           </h2>
+          <p className="mb-10 max-w-xl text-base leading-relaxed text-[var(--landing-muted)]">
+            Reach us on LinkedIn — tap a profile to connect.
+          </p>
           <ul className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {TEAM.map((person) => (
               <li key={person.name} className="space-y-3">
-                <div
-                  aria-hidden
-                  className="aspect-square w-full max-w-[180px] rounded-[2px] bg-[var(--landing-green)]/12 border border-[var(--landing-line)]"
-                />
-                <div>
-                  <p className="font-serif text-lg text-[var(--landing-fg)]">{person.name}</p>
-                  <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--landing-muted)]">
-                    {person.affiliation}
-                  </p>
-                </div>
+                <a
+                  href={person.linkedin}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block space-y-3 no-underline"
+                >
+                  <div className="relative aspect-square w-full max-w-[180px] overflow-hidden rounded-[2px] border border-[var(--landing-line)] bg-[var(--landing-green)]/12 transition-colors group-hover:border-[var(--landing-green)]">
+                    <Image
+                      src={person.photo}
+                      alt={person.name}
+                      fill
+                      sizes="180px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div>
+                    <p className="font-serif text-lg text-[var(--landing-fg)] transition-colors group-hover:text-[var(--landing-green)]">
+                      {person.name}
+                    </p>
+                    <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.08em] text-[var(--landing-muted)]">
+                      LinkedIn ↗
+                    </p>
+                  </div>
+                </a>
               </li>
             ))}
           </ul>
-        </div>
-      </section>
-
-      {/* —— Contact —— */}
-      <section
-        id="contact"
-        className="relative border-t border-[var(--landing-line)] px-6 sm:px-10 py-16 sm:py-20"
-      >
-        <div className="mx-auto max-w-3xl space-y-4">
-          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-[var(--landing-green)]">
-            Contact
-          </p>
-          <h2 className="font-serif text-3xl tracking-tight text-[var(--landing-fg)]">
-            Talk to the team
-          </h2>
-          <p className="text-[var(--landing-muted)] text-base leading-relaxed max-w-xl">
-            Questions about Brain Venture, a demo, or the Hack-Nation challenge — reach out and we
-            will get back to you.
-          </p>
-          <a
-            href="mailto:hello@brainventure.ai"
-            className="inline-flex items-center justify-center rounded-[2px] bg-[var(--landing-green-solid)] px-6 py-3 text-sm font-semibold !text-white transition-opacity hover:opacity-90 hover:!text-white"
-          >
-            hello@brainventure.ai
-          </a>
         </div>
       </section>
 
