@@ -6,6 +6,7 @@ import { AxisScoreRow } from "@/components/dashboard/AxisScoreCard";
 import { ContradictionBanner } from "@/components/opportunity/ContradictionBanner";
 import { ClaimTrustList } from "@/components/opportunity/ClaimTrustList";
 import { AnalyzeButton } from "@/components/opportunity/AnalyzeButton";
+import { AdversarialPanel } from "@/components/opportunity/AdversarialPanel";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 
@@ -79,6 +80,13 @@ export default async function OpportunityDetailPage({
         </h2>
         <AxisScoreRow scores={opp.axis_scores} />
       </section>
+
+      {opp.adversarial && (
+        <>
+          <Separator />
+          <AdversarialPanel view={opp.adversarial} />
+        </>
+      )}
 
       <Separator />
 

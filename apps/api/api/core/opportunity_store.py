@@ -268,6 +268,7 @@ def _db_get_opportunity(client, opportunity_id: str) -> dict[str, Any] | None:
         "axis_scores": axis_scores,
         "claims": claims_out,
         "memo": memo,
+        "adversarial": o.get("adversarial"),
         "trace_id": None,
         "sla": sla,
         **_deck_fields(o),
@@ -471,6 +472,7 @@ def get_memo_detail(memo_id: str) -> dict[str, Any] | None:
                 sections = (opp.get("memo") or {}).get("sections") or []
                 return {
                     **item,
+                    "adversarial": opp.get("adversarial"),
                     "sections": [
                         {
                             "title": s.get("title"),
@@ -485,16 +487,29 @@ def get_memo_detail(memo_id: str) -> dict[str, Any] | None:
                 }
         return None
 
-    res = (
-        client.table("memos")
-        .select(
-            "id, opportunity_id, sections, created_at, updated_at, "
-            "opportunities(id, source, status, has_contradiction, founders(display_name), companies(name))"
+    try:
+        res = (
+            client.table("memos")
+            .select(
+                "id, opportunity_id, sections, created_at, updated_at, "
+                "opportunities(id, source, status, has_contradiction, adversarial, founders(display_name), companies(name))"
+            )
+            .eq("id", memo_id)
+            .limit(1)
+            .execute()
         )
-        .eq("id", memo_id)
-        .limit(1)
-        .execute()
-    )
+    except Exception:
+        # Older DBs may lack the 014_adversarial_view column.
+        res = (
+            client.table("memos")
+            .select(
+                "id, opportunity_id, sections, created_at, updated_at, "
+                "opportunities(id, source, status, has_contradiction, founders(display_name), companies(name))"
+            )
+            .eq("id", memo_id)
+            .limit(1)
+            .execute()
+        )
     if not res.data:
         return None
     row = res.data[0]
@@ -532,6 +547,7 @@ def get_memo_detail(memo_id: str) -> dict[str, Any] | None:
         "recommendation": decision.get("recommendation"),
         "decision_at": decision.get("decision_at"),
         "has_contradiction": opp.get("has_contradiction", False),
+        "adversarial": opp.get("adversarial"),
         "snapshot": (snapshot or "")[:240] or None,
         "created_at": row.get("created_at"),
         "updated_at": row.get("updated_at"),
@@ -557,7 +573,12 @@ def record_decision(
         row = _memory().get(opportunity_id)
         if row is None:
             raise KeyError(opportunity_id)
+        adversarial = row.get("adversarial") or {}
+        bull_summary = bull_summary or adversarial.get("bull_summary")
+        bear_summary = bear_summary or adversarial.get("bear_summary")
         row["recommendation"] = recommendation
+        row["bull_summary"] = bull_summary
+        row["bear_summary"] = bear_summary
         row.setdefault("sla", {})["decision_at"] = now
         if recommendation == "yes":
             row["status"] = "funded"
@@ -573,8 +594,12 @@ def record_decision(
             "check_size_usd": row.get("check_size_usd") or 100_000,
         }
 
-    if get_opportunity(opportunity_id) is None:
+    opp = get_opportunity(opportunity_id)
+    if opp is None:
         raise KeyError(opportunity_id)
+    adversarial = opp.get("adversarial") or {}
+    bull_summary = bull_summary or adversarial.get("bull_summary")
+    bear_summary = bear_summary or adversarial.get("bear_summary")
 
     status = "funded" if recommendation == "yes" else "rejected" if recommendation == "no" else "needs-more-info"
     client.table("opportunities").update({"status": status}).eq("id", opportunity_id).execute()
@@ -906,6 +931,7 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
     axis_scores = fields.pop("axis_scores", None)
     memo = fields.pop("memo", None)
     trace = fields.pop("trace", None)
+    adversarial = fields.pop("adversarial", None)
     fields.pop("trace_id", None)  # reasoning_traces generates its own id
     # Memory-only / computed fields — never write to opportunities table
     fields.pop("has_deck", None)
@@ -938,6 +964,14 @@ def update_opportunity(opportunity_id: str, **fields: Any) -> dict[str, Any] | N
             client.table("memos").update({"sections": memo["sections"]}).eq("id", existing.data[0]["id"]).execute()
         else:
             client.table("memos").insert({"opportunity_id": opportunity_id, "sections": memo["sections"]}).execute()
+
+    if adversarial is not None:
+        try:
+            client.table("opportunities").update({"adversarial": adversarial}).eq("id", opportunity_id).execute()
+        except Exception:
+            # Older DBs may lack the 014_adversarial_view column — the view
+            # still returns in the /analyze response, it just isn't persisted.
+            pass
 
     if trace is not None:
         rows = [

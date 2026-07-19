@@ -162,6 +162,7 @@ def analyze_opportunity(opportunity_id: str):
         axis_scores=result["axis_scores"],
         memo=result["memo"],
         claims=result["claims"],
+        adversarial=result["adversarial"],
         trace=result["trace"],
         status="diligence",
     )

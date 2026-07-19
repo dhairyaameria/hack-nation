@@ -25,7 +25,9 @@ def chat_json(system: str, user: str) -> dict | None:
     try:
         from openai import OpenAI
 
-        client = OpenAI(api_key=settings.openai_api_key)
+        # Bounded so one stalled call can't hold /analyze for the SDK's
+        # default 600s x retries — a timeout degrades to the heuristic instead.
+        client = OpenAI(api_key=settings.openai_api_key, timeout=60.0, max_retries=1)
         resp = client.chat.completions.create(
             model=MODEL,
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],

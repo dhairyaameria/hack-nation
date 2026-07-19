@@ -11,6 +11,7 @@ never crashes or fabricates data (`docs/00-OVERVIEW.md` §4 rule 3).
 from __future__ import annotations
 
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 
 from api.core import gold_features
 from api.intelligence import llm, retrieval
@@ -287,7 +288,12 @@ def _validate_claim(claim: dict, company_name: str) -> dict:
 
 
 def run_validator(claims: list[dict], company_name: str) -> list[dict]:
-    return [_validate_claim(c, company_name) for c in claims]
+    """Validate claims concurrently — each is an independent Tavily search +
+    LLM classification, and doing them serially dominated /analyze latency."""
+    if not claims:
+        return []
+    with ThreadPoolExecutor(max_workers=min(8, len(claims))) as pool:
+        return list(pool.map(lambda c: _validate_claim(c, company_name), claims))
 
 
 # ---------------------------------------------------------------------------
@@ -566,6 +572,157 @@ def run_referee(
 
 
 # ---------------------------------------------------------------------------
+# Adversarial — bear case against the memo, before the human decision
+# ---------------------------------------------------------------------------
+
+VALID_SEVERITIES = {"high", "medium", "low"}
+VALID_RECOMMENDATIONS = {"yes", "no", "needs-more-info"}
+
+
+def _normalize_adversarial(raw: dict, prompt_version: str) -> dict:
+    points = []
+    for p in raw.get("bear_points") or []:
+        if not isinstance(p, dict) or not (p.get("point") or "").strip():
+            continue
+        points.append({
+            "point": str(p["point"]).strip(),
+            "severity": p.get("severity") if p.get("severity") in VALID_SEVERITIES else "medium",
+            "basis": (str(p.get("basis")).strip() or None) if p.get("basis") else None,
+        })
+    kill_criteria = [str(k).strip() for k in raw.get("kill_criteria") or [] if str(k).strip()]
+    recommendation = raw.get("recommendation")
+    if recommendation not in VALID_RECOMMENDATIONS:
+        recommendation = "needs-more-info"
+    try:
+        confidence = round(max(0.0, min(1.0, float(raw.get("confidence", 0.5)))), 2)
+    except (TypeError, ValueError):
+        confidence = 0.5
+    return {
+        "bull_summary": (str(raw.get("bull_summary")).strip() or None) if raw.get("bull_summary") else None,
+        "bear_summary": (str(raw.get("bear_summary")).strip() or None) if raw.get("bear_summary") else None,
+        "bear_points": points,
+        "kill_criteria": kill_criteria,
+        "recommendation": recommendation,
+        "confidence": confidence,
+        "prompt_version": prompt_version,
+    }
+
+
+def _heuristic_adversarial(claims_with_trust: list[dict], axis_scores: list[dict], memo_sections: list[dict]) -> dict:
+    contradicted = [c for c in claims_with_trust if c.get("validation_status") == "contradicted"]
+    verified = [c for c in claims_with_trust if c.get("validation_status") == "verified"]
+    unknown = [c for c in claims_with_trust if c.get("validation_status") == "unknown"]
+    axes = {a["axis"]: a for a in axis_scores}
+
+    points = []
+    for c in contradicted:
+        points.append({
+            "point": f"Claim contradicted by independent evidence: {c.get('text', '')}",
+            "severity": "high",
+            "basis": c.get("contradiction_reason") or "Validator found conflicting web evidence.",
+        })
+    if unknown:
+        points.append({
+            "point": f"{len(unknown)} of {len(claims_with_trust)} claims could not be independently corroborated.",
+            "severity": "medium",
+            "basis": "Validator found no related external evidence — trust rests on the source pack alone.",
+        })
+    gap_titles = [s["title"] for s in memo_sections if not s.get("content")]
+    if gap_titles:
+        points.append({
+            "point": "Memo gaps: " + ", ".join(gap_titles[:5]) + ("…" if len(gap_titles) > 5 else ""),
+            "severity": "low",
+            "basis": "Sections without evidence — flagged, not fabricated.",
+        })
+    founder = axes.get("founder", {})
+    market = axes.get("market", {})
+    if market.get("value") == "bear" and isinstance(founder.get("value"), (int, float)) and founder["value"] >= 0.6:
+        points.append({
+            "point": "Axis disagreement: strong founder in a bear-rated market — this is a pivot bet, not a market bet.",
+            "severity": "medium",
+            "basis": f"founder={founder['value']}, market=bear (independent axes, not averaged).",
+        })
+
+    bull_bits = []
+    if verified:
+        bull_bits.append(f"{len(verified)} claim(s) independently verified.")
+    if isinstance(founder.get("value"), (int, float)) and founder["value"] >= 0.6:
+        bull_bits.append(f"Founder axis {founder['value']} ({founder.get('trend', 'stable')}).")
+    if market.get("value") == "bullish":
+        bull_bits.append("Market rated bullish.")
+
+    if contradicted:
+        recommendation, confidence = "needs-more-info", 0.55
+        bear_summary = "Contradicted claims must be resolved with the founder before any check is written."
+    elif verified and isinstance(founder.get("value"), (int, float)) and founder["value"] >= 0.6:
+        recommendation, confidence = "yes", 0.6
+        bear_summary = "Main residual risk is uncorroborated claims and memo gaps listed above."
+    else:
+        recommendation, confidence = "needs-more-info", 0.5
+        bear_summary = "Evidence base is too thin to underwrite conviction either way."
+
+    return _normalize_adversarial({
+        "bull_summary": " ".join(bull_bits) or "No independently verified positive signal yet.",
+        "bear_summary": bear_summary,
+        "bear_points": points,
+        "kill_criteria": [
+            "A contradicted claim confirmed false on the founder call.",
+            "No verifiable traction or shipped work found within diligence window.",
+        ],
+        "recommendation": recommendation,
+        "confidence": confidence,
+    }, "heuristic-adversarial-v1")
+
+
+def run_adversarial(
+    company_name: str,
+    claims_with_trust: list[dict],
+    axis_scores: list[dict],
+    memo_sections: list[dict],
+    *,
+    founder_name: str = "",
+) -> dict:
+    """Devil's-advocate pass over the finished memo: strongest bear case,
+    explicit kill criteria, and a system recommendation the human can
+    overrule. Runs on validator output, so every bear point is grounded in
+    an actual verdict — it never invents new facts."""
+    if llm.is_available():
+        claims_block = "\n".join(
+            f"- [{c.get('validation_status', 'unknown')}, trust {c.get('trust_score', 0.5)}] {c.get('text', '')}"
+            + (f" (contradiction: {c['contradiction_reason']})" if c.get("contradiction_reason") else "")
+            for c in claims_with_trust
+        ) or "(no claims)"
+        axis_block = "\n".join(f"- {a['axis']}: {a['value']} (trend {a.get('trend')}, confidence {a.get('confidence')})" for a in axis_scores)
+        memo_block = "\n".join(
+            f"- {s['title']}: {(s.get('content') or '(GAP — no content)')[:300]}"
+            for s in memo_sections
+        )
+        system = (
+            "You are the devil's-advocate partner at a VC fund, reviewing a finished diligence "
+            "memo before a $100K decision. Argue the strongest honest bear case using ONLY the "
+            "validated claims, axis scores, and memo given — never invent facts. Weigh contradicted "
+            "and unverified claims heavily. Then give the balanced call.\n\n"
+            "Return strict JSON:\n"
+            '{"bull_summary": <2-3 sentence strongest case FOR investing>,\n'
+            ' "bear_summary": <2-3 sentence strongest case AGAINST>,\n'
+            ' "bear_points": [{"point": <specific risk>, "severity": "high|medium|low", "basis": <which claim/axis/gap grounds it>}],\n'
+            ' "kill_criteria": [<observable condition that should kill the deal if true>],\n'
+            ' "recommendation": "yes|no|needs-more-info", "confidence": <0.0-1.0>}\n'
+            "recommendation is the system's call for the human to overrule; confidence reflects evidence depth."
+        )
+        user = (
+            f"Company: {company_name}\nFounder: {founder_name or 'unknown'}\n\n"
+            f"Validated claims:\n{claims_block}\n\n"
+            f"Axis scores (independent — never averaged):\n{axis_block}\n\n"
+            f"Memo sections:\n{memo_block}"
+        )
+        data = llm.chat_json(system, user)
+        if data and (data.get("bear_summary") or data.get("bear_points")):
+            return _normalize_adversarial(data, f"openai:{llm.MODEL}:adversarial-v1")
+    return _heuristic_adversarial(claims_with_trust, axis_scores, memo_sections)
+
+
+# ---------------------------------------------------------------------------
 # Pipeline orchestration
 # ---------------------------------------------------------------------------
 
@@ -617,22 +774,6 @@ def run_pipeline(
         founder_name=founder_name,
     )
 
-    trace = {
-        "trace_id": trace_id,
-        "opportunity_id": opportunity_id,
-        "stages": [
-            {
-                "stage": "research",
-                "inputs_used": [company_name, founder_name] if founder_name else [company_name],
-                "decision_rule_or_prompt_version": "live-connectors-v1",
-                "output_claim_ids": claim_ids,
-            },
-            {"stage": "analyst", "inputs_used": claim_ids, "decision_rule_or_prompt_version": analyst_out["prompt_version"], "output_claim_ids": claim_ids},
-            {"stage": "validate", "inputs_used": claim_ids, "decision_rule_or_prompt_version": ",".join({v["prompt_version"] for v in validations}) or "n/a", "output_claim_ids": claim_ids},
-            {"stage": "referee", "inputs_used": claim_ids, "decision_rule_or_prompt_version": referee_out["prompt_version"], "output_claim_ids": claim_ids},
-        ],
-    }
-
     val_by_id = {v["claim_id"]: v for v in validations}
     claims_with_trust = []
     for c in claims:
@@ -661,10 +802,36 @@ def run_pipeline(
             "evidence": evidence,
         })
 
+    adversarial = run_adversarial(
+        company_name,
+        claims_with_trust,
+        referee_out["axis_scores"],
+        referee_out["sections"],
+        founder_name=founder_name,
+    )
+
+    trace = {
+        "trace_id": trace_id,
+        "opportunity_id": opportunity_id,
+        "stages": [
+            {
+                "stage": "research",
+                "inputs_used": [company_name, founder_name] if founder_name else [company_name],
+                "decision_rule_or_prompt_version": "live-connectors-v1",
+                "output_claim_ids": claim_ids,
+            },
+            {"stage": "analyst", "inputs_used": claim_ids, "decision_rule_or_prompt_version": analyst_out["prompt_version"], "output_claim_ids": claim_ids},
+            {"stage": "validate", "inputs_used": claim_ids, "decision_rule_or_prompt_version": ",".join({v["prompt_version"] for v in validations}) or "n/a", "output_claim_ids": claim_ids},
+            {"stage": "referee", "inputs_used": claim_ids, "decision_rule_or_prompt_version": referee_out["prompt_version"], "output_claim_ids": claim_ids},
+            {"stage": "adversarial", "inputs_used": claim_ids, "decision_rule_or_prompt_version": adversarial["prompt_version"], "output_claim_ids": claim_ids},
+        ],
+    }
+
     return {
         "axis_scores": referee_out["axis_scores"],
         "memo": {"sections": referee_out["sections"]},
         "claims": claims_with_trust,
+        "adversarial": adversarial,
         "trace": trace,
         "research_channels": [],
     }

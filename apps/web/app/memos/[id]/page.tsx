@@ -5,6 +5,7 @@ import { getMemoDetail, type MemoSectionDetail } from "@/lib/api/client";
 import { DiscoveryChannelBadge, DisclosureBadge } from "@/components/ui/ds";
 import { EvidenceCard } from "@/components/opportunity/EvidenceCard";
 import { InvestButton } from "@/components/opportunity/InvestButton";
+import { AdversarialPanel } from "@/components/opportunity/AdversarialPanel";
 import { memoGapCopy, memoGapKind } from "@/lib/utils";
 import type { EvidenceRef, ValidationStatus } from "@/lib/types";
 
@@ -150,6 +151,13 @@ export default async function MemoDetailPage({
           <span className="font-semibold text-brand-ink">Validator caught a contradiction.</span> At least one
           claim in this memo conflicts with independently corroborated evidence. The conflicting
           sources are shown side by side in the affected section below.
+        </div>
+      )}
+
+      {/* ---------- adversarial view (bull vs bear before the human closes) ---------- */}
+      {memo.adversarial && (
+        <div className="mt-8 border-b border-line pb-8">
+          <AdversarialPanel view={memo.adversarial} />
         </div>
       )}
 

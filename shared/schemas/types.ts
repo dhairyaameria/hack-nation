@@ -126,6 +126,24 @@ export interface Memo {
   sections: MemoSection[];
 }
 
+export interface AdversarialBearPoint {
+  point: string;
+  severity: "high" | "medium" | "low";
+  basis?: string | null;
+}
+
+/** Devil's-advocate pass after the Referee memo — the system's call for the
+ * human to overrule. bull/bear summaries prefill the decision log. */
+export interface AdversarialView {
+  bull_summary?: string | null;
+  bear_summary?: string | null;
+  bear_points: AdversarialBearPoint[];
+  kill_criteria: string[];
+  recommendation: "yes" | "no" | "needs-more-info";
+  confidence: number;
+  prompt_version: string;
+}
+
 export interface OpportunityDetail {
   id: string;
   company_name: string;
@@ -137,6 +155,7 @@ export interface OpportunityDetail {
   axis_scores: AxisScore[];
   claims: ClaimTrust[];
   memo?: Memo | null;
+  adversarial?: AdversarialView | null;
   trace_id?: string | null;
 }
 
