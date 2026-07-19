@@ -3,7 +3,7 @@
 **Owner:** team-k (memory/MCP scaffold)
 **Purpose:** the unified "company brain": one Supabase Postgres + pgvector store that holds unstructured content (decks, memos, notes, emails) alongside structured facts, queryable by AI agents (MCP) and the dashboard (REST) through the same service functions.
 
-Tables land in `db/migrations/009_memory_layer.sql`. Code lives in `apps/api/api/memory/` and `apps/api/api/mcp/`.
+Tables land in `db/migrations/011_memory_layer.sql`. Code lives in `apps/api/api/memory/` and `apps/api/api/mcp/`.
 
 ---
 

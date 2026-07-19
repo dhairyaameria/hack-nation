@@ -1,5 +1,5 @@
 """Memory layer data access, backed by `documents`, `document_chunks`,
-`memory_facts`, `actor_aliases` (migration 009). This is the ONE place that
+`memory_facts`, `actor_aliases` (migration 011). This is the ONE place that
 touches those tables: REST routes (`api.memory.routes`), MCP tools
 (`api.mcp.server`), and scheduled pipelines (`jobs/pipelines/`) are all thin
 adapters over these functions. See docs/18-MEMORY-LAYER.md.
@@ -167,7 +167,7 @@ def search_memory(
     limit: int = 8,
 ) -> list[dict[str, Any]]:
     """Semantic search over document chunks (cosine, via the
-    `match_document_chunks` SQL function from migration 009). Falls back to
+    `match_document_chunks` SQL function from migration 011). Falls back to
     keyword matching when no embedding key is configured.
     """
     client = _client()

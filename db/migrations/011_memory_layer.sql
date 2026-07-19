@@ -1,4 +1,4 @@
--- 009 - Memory layer: documents, chunks, structured facts, actor aliases
+-- 011 - Memory layer: documents, chunks, structured facts, actor aliases
 -- Unified "company brain" store shared by REST, MCP tools, and pipelines.
 -- Design: resolve meaning at write time (LLM fact extraction on ingest),
 -- bi-temporal-lite facts (valid_from/valid_until, invalidate not delete),

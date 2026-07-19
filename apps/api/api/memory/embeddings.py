@@ -11,7 +11,7 @@ from __future__ import annotations
 from api.core.config import settings
 
 EMBEDDING_MODEL = "text-embedding-3-small"
-EMBEDDING_DIM = 1536  # matches vector(1536) in db/migrations/009_memory_layer.sql
+EMBEDDING_DIM = 1536  # matches vector(1536) in db/migrations/011_memory_layer.sql
 
 
 def is_available() -> bool:

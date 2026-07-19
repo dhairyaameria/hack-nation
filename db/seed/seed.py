@@ -269,7 +269,7 @@ DISCLOSURE_TEXT = (
 )
 
 # ---------------------------------------------------------------------------
-# 8. Memory layer: documents, chunks, facts, aliases (migration 009)
+# 8. Memory layer: documents, chunks, facts, aliases (migration 011)
 # ---------------------------------------------------------------------------
 
 
