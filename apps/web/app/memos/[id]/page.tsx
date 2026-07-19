@@ -25,12 +25,19 @@ function MemoSection({ section, index }: { section: MemoSectionDetail; index: nu
         {section.not_disclosed && <DisclosureBadge kind="not_disclosed" />}
       </div>
 
+      {/* withheld != not-yet-generated. Only the not_disclosed flag licenses the
+          claim that the founder withheld something. */}
       {section.content ? (
         <p className="mt-3 max-w-[720px] text-[15px] leading-[1.65]">{section.content}</p>
-      ) : (
+      ) : section.not_disclosed ? (
         <p className="mt-3 max-w-[720px] text-[14px] italic leading-relaxed text-sub">
           Not disclosed — the founder withheld this and no inference was made. This is a
           recorded fact about the memo, not a guess about the company.
+        </p>
+      ) : (
+        <p className="mt-3 max-w-[720px] text-[14px] italic leading-relaxed text-sub">
+          Not generated yet — this section has not been written. No claim is made either
+          way about the underlying facts.
         </p>
       )}
 

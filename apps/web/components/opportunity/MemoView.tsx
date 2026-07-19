@@ -25,11 +25,17 @@ export function MemoView({ memo }: { memo: Memo | null | undefined }) {
             {section.not_disclosed && <DisclosureBadge kind="not_disclosed" />}
           </div>
 
+          {/* withheld != not-yet-generated: only claim the founder withheld it
+              when not_disclosed actually says so */}
           {section.content ? (
             <p className="mt-1.5 text-[13.5px] leading-relaxed">{section.content}</p>
-          ) : (
+          ) : section.not_disclosed ? (
             <p className="mt-1.5 text-[13px] italic leading-relaxed text-sub">
               Not disclosed — withheld by the founder, no inference made.
+            </p>
+          ) : (
+            <p className="mt-1.5 text-[13px] italic leading-relaxed text-sub">
+              Unavailable at this stage.
             </p>
           )}
 
