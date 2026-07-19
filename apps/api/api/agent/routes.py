@@ -13,7 +13,7 @@ import re
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from api.agent import nl_query, sourcing_sweep, thesis_store
+from api.agent import memory_chat, nl_query, pipeline_stats, sourcing_sweep, thesis_store
 
 router = APIRouter(tags=["thesis", "agent"])
 
@@ -22,6 +22,24 @@ _ACTION_RE = re.compile(
     r"compare|verify|trust\s*score|genome|memo|proximity|wayback|"
     r"screen|channel\s*quality|what'?s|tell\s+me|how\s+(?:is|are|does)|"
     r"diligence|outreach"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# "How many inbound leads today?" — honest counts from the opportunity store.
+_STATS_RE = re.compile(
+    r"(\bhow\s+many\b.*\b(?:leads?|inbound|deals?|applications?)\b)"
+    r"|(\b(?:leads?|inbound|applications?)\b.*\btoday\b)",
+    re.IGNORECASE,
+)
+
+# Chief-of-staff asks answered from the unified memory layer (notes, calls,
+# commitments, decisions) rather than the live pipeline table.
+_MEMORY_RE = re.compile(
+    r"\b("
+    r"catch\s+me\s+up|brief\s+me|remind\s+me|what\s+did\s+we|what\s+did\s+\w+\s+(?:say|agree|promise|commit)|"
+    r"last\s+call|intro\s+call|notes?|discussed?|agreed?|outstanding|"
+    r"commitments?|committed|promised?|follow[-\s]?ups?"
     r")\b",
     re.IGNORECASE,
 )
@@ -76,6 +94,26 @@ def agent_message(payload: dict):
     message = (payload.get("message") or "").strip()
     if not message:
         raise HTTPException(400, "message must not be empty")
+
+    if _STATS_RE.search(message):
+        stats = pipeline_stats.inbound_today()
+        return {
+            "mode": "stats",
+            "reply": stats["reply"],
+            "skills_used": ["pipeline-stats"],
+            "citations": [],
+            "search": None,
+        }
+
+    if _MEMORY_RE.search(message):
+        memo = memory_chat.answer(message)
+        return {
+            "mode": "memory",
+            "reply": memo["reply"],
+            "skills_used": ["memory-search", "memory-facts"] if memo["available"] else [],
+            "citations": memo["citations"],
+            "search": None,
+        }
 
     if _is_action_intent(message):
         return {
