@@ -33,6 +33,15 @@ _STATS_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Unambiguous diligence-skill verbs. Checked BEFORE the memory intent so
+# "compare X and Y based on our notes" still routes to skills; conversational
+# action tokens ("tell me", "what's") stay lower priority than memory.
+_HARD_ACTION_RE = re.compile(
+    r"\b(compare|verify|trust\s*score|genome|memo|proximity|wayback|"
+    r"channel\s*quality|diligence|outreach)\b",
+    re.IGNORECASE,
+)
+
 # Chief-of-staff asks answered from the unified memory layer (notes, calls,
 # commitments, decisions) rather than the live pipeline table.
 _MEMORY_RE = re.compile(
@@ -105,7 +114,7 @@ def agent_message(payload: dict):
             "search": None,
         }
 
-    if _MEMORY_RE.search(message):
+    if _MEMORY_RE.search(message) and not _HARD_ACTION_RE.search(message):
         memo = memory_chat.answer(message)
         return {
             "mode": "memory",

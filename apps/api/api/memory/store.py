@@ -209,7 +209,9 @@ def get_facts(
     if subject:
         q = q.ilike("subject", f"%{subject}%")
     if as_of:
-        q = q.lte("valid_from", as_of).or_(f"valid_until.is.null,valid_until.gt.{as_of}")
+        # Quote the timestamp: PostgREST or= strings treat unquoted "+" in
+        # ISO offsets as a separator, silently breaking the filter.
+        q = q.lte("valid_from", as_of).or_(f'valid_until.is.null,valid_until.gt."{as_of}"')
     elif not include_invalidated:
         q = q.is_("valid_until", "null")
     res = q.order("valid_from", desc=True).limit(limit).execute()

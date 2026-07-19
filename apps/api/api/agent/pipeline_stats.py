@@ -13,8 +13,10 @@ from api.core import opportunity_store
 
 
 def _arrival_date(opp: dict[str, Any]) -> str | None:
-    signal_at = (opp.get("sla") or {}).get("signal_at")
-    return signal_at[:10] if signal_at else None
+    # signal_at lives in decision_log, which not every row has (e.g. seeded
+    # leads), so fall back to the opportunity row's own created_at.
+    arrived = (opp.get("sla") or {}).get("signal_at") or opp.get("created_at")
+    return arrived[:10] if arrived else None
 
 
 def inbound_today() -> dict[str, Any]:

@@ -108,6 +108,7 @@ def _db_list_opportunities(client) -> list[dict[str, Any]]:
             "thesis_fit_score": o.get("thesis_fit_score"),
             "status": o["status"],
             "has_contradiction": o["has_contradiction"],
+            "created_at": o.get("created_at"),
             "axis_scores": axis_by_opp.get(o["id"], []),
             "sla": _sla_from_decision_log(decision_by_opp.get(o["id"])),
         })

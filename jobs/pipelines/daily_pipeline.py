@@ -42,16 +42,20 @@ def run_daily() -> None:
 
         if opp.get("screen_verdict") is None:
             verdict, reason = fast_screen.screen(opp["company_name"], claims)
-            opportunity_store.update_opportunity(
-                opp["id"],
-                screen_verdict=verdict,
-                status="screening" if verdict == "pass" else "rejected" if verdict == "reject" else "needs-more-info",
-            )
+            status = "screening" if verdict == "pass" else "rejected" if verdict == "reject" else "needs-more-info"
+            opportunity_store.update_opportunity(opp["id"], screen_verdict=verdict, status=status)
             print(f"[pipeline] screened {opp['company_name']}: {verdict} ({reason})")
-            continue
+            # Refresh the stale snapshot so a fresh pass is analyzable this run.
+            opp = {**opp, "screen_verdict": verdict, "status": status}
 
         if opp.get("screen_verdict") == "pass" and opp.get("status") == "screening" and analyzed < MAX_ANALYZE_PER_RUN:
-            result = agents.run_pipeline(opp["id"], opp["company_name"], claims)
+            result = agents.run_pipeline(
+                opp["id"],
+                opp["company_name"],
+                claims,
+                founder_id=opp.get("founder_id"),
+                founder_name=opp.get("founder_name") or "",
+            )
             opportunity_store.update_opportunity(
                 opp["id"],
                 axis_scores=result["axis_scores"],
