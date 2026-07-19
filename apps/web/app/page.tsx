@@ -33,7 +33,11 @@ export default async function PipelinePage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="rounded-[2px] border border-line bg-surface">
+        <div className="flex items-center justify-between border-b border-line px-5 py-3 font-mono text-[10.5px] uppercase tracking-[0.1em] text-sub">
+          <span>Pipeline — needs decision</span>
+          <span>{opportunities.length} open · sorted by SLA</span>
+        </div>
         {opportunities.map((opp) => (
           <OpportunityCard key={opp.id} opp={opp} />
         ))}
