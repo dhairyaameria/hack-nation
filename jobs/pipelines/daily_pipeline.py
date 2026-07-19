@@ -47,6 +47,7 @@ def run_daily() -> None:
                 screen_verdict=verdict,
                 status="screening" if verdict == "pass" else "rejected" if verdict == "reject" else "needs-more-info",
             )
+            opportunity_store.set_sla_stage(opp["id"], "screening_at")
             print(f"[pipeline] screened {opp['company_name']}: {verdict} ({reason})")
             continue
 
