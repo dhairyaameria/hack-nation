@@ -54,11 +54,11 @@ const SAMPLE_SIGNALS = [
 
 const FEATURES = [
   { href: "/apply", icon: UploadCloud, label: "Inbound Sources", body: "Drop a deck. Claims get extracted, screened against the thesis, and every one keeps a pointer back to the slide it came from." },
-  { href: "/", icon: Radar, label: "Outbound Sources", body: "Find Lead sweeps GitHub, Hacker News, and arXiv for founders worth a first call, then tracks them through a watchlist state machine." },
+  { href: "/outbound", icon: Radar, label: "Outbound Sources", body: "Find Lead sweeps GitHub, Hacker News, LinkedIn, and arXiv for founders worth a first call, then tracks them through a watchlist state machine." },
   { href: "/memos", icon: FileText, label: "Investment Memos", body: "Company snapshot, hypotheses, SWOT, traction. Gaps stay flagged as gaps — nothing is invented to fill a blank section." },
   { href: "/founders", icon: Users, label: "Founder Book", body: "The founder genome over time: execution velocity, technical depth, resilience, and a network graph you can walk." },
-  { href: "/query", icon: Search, label: "NL Query", body: "Ask the pipeline a question in plain English and get an answer with its sources attached." },
-  { href: "/agent", icon: MessageSquareText, label: "Agent", body: "Chat that routes to the right skill, compares companies, and cites the evidence behind each claim." },
+  { href: "/portfolio", icon: Search, label: "Portfolio", body: "Companies already funded — closed yes decisions from the 24h funnel." },
+  { href: "/profile", icon: MessageSquareText, label: "Fund Profile", body: "Switch the active thesis to re-rank the pipeline by fit, check size, and required signals." },
 ];
 
 function SampleChip() {
@@ -110,16 +110,17 @@ function TableShell({
 
 export default async function HomePage() {
   const dashboard = await getPipelineDashboard();
-  const opportunities = dashboard.opportunities;
+  const opportunities = dashboard.opportunities ?? [];
   const needsDecision = opportunities.filter((o) => o.sla?.signal_at && !o.sla?.decision_at);
   const contradictions = opportunities.filter((o) => o.has_contradiction);
+  const thesisName = dashboard.active_thesis?.name ?? "No active thesis";
 
   return (
     <div className="mx-auto max-w-[1200px] px-10 pb-24 pt-14">
       {/* ---------- hero ---------- */}
       <div className="border-b border-ink pb-8">
         <SectionLabel className="text-sub">
-          VC Brain · {dashboard.active_thesis.name}
+          VC Brain · {thesisName}
         </SectionLabel>
         <h1 className="mt-3.5 font-serif text-[56px] font-medium leading-[1.05] tracking-[-0.01em]">
           Welcome back, VC
