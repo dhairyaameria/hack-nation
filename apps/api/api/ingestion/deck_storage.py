@@ -12,6 +12,7 @@ from typing import Any
 from api.core.db import get_client
 
 BUCKET = "decks"
+_bucket_ready = False
 
 
 def _safe_filename(name: str | None) -> str:
@@ -20,6 +21,28 @@ def _safe_filename(name: str | None) -> str:
     if not base.lower().endswith(".pdf"):
         base = f"{base}.pdf"
     return base[:180]
+
+
+def _ensure_bucket(client) -> None:
+    """Create the public `decks` bucket once if it does not exist yet."""
+    global _bucket_ready
+    if _bucket_ready:
+        return
+    try:
+        buckets = client.storage.list_buckets()
+        names = {
+            getattr(b, "name", None) or (b.get("name") if isinstance(b, dict) else None)
+            for b in (buckets or [])
+        }
+        if BUCKET not in names:
+            try:
+                client.storage.create_bucket(BUCKET, options={"public": True})
+            except TypeError:
+                client.storage.create_bucket(BUCKET, public=True)
+            print(f"[deck_storage] created bucket {BUCKET!r}")
+        _bucket_ready = True
+    except Exception as exc:  # noqa: BLE001
+        print(f"[deck_storage] ensure_bucket failed: {exc}")
 
 
 def upload_deck(opportunity_id: str, file_bytes: bytes, filename: str | None) -> dict[str, str]:
@@ -34,6 +57,7 @@ def upload_deck(opportunity_id: str, file_bytes: bytes, filename: str | None) ->
     if client is None:
         return {"deck_storage_path": path, "deck_url": "", "deck_filename": safe}
 
+    _ensure_bucket(client)
     try:
         client.storage.from_(BUCKET).upload(
             path,
